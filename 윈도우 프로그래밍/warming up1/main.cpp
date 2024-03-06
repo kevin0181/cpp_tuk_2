@@ -38,6 +38,22 @@ int main()
         sentence += '.';
     }
 
+    // 공백 두개 있으면 체크
+    for (int i = 0; i < sentence.length(); ++i)
+    {
+        if (sentence[i] == ' ' && sentence[i + 1] == ' ') // 공백 두개 겹치면 하나 지움
+        {
+            sentence = sentence.substr(0, i) + sentence.substr(i + 1, sentence.length());
+            i = 0;
+        }
+    }
+    
+    //마지막에 공백이 붙으면 제거
+    if (sentence[sentence.length() - 2] == ' ')
+    {
+        sentence = sentence.substr(0, sentence.length() - 2) + sentence.substr(sentence.length() - 1, sentence.length());
+    }
+
     while (SYSTEM_STATUS)
     {
 
