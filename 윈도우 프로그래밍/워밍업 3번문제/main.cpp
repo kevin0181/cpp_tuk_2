@@ -34,8 +34,9 @@ void start1(int result[][5])
             do
             {
                 num = uid(gen);
-            } while (seen.count(num) > 0);
-            // result[i][j] = uid(gen);
+            } while (seen.count(num) > 0); // 중복된 숫자가 안나올때 까지 반복
+            result[i][j] = num;
+            seen.insert(num);
         }
     }
 }
@@ -46,7 +47,7 @@ void sprint_v(int result[][5])
     {
         for (int j = 0; j < 5; ++j)
         {
-            cout << setw(2) << right << result[i][j] << " ";
+            cout << setw(2) << left << result[i][j] << " ";
         }
         cout << endl;
     }
