@@ -17,6 +17,8 @@ string changeSpace(string);
 string changeWordStar(string, char, string);
 int countWords(string);
 string changeUpLo(string);
+string moveLeft(string);
+string moveRight(string);
 
 int main()
 {
@@ -71,10 +73,12 @@ int main()
             break;
         case '4':
             // 좌측 한 문자 이동
+            sentence = moveLeft(sentence);
             std::cout << sentence << endl;
             break;
         case '5':
             //  우측 한 문자 이동
+            sentence = moveRight(sentence);
             std::cout << sentence << endl;
             break;
         default:
@@ -84,6 +88,32 @@ int main()
             break;
         }
     }
+}
+
+// 왼쪽으로 1칸 이동
+string moveLeft(string sentence)
+{
+    char temp{};
+    for (int i = 0; i < sentence.length() - 2; ++i)
+    {
+        temp = sentence[i];
+        sentence[i] = sentence[i + 1];
+        sentence[i + 1] = temp;
+    }
+    return sentence;
+}
+
+// 우측으로 1칸 이동
+string moveRight(string sentence)
+{
+    char temp{};
+    for (int i = sentence.length() - 2; i > 0; --i)
+    {
+        temp = sentence[i];
+        sentence[i] = sentence[i - 1];
+        sentence[i - 1] = temp;
+    }
+    return sentence;
 }
 
 // 공백 변경
