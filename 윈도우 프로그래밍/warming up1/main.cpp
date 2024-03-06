@@ -16,6 +16,7 @@ uniform_int_distribution<int> dis(0, 3);
 string changeSpace(string);
 string changeWordStar(string, char, string);
 int countWords(string);
+string changeUpLo(string);
 
 int main()
 {
@@ -65,6 +66,7 @@ int main()
             break;
         case '3':
             // lower or upper
+            sentence = changeUpLo(sentence);
             std::cout << sentence << endl;
             break;
         case '4':
@@ -136,9 +138,20 @@ int countWords(string sentence)
 }
 
 // 단어 대문자, 소문자
-string changeUpLo(string s)
+string changeUpLo(string sentence)
 {
-    return "";
+    for (auto i = sentence.begin(); i < sentence.end(); ++i)
+    {
+        if (isupper(*i)) // 만약 대문자면?
+        {
+            *i = tolower(*i);
+        }
+        else
+        {
+            *i = toupper(*i);
+        }
+    }
+    return sentence;
 }
 
 // 단어 입력 -> *
