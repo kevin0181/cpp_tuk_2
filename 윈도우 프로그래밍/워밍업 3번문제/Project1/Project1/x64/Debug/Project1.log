@@ -1,2 +1,4 @@
 ﻿  main.cpp
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\ranges(11): warning STL4038: The contents of <ranges> are available only with C++20 or later.
+  LINK : C:\Users\영넨이\Desktop\겜공 2학년\cpp_tuk_2\윈도우 프로그래밍\워밍업 3번문제\Project1\x64\Debug\Project1.exe을(를) 찾을 수 없거나 마지막 증분 링크에 의해 빌드되지 않았습니다. 전체 링크를 수행하고 있습니다.
   Project1.vcxproj -> C:\Users\영넨이\Desktop\겜공 2학년\cpp_tuk_2\윈도우 프로그래밍\워밍업 3번문제\Project1\x64\Debug\Project1.exe
