@@ -38,7 +38,9 @@ int main()
             ascending(result);
             sprint_v(result);
             break;
-        case 'b': // 열따라 내림차순
+        case 'd': // 열따라 내림차순
+            descending(result);
+            sprint_v(result);
             break;
         case 'e': // 짝수만 출력
             break;
@@ -81,19 +83,24 @@ void ascending(int result[][5]) {
 }
 // 열따라 내림차순
 void descending(int result[][5]) {
+
     int* flatArr = &result[0][0]; //2차원 배열을 1차원 배열로 전환 시작점을 가르켜서 1차원배열로 가져오는 느낌
     int size = 4 * 5;
 
-    //sort(flatArr, flatArr + size, [](int a, int b) { return a > b; });
     sort(flatArr, flatArr + size);
+    int saveArr[20]{};
 
     int k = 0;
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 5; ++j) {
-            result[i][j] = flatArr[k++];
-        }
+    for (int i = 0; i < size; ++i) {
+        saveArr[i] = flatArr[k++];
     }
 
+    k = 0;
+    for (int i = 0; i < 5; ++i) {
+        for (int j = 3; j >= 0; --j) {
+            result[j][i] = saveArr[k++];
+        }
+    }
 }
 
 // 랜덤한 숫자
