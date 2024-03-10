@@ -11,10 +11,12 @@
 using namespace std;
 
 void start1(int& candidateNum, map<int, vector<int>> candidateClass, vector<int> classCnt, vector<int> voteC);
-void fP(vector<int> classCnt);
+void fP(vector<int>& classCnt);
 void fNum(vector<int> voteC, int num, map<int, vector<int>> candidateClass);
 void fA(vector<int> voteC, map<int, vector<int>> candidateClass);
-void fB(vector<int> voteC, map<int, vector<int>> candidateClass);
+void fD(vector<int> voteC, map<int, vector<int>> candidateClass);
+void fM(vector<int>& classCnt, vector<int> voteC, map<int, vector<int>> candidateClass);
+void fN(vector<int>& classCnt, vector<int> voteC, map<int, vector<int>> candidateClass);
 
 random_device rd;
 mt19937 gen(rd());
@@ -70,7 +72,7 @@ void start1(int& candidateNum, map<int, vector<int>> candidateClass, vector<int>
 
 	for (const auto& pair : candidateClass) {
 		for (size_t i = 0; i < pair.second.size(); ++i) {
-			cout << pair.first << "반 - " << pair.second[i] << "번";
+			cout << pair.second[i] << "번 - " << pair.first << "반";
 			if (i != pair.second.size() - 1) {
 				cout << ", ";
 			}
@@ -86,9 +88,12 @@ void start1(int& candidateNum, map<int, vector<int>> candidateClass, vector<int>
 		cin >> orderS;
 
 		unordered_map<std::string, int> myMap = {
-		{"p", 'p'},
-		{"a", 'a'},
-		{"b",'b'}
+		{"p",'p'},
+		{"a",'a'},
+		{"b",'b'},
+		{"m",'m'},
+		{"n",'n'},
+		{"r",'r'}
 		};
 
 			int value = myMap[orderS];
@@ -100,8 +105,22 @@ void start1(int& candidateNum, map<int, vector<int>> candidateClass, vector<int>
 			case 'a':
 				fA(voteC, candidateClass);
 				break;
-			case 'b':
-				fB(voteC, candidateClass);
+			case 'd':
+				fD(voteC, candidateClass);
+				break;
+			case 'm':
+				fM(classCnt, voteC, candidateClass);
+				break;
+			case 'n':
+				fN(classCnt, voteC, candidateClass);
+				break;
+			case 'r':
+				candidateClass.clear();
+				candidate.clear();
+				voteC.clear();
+				candidateNum = 0;
+				classCnt.clear();
+				start1(candidateNum, candidateClass, classCnt, voteC);
 				break;
 			default:
 				try {
@@ -120,7 +139,110 @@ void start1(int& candidateNum, map<int, vector<int>> candidateClass, vector<int>
 		cout << endl << "----------------------------------------" << endl << endl;
 	}
 }
-void fB(vector<int> voteC, map<int, vector<int>> candidateClass) {
+
+void fN(vector<int>& classCnt, vector<int> voteC, map<int, vector<int>> candidateClass) {
+
+	map<int, int> candidateList;
+	
+	for (const auto& pair : candidateClass) {
+		int key = pair.first;
+		for (int value : pair.second) {
+			int sum = 0; // 각 후보자의 투표 수를 계산하기 전에 sum을 초기화해야 합니다.
+			for (int i = 0; i < 1000; ++i) {
+				if (voteC[i] == value) {
+					++sum;
+				}
+			}
+			candidateList[value] += sum; // 기존 후보자의 투표 수에 sum을 더합니다.
+		}
+
+	}
+
+
+	// map을 pair 벡터로 변환합니다.
+	vector<std::pair<int, int>> vec(candidateList.begin(), candidateList.end());
+
+	// value 값을 기준으로 내림차순으로 정렬합니다.
+	sort(vec.begin(), vec.end(), [](const std::pair<int, int>& a, const std::pair<int, int>& b) {
+		return a.second > b.second;
+	});
+
+	// candidateList 맵 출력
+	for (const auto& pair1 : vec) {
+
+		int key{};
+
+		//for (auto& pair2 : candidateClass) {
+		//	//key = pair2.first; // 키 읽기
+		//	vector<int>& values = pair2.second; // 값(벡터) 읽기
+
+		//	for (int value : values) {
+		//		for (int i = 0; i < 1000; ++i) {
+		//			if (pair2.first == value) {
+		//				key = pair2.first; // 키 읽기
+		//				break;
+		//			}
+		//		}
+		//	}
+
+		//	
+		//}
+		cout << pair1.first << "번 - " << pair1.second << "표 " << key << "반, ";
+	
+	}
+	
+
+}
+
+void fM(vector<int> &classCnt, vector<int> voteC, map<int, vector<int>> candidateClass) {
+
+	int cc = 0;
+
+	for (auto& pair : candidateClass) {
+		int key = pair.first; // 키 읽기
+		vector<int>& values = pair.second; // 값(벡터) 읽기
+
+		map<int, int> candidateList;
+		int sum{};
+
+		for (int value : values) {
+			for (int i = 0; i < 1000; ++i) {
+				if (voteC[i] == value) {
+					++sum;
+				}
+			}
+			candidateList[value] = sum;
+			sum = 0;
+		}
+
+		vector<std::pair<int, int>> vec(candidateList.begin(), candidateList.end());
+
+		sort(vec.begin(), vec.end(), [](const std::pair<int, int>& a, const std::pair<int, int>& b) {
+			return a.second > b.second;
+		});
+
+
+		cout << key << "반 : ";
+		if (classCnt.size() == 0) {
+			cerr << "p를 먼저 실행 후, m을 입력해주세요." << endl;
+			break;
+		}
+
+		for (int i = 0; i < vec.size(); ++i) {
+			if (classCnt[cc] == i) {
+				break;
+			}
+			cout << vec[i].first << "번 - " << vec[i].second << "표, ";
+		}
+
+		++cc;
+
+		cout << endl;
+
+	}
+}
+
+void fD(vector<int> voteC, map<int, vector<int>> candidateClass) {
 
 	for (auto& pair : candidateClass) {
 		int key = pair.first; // 키 읽기
@@ -155,6 +277,8 @@ void fB(vector<int> voteC, map<int, vector<int>> candidateClass) {
 	}
 
 }
+
+
 void fA(vector<int> voteC, map<int, vector<int>> candidateClass) {
 
 	for (auto& pair : candidateClass) {
@@ -222,7 +346,7 @@ void fNum(vector<int> voteC, int num, map<int, vector<int>> candidateClass) {
 
 
 
-void fP(vector<int> classCnt) { //대의원 반 정원 설정 & 출력
+void fP(vector<int>& classCnt) { //대의원 반 정원 설정 & 출력
 	const int target_sum = 109;
 	const int total_iterations = 13;
 
