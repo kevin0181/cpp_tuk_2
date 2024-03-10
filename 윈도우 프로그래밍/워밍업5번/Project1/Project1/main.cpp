@@ -13,6 +13,8 @@ using namespace std;
 void start1(int& candidateNum, map<int, vector<int>> candidateClass, vector<int> classCnt, vector<int> voteC);
 void fP(vector<int> classCnt);
 void fNum(vector<int> voteC, int num, map<int, vector<int>> candidateClass);
+void fA(vector<int> voteC, map<int, vector<int>> candidateClass);
+void fB(vector<int> voteC, map<int, vector<int>> candidateClass);
 
 random_device rd;
 mt19937 gen(rd());
@@ -85,7 +87,8 @@ void start1(int& candidateNum, map<int, vector<int>> candidateClass, vector<int>
 
 		unordered_map<std::string, int> myMap = {
 		{"p", 'p'},
-		{"a", 'a'}
+		{"a", 'a'},
+		{"b",'b'}
 		};
 
 			int value = myMap[orderS];
@@ -94,17 +97,98 @@ void start1(int& candidateNum, map<int, vector<int>> candidateClass, vector<int>
 			case 'p': //대의원 수 출력
 				fP(classCnt);
 				break;
-			default:
-				int num = std::stoi(orderS);			
-				if (num <= 1000)
-					fNum(voteC, num, candidateClass);
-				else
-					cout << "1000 이하로 입력해주세요." << endl;
+			case 'a':
+				fA(voteC, candidateClass);
 				break;
+			case 'b':
+				fB(voteC, candidateClass);
+				break;
+			default:
+				try {
+					int num = stoi(orderS);
+					if (num <= 1000)
+						fNum(voteC, num, candidateClass);
+					else
+						cout << "1000 이하로 입력해주세요." << endl;
+					break;
+				}
+				catch (const  std::invalid_argument& e) {
+					cerr << "예외 발생: 입력된 문자열에는 숫자가 아닌 문자가 포함되어 있습니다." << endl;
+				}
 			}
 
 		cout << endl << "----------------------------------------" << endl << endl;
 	}
+}
+void fB(vector<int> voteC, map<int, vector<int>> candidateClass) {
+
+	for (auto& pair : candidateClass) {
+		int key = pair.first; // 키 읽기
+		vector<int>& values = pair.second; // 값(벡터) 읽기
+
+		map<int, int> candidateList;
+		int sum{};
+
+		for (int value : values) {
+			for (int i = 0; i < 1000; ++i) {
+				if (voteC[i] == value) {
+					++sum;
+				}
+			}
+			candidateList[value] = sum;
+			sum = 0;
+		}
+
+		vector<std::pair<int, int>> vec(candidateList.begin(), candidateList.end());
+
+		sort(vec.begin(), vec.end(), [](const std::pair<int, int>& a, const std::pair<int, int>& b) {
+			return a.second > b.second;
+			});
+
+		cout << key << "반 : ";
+		for (const auto& pair : vec) {
+			cout << pair.first << "번 - " << pair.second << "표, ";
+		}
+
+		cout << endl;
+
+	}
+
+}
+void fA(vector<int> voteC, map<int, vector<int>> candidateClass) {
+
+	for (auto& pair : candidateClass) {
+		int key = pair.first; // 키 읽기
+		vector<int>& values = pair.second; // 값(벡터) 읽기
+
+		map<int, int> candidateList;
+		int sum{};
+
+		for (int value : values) {
+			for (int i = 0; i < 1000; ++i) {
+				if (voteC[i] == value) {
+					++sum;
+				}
+			}
+			candidateList[value] = sum;
+			sum = 0;
+		}
+
+		vector<std::pair<int, int>> vec(candidateList.begin(), candidateList.end());
+
+		sort(vec.begin(), vec.end(), [](const std::pair<int, int>& a, const std::pair<int, int>& b) {
+			return a.second < b.second;
+		});
+
+		cout << key << "반 : ";
+		for (const auto& pair : vec) {
+			cout << pair.first << "번 - " << pair.second << "표, ";
+		}
+
+		cout << endl;
+
+	}
+
 }
 
 void fNum(vector<int> voteC, int num, map<int, vector<int>> candidateClass) {
@@ -117,9 +201,26 @@ void fNum(vector<int> voteC, int num, map<int, vector<int>> candidateClass) {
 		}
 	}
 
+	int classKey{};
+	int keyValue{};
 
-	cout << num << "이 투표한 사람은 " <<voteNum; //
+	for (const auto& pair : candidateClass) {
+		int key = pair.first; // 키 읽기
+		const vector<int>& values = pair.second; // 값(벡터) 읽기
+
+		for (int value : values) {
+			if (voteNum == value) {
+				classKey = key;
+				keyValue = value;
+			}
+		}
+
+	}
+
+	cout << num << "이 투표한 사람은 " << classKey << "반 - " << keyValue << "번" << " 입니다." << endl;
 }
+
+
 
 void fP(vector<int> classCnt) { //대의원 반 정원 설정 & 출력
 	const int target_sum = 109;
