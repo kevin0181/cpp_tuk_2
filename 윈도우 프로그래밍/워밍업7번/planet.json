@@ -1,0 +1,92 @@
+[
+    {
+        "name": "태양",
+        "size": 1090,
+        "satellite_cnt": 0,
+        "revolution_period": 0,
+        "rotation_cycle": 25.38,
+        "idle_speed": 0,
+        "inclination": 7.25,
+        "dft_sum": 0.0
+    },
+    {
+        "name": "수성",
+        "size": 3.8,
+        "satellite_cnt": 0,
+        "revolution_period": 87.97,
+        "rotation_cycle": 58.6462,
+        "idle_speed": 47.8725,
+        "inclination": 0.01,
+        "dft_sum": 0.4
+    },
+    {
+        "name": "금성",
+        "size": 9.5,
+        "satellite_cnt": 0,
+        "revolution_period": 224.7,
+        "rotation_cycle": -243.0185,
+        "idle_speed": 35.0214,
+        "inclination": 2.64,
+        "dft_sum": 0.7
+    },
+    {
+        "name": "지구",
+        "size": 10,
+        "satellite_cnt": 1,
+        "revolution_period": 365.26,
+        "rotation_cycle": 0.99726963,
+        "idle_speed": 29.7859,
+        "inclination": 23.44,
+        "dft_sum": 1.0
+    },
+    {
+        "name": "화성",
+        "size": 5.3,
+        "satellite_cnt": 2,
+        "revolution_period": 686.96,
+        "rotation_cycle": 1.02595676,
+        "idle_speed": 24.1309,
+        "inclination": 25.19,
+        "dft_sum": 1.5
+    },
+    {
+        "name": "목성",
+        "size": 112,
+        "satellite_cnt": 79,
+        "revolution_period": 4333.29,
+        "rotation_cycle": 0.41354,
+        "idle_speed": 13.0697,
+        "inclination": 3.12,
+        "dft_sum": 5.2
+    },
+    {
+        "name": "토성",
+        "size": 94.5,
+        "satellite_cnt": 82,
+        "revolution_period": 10756.20,
+        "rotation_cycle": 0.44401,
+        "idle_speed": 9.6724,
+        "inclination": 26.73,
+        "dft_sum": 9.5
+    },
+    {
+        "name": "천왕성",
+        "size": 40,
+        "satellite_cnt": 27,
+        "revolution_period": 30707.49,
+        "rotation_cycle": 0.71833,
+        "idle_speed": 6.8352,
+        "inclination": 82.23,
+        "dft_sum": 19.2
+    },
+    {
+        "name": "해왕성",
+        "size": 38.8,
+        "satellite_cnt": 14,
+        "revolution_period": 60223.35,
+        "rotation_cycle": 0.67125,
+        "idle_speed": 5.4778,
+        "inclination": 28.33,
+        "dft_sum": 30.1
+    }
+]
