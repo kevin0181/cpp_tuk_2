@@ -27,7 +27,7 @@ int main() {
    vector<int> classCnt; // 대의원 반 정원
    //map<int, vector<int>> delegateClass; //대의원 반
    vector<int> voteC; // 1000명 투표
-
+   
    start1(candidateNum, candidateClass, classCnt, voteC);
 
 }
