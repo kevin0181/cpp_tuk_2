@@ -83,6 +83,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     // insert
     static bool in_status = false;
 
+    static bool f2_status = false;
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -99,7 +101,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         switch (wParam)
         {
         case VK_BACK:
-
             if (cnt_x == 0 && cnt_y == 0 || caret_x == 0 && caret_y == 0) //처음 부터 뒤로가는거 막기
                 break;
 
@@ -107,6 +108,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 caret_y--;
                 cnt_y--;
                 caret_x = lstrlen(str[caret_y]);
+                cnt_x = lstrlen(str[caret_y]);
                 for (int i = 0; i < lstrlen(str[caret_y + 1]); ++i) { // 한줄만 이제 뒤에 붙이고
                     str[caret_y][caret_x + i] = str[caret_y + 1][i];
                     cnt_x++;
@@ -387,6 +389,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 ShowCaret(hWnd);
             }
             InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        case VK_F2:
+            f2_status = !f2_status;
+
+            if (f2_status) {
+
+                for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i) {
+                    for (int j = lstrlen(str[i]); j > 0; --j) {
+                        str[i][j + 1] = str[i][j];
+                    }
+                }
+
+            }
+            else {
+
+            }
             break;
         default:
             break;
