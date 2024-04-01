@@ -68,6 +68,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int cnt_y;
     int size_tap = 5;
     TCHAR ch_n; // 필요할때쓰는거.
+    int num = 0; //필요할때 쓰는거
 
 
     //caret좌표
@@ -395,16 +396,41 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
             if (f2_status) {
 
+                do {
+                    for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i) { //한칸씩 앞으로!
+                        for (int j = lstrlen(str[i]); j >= 0; --j) {
+                            str[i][j + 1] = str[i][j];
+                        }
+                    }
+                } while (++num < 4);
+                    
                 for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i) {
-                    for (int j = lstrlen(str[i]); j > 0; --j) {
-                        str[i][j + 1] = str[i][j];
+                    if (lstrlen(str[i]) != 0) {
+                        for (int j = 0; j < 4; ++j) {
+                            str[i][j] = '_';
+                        }
                     }
                 }
-
+                caret_x = lstrlen(str[caret_y]);
+                cnt_x = lstrlen(str[cnt_y]);
             }
+
             else {
+                do {
+                    for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i) { //한칸씩 뒤으로!
+                        if (str[i][0] == '_') {
+                            for (int j = 0; j < lstrlen(str[i]); ++j) {
+                                str[i][j] = str[i][j + 1];
+                            }
+                        }
+                    }
+                } while (++num < 4);
 
+                caret_x = lstrlen(str[caret_y]);
+                cnt_x = lstrlen(str[cnt_y]);
             }
+
+            InvalidateRect(hWnd, NULL, TRUE);
             break;
         default:
             break;
