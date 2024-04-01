@@ -432,6 +432,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
             InvalidateRect(hWnd, NULL, TRUE);
             break;
+
+        case VK_F3:
+            for (int i = sizeof(str) / sizeof(str[0]); i > 0; --i) {
+                memcpy(str[i], str[i - 1], sizeof(str[i - 1]));
+            }
+            str[0][0] = '\0';
+            caret_y = cnt_y;
+            caret_x = lstrlen(str[caret_y]);
+            InvalidateRect(hWnd, NULL, TRUE);
+            break;
         default:
             break;
         }
