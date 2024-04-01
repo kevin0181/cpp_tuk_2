@@ -1,0 +1,9 @@
+
+.gitignore.rtf
+
+ARM64/
+
+Debug/
+.idea/
+.vscode/
+cmake-build-debug/
