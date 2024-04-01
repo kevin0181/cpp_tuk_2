@@ -67,8 +67,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int cnt_x;
     static int cnt_y;
     int size_tap = 5;
-    TCHAR ch_n; // 필요할때쓰는거.
+    TCHAR **ch_n; // 필요할때쓰는거.
     int num = 0; //필요할때 쓰는거
+    
 
 
     //caret좌표
@@ -441,6 +442,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             caret_y = cnt_y;
             caret_x = lstrlen(str[caret_y]);
             InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        case VK_F4:
+
+            ch_n = new  TCHAR * [11];
+            for (int i = 0; i < 11; ++i) {
+                ch_n[i] = new TCHAR[36];
+            }
+
+            for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i) {
+                for (int j = 0; j < lstrlen(str[i]); ++j) {
+                    ch_n[i][j] = str[i][j];
+                }
+            }
+
             break;
         default:
             break;
