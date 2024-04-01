@@ -1,2 +1,20 @@
 ﻿  main.cpp
-  Project1.vcxproj -> C:\Users\영넨이\Desktop\겜공 2학년\cpp_tuk_2\윈도우 프로그래밍\워밍업8번\Project1\x64\Debug\Project1.exe
+C:\Users\영넨이\Desktop\겜공 2학년\cpp_tuk_2\윈도우 프로그래밍\워밍업8번\Project1\Project1\main.cpp(30,9): error C3867: 'List<champion>::size': 비표준 구문입니다. '&'를 사용하여 멤버 포인터를 만드세요.
+  C:\Users\영넨이\Desktop\겜공 2학년\cpp_tuk_2\윈도우 프로그래밍\워밍업8번\Project1\Project1\main.cpp(30,9):
+  템플릿 인스턴스화 컨텍스트(가장 오래된 인스턴스화 컨텍스트)가
+  	C:\Users\영넨이\Desktop\겜공 2학년\cpp_tuk_2\윈도우 프로그래밍\워밍업8번\Project1\Project1\main.cpp(96,17):
+  	컴파일되는 클래스 템플릿 인스턴스화 'List<champion>'에 대한 참조를 확인하세요.
+  	C:\Users\영넨이\Desktop\겜공 2학년\cpp_tuk_2\윈도우 프로그래밍\워밍업8번\Project1\Project1\main.cpp(26,7):
+  	클래스 템플릿 멤버 함수 'void List<champion>::push_back(const T &)'을(를) 컴파일하는 중입니다.
+          with
+          [
+              T=champion
+          ]
+  		C:\Users\영넨이\Desktop\겜공 2학년\cpp_tuk_2\윈도우 프로그래밍\워밍업8번\Project1\Project1\main.cpp(14,13):
+  		'List<champion>::List'에서 'List<champion>::push_back'에 대한 첫 번째 참조를 확인하세요.
+  		C:\Users\영넨이\Desktop\겜공 2학년\cpp_tuk_2\윈도우 프로그래밍\워밍업8번\Project1\Project1\main.cpp(96,30):
+  		'main'에서 'List<champion>::List'에 대한 첫 번째 참조를 확인하세요.
+  
+C:\Users\영넨이\Desktop\겜공 2학년\cpp_tuk_2\윈도우 프로그래밍\워밍업8번\Project1\Project1\main.cpp(30,13): error C2171: operator '++' cannot be applied to an operand of type 'size_t (__cdecl List<champion>::* )(void)'
+C:\Users\영넨이\Desktop\겜공 2학년\cpp_tuk_2\윈도우 프로그래밍\워밍업8번\Project1\Project1\main.cpp(30,9): error C2105: '++'에 l-value가 필요합니다.
+C:\Users\영넨이\Desktop\겜공 2학년\cpp_tuk_2\윈도우 프로그래밍\워밍업8번\Project1\Project1\main.cpp(30,15): error C2107: 인덱스가 잘못되어 간접 참조를 사용할 수 없습니다.
