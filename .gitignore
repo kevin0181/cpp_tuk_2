@@ -7,5 +7,4 @@ Debug/
 .idea/
 .vscode/
 cmake-build-debug/
-
-visualstudio/
+.vs/
