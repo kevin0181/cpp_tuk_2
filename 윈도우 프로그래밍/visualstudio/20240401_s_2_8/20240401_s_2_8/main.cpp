@@ -87,6 +87,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     static bool f2_status = false;
     
+    static bool pg_status = false;
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -442,6 +444,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             for (int i = lstrlen(str[0]); i >= 0; --i) {
                 str[0][i] = '\0';
             }
+
             caret_y = cnt_y;
             caret_x = lstrlen(str[caret_y]);
             InvalidateRect(hWnd, NULL, TRUE);
@@ -475,6 +478,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             InvalidateRect(hWnd, NULL, TRUE);
             break;
         case VK_NEXT:
+
+            if (pg_status)
+                break;
+
+            pg_status = true;
+           
             for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i) {
                 if (lstrlen(str[i]) == 0) {
                     ch_n[i][0] = '\0';
@@ -504,13 +513,72 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                         }
                     }
                 }
-                ch_n[i][num++] = ')';
+                if (lstrlen(str[i]) != 0)
+                    ch_n[i][num++] = ')';
                 ch_n[i][num] = '\0';
             }
+
+            for (int i = 0; i < 11; ++i) {
+                for (int j = 55; j >= 0; --j) {
+                    str[i][j] = '\0';
+                }
+            }
+
+            for (int i = 0; i < sizeof(ch_n) / sizeof(ch_n[0]); ++i) {
+                for (int j = 0; j < lstrlen(ch_n[i]); ++j) {
+                    str[i][j] = ch_n[i][j];
+                }
+            }
+            caret_x = lstrlen(str[caret_y]);
             InvalidateRect(hWnd, NULL, TRUE);
             break;
         case VK_PRIOR:
-           
+            if (!pg_status)
+                break;
+            pg_status = false;
+
+            for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i) {
+                if (lstrlen(str[i]) == 0) {
+                    ch_n[i][0] = '\0';
+                }
+                num = 0;
+                for (int j = 0; j < lstrlen(str[i]); ++j) {
+                    if (lstrlen(str[i]) == 0)
+                        break;
+                    if (num == 0) {
+                        ++num;
+                    }
+                    else {
+                        if (str[i][j] == ')' && str[i][j + 1] == '(') {
+                            ch_n[i][num-1] = ' ';
+                            ++num;
+                            ++j;
+                        }
+                        else {
+                            ch_n[i][num - 1] = str[i][j];
+                            ++num;
+                        }
+                    }
+                }
+                ch_n[i][num - 2] = '\0';
+                
+            }
+            
+            for (int i = 0; i < 11; ++i) {
+                for (int j = 55; j >= 0; --j) {
+                    str[i][j] = '\0';
+                }
+            }
+
+            for (int i = 0; i < sizeof(ch_n) / sizeof(ch_n[0]); ++i) {
+                for (int j = 0; j < lstrlen(ch_n[i]); ++j) {
+                    str[i][j] = ch_n[i][j];
+                }
+            }
+
+            caret_x = lstrlen(str[caret_y]);
+            InvalidateRect(hWnd, NULL, TRUE);
+
             break;
         default:
             break;
