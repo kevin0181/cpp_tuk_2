@@ -67,7 +67,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int cnt_x;
     static int cnt_y;
     int size_tap = 5;
-    TCHAR **ch_n; // 필요할때쓰는거.
+    TCHAR ch_n[11][32]; // 필요할때쓰는거.
     int num = 0; //필요할때 쓰는거
     
 
@@ -448,17 +448,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
         case VK_F4:
 
-            ch_n = new  TCHAR * [11];
-            for (int i = 0; i < 11; ++i) {
-                ch_n[i] = new TCHAR[36];
-            }
-
+            //순서대로 값 넣기
             for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i) {
                 for (int j = 0; j < lstrlen(str[i]); ++j) {
                     ch_n[i][j] = str[i][j];
                 }
+                ch_n[i][lstrlen(str[i])] = '\0';
             }
 
+            for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i) {
+                for (int j = lstrlen(str[i]); j >= 0; --j) {
+                    str[i][j] = '\0';
+                }
+            }
+            
+
+            for (int i = cnt_y; i >= 0; --i) {
+                for (int j = 0; j < lstrlen(ch_n[i]); ++j) {
+                    str[num][j] = ch_n[i][j];
+                }
+                num++;
+            }
+
+            caret_x = lstrlen(str[caret_y]);
+
+            InvalidateRect(hWnd, NULL, TRUE);
             break;
         default:
             break;
