@@ -55,13 +55,13 @@ public:
     virtual ~Shape() {} // 가상 소멸자
 };
 
-// 사각형 클래스
-class RectangleShape : public Shape {
+// 오각형 클래스
+class PentagonShape : public Shape {
     RECT rect;
     COLORREF color;
 
 public:
-    RectangleShape(RECT rect, COLORREF color) : rect(rect), color(color) {}
+    PentagonShape(RECT rect, COLORREF color) : rect(rect), color(color) {}
 
     void draw(HDC hdc,RECT rect) const override {
         HBRUSH hBrush = CreateSolidBrush(color);
@@ -71,12 +71,41 @@ public:
 };
 
 // 삼각형 클래스
-class RectangleShape : public Shape {
+class TriangleShape : public Shape {
     RECT rect;
     COLORREF color;
 
 public:
-    RectangleShape(RECT rect, COLORREF color) : rect(rect), color(color) {}
+    TriangleShape(RECT rect, COLORREF color) : rect(rect), color(color) {}
+
+    void draw(HDC hdc, RECT rect) const override {
+        HBRUSH hBrush = CreateSolidBrush(color);
+        FillRect(hdc, &rect, hBrush);
+        DeleteObject(hBrush);
+    }
+};
+
+// 반원 클래스
+class SemicircleShape : public Shape {
+    RECT rect;
+    COLORREF color;
+
+public:
+    SemicircleShape(RECT rect, COLORREF color) : rect(rect), color(color) {}
+
+    void draw(HDC hdc, RECT rect) const override {
+        HBRUSH hBrush = CreateSolidBrush(color);
+        FillRect(hdc, &rect, hBrush);
+        DeleteObject(hBrush);
+    }
+};
+// 모래시계 클래스
+class HourglassShape : public Shape {
+    RECT rect;
+    COLORREF color;
+
+public:
+    HourglassShape(RECT rect, COLORREF color) : rect(rect), color(color) {}
 
     void draw(HDC hdc, RECT rect) const override {
         HBRUSH hBrush = CreateSolidBrush(color);
@@ -99,14 +128,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     HBRUSH hBrush, oldBrush;
     static RECT rect;
     static SIZE size;
- 
-    
+    vector<unique_ptr<Shape>> shapes;
+    static RECT rect_point[4];
     switch (uMsg)
     {
     case WM_CREATE:
-        
         break;
     case WM_CHAR:
+        break;
+    case WM_SIZE:
+
+        hDC = BeginPaint(hWnd, &ps);
+        GetClientRect(hWnd, &rect);
+        rect_point[0] = RECT{ (rect.right / 2) - 400,(rect.bottom / 2) - 400,(rect.right / 2) - 200, (rect.bottom / 2) - 200 };
+        EndPaint(hWnd, &ps);
+
+        InvalidateRect(hWnd, NULL, TRUE); // 창을 다시 그리도록 요청
+
         break;
     case WM_PAINT:
         hDC = BeginPaint(hWnd, &ps);
@@ -118,6 +156,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         hBrush = CreateSolidBrush(RGB(128, 128, 128));
         oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
         Rectangle(hDC, (rect.right / 2) - 100, (rect.bottom / 2) - 100, (rect.right / 2) + 100, (rect.bottom / 2) + 100);
+
+
+        SelectObject(hDC, oldPen); // 제자리 돌아가기
+        SelectObject(hDC, oldBrush);
+        DeleteObject(hPen); // 새로운 객체 삭제
+        DeleteObject(hBrush);
+
+        hPen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
+        oldPen = (HPEN)SelectObject(hDC, hPen);
+        hBrush = CreateSolidBrush(RGB(128, 128, 128));
+        oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
+        Rectangle(hDC, rect_point[0].left, rect_point[0].top, rect_point[0].right, rect_point[0].bottom);
 
         SelectObject(hDC, oldPen); // 제자리 돌아가기
         SelectObject(hDC, oldBrush);
