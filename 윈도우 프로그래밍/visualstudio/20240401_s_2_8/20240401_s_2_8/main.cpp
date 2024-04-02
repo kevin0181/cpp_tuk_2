@@ -63,11 +63,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static TCHAR lpOut[100];
     static RECT rect;
     static SIZE size;
-    static TCHAR str[11][32];
+    static TCHAR str[11][50];
     static int cnt_x;
     static int cnt_y;
     int size_tap = 5;
-    TCHAR ch_n[11][32]; // 필요할때쓰는거.
+    TCHAR ch_n[11][50]; // 필요할때쓰는거.
     int num = 0; //필요할때 쓰는거
     
 
@@ -473,6 +473,44 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             caret_x = lstrlen(str[caret_y]);
 
             InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        case VK_NEXT:
+            for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i) {
+                if (lstrlen(str[i]) == 0) {
+                    ch_n[i][0] = '\0';
+                }
+                num = 0;
+                for (int j = -1; j < lstrlen(str[i]); ++j) {
+                    if (lstrlen(str[i]) == 0)
+                        break;
+                    if (num == 0){
+                        ch_n[i][0] = '(';
+                        ++num;
+                    }
+                    else {
+                        if (str[i][j] == ' ') {
+                            ch_n[i][num] = ')';
+                            ch_n[i][num + 1] = '(';
+                            num += 2; 
+                        }
+                        else {
+                            if (str[i][j] == ' ') {
+                               
+                            }
+                            else {
+                                ch_n[i][num] = str[i][j];
+                                ++num;
+                            }
+                        }
+                    }
+                }
+                ch_n[i][num++] = ')';
+                ch_n[i][num] = '\0';
+            }
+            InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        case VK_PRIOR:
+           
             break;
         default:
             break;
