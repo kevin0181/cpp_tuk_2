@@ -70,7 +70,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     TCHAR ch_n[11][50]; // 필요할때쓰는거.
     int num = 0; //필요할때 쓰는거
     
-
+    static bool shf = false;
 
     //caret좌표
     static int caret_x;
@@ -200,7 +200,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
         default:
 
-
             if (f1_status)
                 wParam = (WPARAM)CharUpper((LPTSTR)(DWORD_PTR)wParam); //대문자로 변형
             else
@@ -295,11 +294,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
 
+    if (uMsg == WM_KEYUP) {
+        switch (wParam) {
+        case VK_SHIFT:
+            shf = false;
+            break;
+        default:
+            break;
+        }
+    }
+
 
     if (uMsg == WM_KEYDOWN) {
+
         //key arrow
         switch (wParam)
         {
+        case VK_SHIFT:
+            shf = true;
+            break;
         case VK_LEFT:
             if (caret_x == 0)
                 break;
@@ -577,6 +590,66 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             }
 
             caret_x = lstrlen(str[caret_y]);
+            InvalidateRect(hWnd, NULL, TRUE);
+
+            break;
+        case 0xBB:
+
+            if (!shf)
+                break;
+
+            for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i) {
+                for (int j = 0; j < lstrlen(str[i]); ++j) {
+                    if (str[i][j] != '\0') {
+                        if (isalpha(str[i][j])) { // 알파벳인 경우
+                            if (str[i][j] == 'z')
+                                str[i][j] = 'a';
+                            else if (str[i][j] == 'Z')
+                                str[i][j] = 'A';
+                            else
+                                str[i][j] = str[i][j] + 1;
+                        }
+                        else if (isdigit(str[i][j])) { // 숫자인 경우
+                            if (str[i][j] == '9')
+                                str[i][j] = '1'; // 9 다음에 1로 변경
+                            else
+                                str[i][j] = str[i][j] + 1; // 다음 숫자로 변경
+                        }
+                    }
+                }
+            }
+
+            caret_x = lstrlen(str[caret_y]);
+
+            InvalidateRect(hWnd, NULL, TRUE);
+
+            break;
+
+        case 0xBD:
+
+            for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i) {
+                for (int j = 0; j < lstrlen(str[i]); ++j) {
+                    if (str[i][j] != '\0') {
+                        if (isalpha(str[i][j])) { // 알파벳인 경우
+                            if (str[i][j] == 'a')
+                                str[i][j] = 'z';
+                            else if (str[i][j] == 'A')
+                                str[i][j] = 'Z';
+                            else
+                                str[i][j] = str[i][j] - 1;
+                        }
+                        else if (isdigit(str[i][j])) { // 숫자인 경우
+                            if (str[i][j] == '1')
+                                str[i][j] = '9'; // 9 다음에 1로 변경
+                            else
+                                str[i][j] = str[i][j] - 1; // 다음 숫자로 변경
+                        }
+                    }
+                }
+            }
+
+            caret_x = lstrlen(str[caret_y]);
+
             InvalidateRect(hWnd, NULL, TRUE);
 
             break;
