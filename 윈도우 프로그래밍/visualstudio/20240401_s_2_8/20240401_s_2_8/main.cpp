@@ -438,7 +438,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             for (int i = sizeof(str) / sizeof(str[0]); i > 0; --i) {
                 memcpy(str[i], str[i - 1], sizeof(str[i - 1]));
             }
-            str[0][0] = '\0';
+
+            for (int i = lstrlen(str[0]); i >= 0; --i) {
+                str[0][i] = '\0';
+            }
             caret_y = cnt_y;
             caret_x = lstrlen(str[caret_y]);
             InvalidateRect(hWnd, NULL, TRUE);
