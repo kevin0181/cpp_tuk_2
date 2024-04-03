@@ -75,6 +75,10 @@ public:
         return p;
     }
 
+    void setColor(COLORREF color1) {
+        color = color1;
+    }
+
     // 설정자 함수: 꼭짓점 배열 설정
     void setPoints(POINT newP[3]) {
         for (int i = 0; i < 3; ++i) {
@@ -124,6 +128,9 @@ public:
         return center;
     }
 
+    void setColor(COLORREF color1) {
+        color = color1;
+    }
 };
 
 class Pentagon : public Shape {
@@ -141,6 +148,9 @@ public:
         return p;
     }
 
+    void setColor(COLORREF color1) {
+        color = color1;
+    }
    /* void draw(HDC hdc) override {
         HBRUSH hBrush = CreateSolidBrush(color);
         HGDIOBJ hOldBrush = SelectObject(hdc, hBrush);
@@ -172,6 +182,9 @@ public:
         return p;
     }
 
+    void setColor(COLORREF color1) {
+        color = color1;
+    }
     /*void draw(HDC hdc) override {
         HBRUSH hBrush = CreateSolidBrush(color);
         HGDIOBJ hOldBrush = SelectObject(hdc, hBrush);
@@ -186,9 +199,9 @@ struct PositionXY {
     int y;
 };
 
+void printMidShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, PositionXY positionXY, HBRUSH hBrush, HGDIOBJ hOldBrush);
 void printShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, PositionXY positionXY, HBRUSH hBrush, HGDIOBJ hOldBrush);
 void default_shape(vector<unique_ptr<Shape>>& shapes, int midX, int midY);
-
 
 random_device rd;
 mt19937 gen(rd());
@@ -203,7 +216,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static SIZE size;
     static char shape_position[4];
 
-    vector<unique_ptr<Shape>> shapes;
+    static vector<unique_ptr<Shape>> shapes;
     // Triangle 인스턴스를 생성하고 shapes 벡터에 추가
 
     static PositionXY positionXY[4] = {
@@ -215,7 +228,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     int midX, midY;
 
-    Triangle triangle;
+    Triangle* triangle;
+    Hourglass* hourglass;
+    Pentagon* pentagon;
+    Pacman* pacman;
 
     switch (uMsg)
     {
@@ -224,8 +240,34 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         shape_position[1] = 'H'; //모래시계
         shape_position[2] = 'P'; //오각형
         shape_position[3] = 'C'; //팩맨
+
+        // HDC를 얻기 위해 GetDC를 사용합니다.
+        hDC = GetDC(hWnd);
+        GetClientRect(hWnd, &rect);
+
+        midX = (rect.right / 2);
+        midY = (rect.bottom / 2);
+        default_shape(shapes, midX, midY);
+
+        // 더 이상 필요하지 않으므로 DC를 해제합니다.
+        ReleaseDC(hWnd, hDC);
+
         break;
     case WM_CHAR:
+
+        if (wParam == WM_CHAR) {
+            switch (wParam)
+            {
+            case 's':
+                hourglass = dynamic_cast<Hourglass*>(shapes[1].get());
+                hourglass->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
+                break;
+            default:
+                break;
+            }
+        }
+
+        InvalidateRect(hWnd, NULL, TRUE);
         break;
     case WM_SIZE:
         break;
@@ -242,7 +284,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         hBrush = CreateSolidBrush(RGB(128, 128, 128));
         oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
         Rectangle(hDC, midX - 100, midY - 100, midX + 100, midY + 100);
-        default_shape(shapes, midX, midY);
+        //default_shape(shapes, midX, midY);
         SelectObject(hDC, oldPen); // 제자리 돌아가기
         SelectObject(hDC, oldBrush);
         DeleteObject(hPen); // 새로운 객체 삭제
@@ -250,23 +292,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         //---------------------------------------------------------------
 
-        for (int i = 0; i < 4; ++i) {
-            switch (i) {
-            case 0: //가운데
-                printShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
-                break;
-            case 1: //왼쪽
-                printShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
-                break;
-            case 2: //아래
-                printShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
-                break;
-            case 3: //오른쪽
-                printShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
-                break;
-            }
-        }
+        if (shapes.size() != 0) {
 
+            for (int i = 0; i < 4; ++i) {
+                switch (i) {
+                case 0: //가운데
+
+                    printMidShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
+                    printShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
+                    break;
+                case 1: //왼쪽
+                    printShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
+                    break;
+                case 2: //아래
+                    printShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
+                    break;
+                case 3: //오른쪽
+                    printShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
+                    break;
+                }
+            }
+
+        }
         EndPaint(hWnd, &ps);
         ReleaseDC(hWnd, hDC);
         break;
@@ -275,12 +322,67 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_KEYDOWN:
         break;
-
     default:
         break;
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+void printMidShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, PositionXY positionXY, HBRUSH hBrush, HGDIOBJ hOldBrush) {
+    POINT* p1;
+    POINT* p2;
+    POINT p3;
+    Triangle* triangle;
+    Hourglass* hourglass;
+    Pentagon* pentagon;
+    Pacman* pacman;
+    switch (shape_c)
+    {
+    case 'T':
+        triangle = dynamic_cast<Triangle*>(shapes[0].get());
+        p1 = triangle->getPoints();
+        hBrush = CreateSolidBrush(triangle->color);
+        hOldBrush = SelectObject(hDC, hBrush);
+        Polygon(hDC, p1, 3);
+        SelectObject(hDC, hOldBrush);
+        DeleteObject(hBrush);
+        break;
+    case 'H':
+        hourglass = dynamic_cast<Hourglass*>(shapes[1].get());
+
+        hBrush = CreateSolidBrush(hourglass->color);
+        hOldBrush = SelectObject(hDC, hBrush);
+        p1 = hourglass->getTopTriangle();
+        p2 = hourglass->getBottomTriangle();
+
+        // 상단 삼각형 그리기
+        Polygon(hDC, p1, 3);
+        // 하단 삼각형 그리기
+        Polygon(hDC, p2, 3);
+        SelectObject(hDC, hOldBrush);
+        DeleteObject(hBrush);
+        break;
+    case 'P':
+        pentagon = dynamic_cast<Pentagon*>(shapes[2].get());
+        hBrush = CreateSolidBrush(pentagon->color);
+        hOldBrush = SelectObject(hDC, hBrush);
+        p1 = pentagon->getPoints();
+        Polygon(hDC, p1, 5);
+        SelectObject(hDC, hOldBrush);
+        DeleteObject(hBrush);
+        break;
+    case 'C':
+        pacman = dynamic_cast<Pacman*>(shapes[3].get());
+        hBrush = CreateSolidBrush(pacman->color);
+        hOldBrush = SelectObject(hDC, hBrush);
+        p1 = pacman->getPoints();
+        Pie(hDC, p1[0].x, p1[0].y, p1[1].x, p1[1].y, p1[2].x, p1[2].y, p1[3].x, p1[3].y);
+        SelectObject(hDC, hOldBrush);
+        DeleteObject(hBrush);
+        break;
+    default:
+        break;
+    }
 }
 
 void printShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, PositionXY positionXY, HBRUSH hBrush, HGDIOBJ hOldBrush) {
