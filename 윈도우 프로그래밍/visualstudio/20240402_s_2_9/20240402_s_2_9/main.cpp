@@ -168,6 +168,9 @@ public:
             p[i] = getP[i];
         }
     }
+    POINT* getPoints() {
+        return p;
+    }
 
     /*void draw(HDC hdc) override {
         HBRUSH hBrush = CreateSolidBrush(color);
@@ -287,6 +290,7 @@ void printShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, Positi
     POINT p3;
     Hourglass *hourglass;
     Pentagon* pentagon;
+    Pacman* pacman;
     switch (shape_c)
     {
     case 'T':
@@ -342,7 +346,17 @@ void printShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, Positi
         DeleteObject(hBrush);
         break;
     case 'C':
-
+        pacman = dynamic_cast<Pacman*>(shapes[3].get());
+        hBrush = CreateSolidBrush(pacman->color);
+        hOldBrush = SelectObject(hDC, hBrush);
+        p1 = pacman->getPoints();
+        for (int i = 0; i < 5; ++i) {
+            p1[i].x += positionXY.x;
+            p1[i].y += positionXY.y;
+        }
+        Pie(hDC, p1[0].x, p1[0].y, p1[1].x, p1[1].y, p1[2].x, p1[2].y, p1[3].x, p1[3].y);
+        SelectObject(hDC, hOldBrush);
+        DeleteObject(hBrush);
         break;
     default:
         break;
@@ -370,19 +384,19 @@ void default_shape(vector<unique_ptr<Shape>>& shapes, int midX, int midY) {
     COLORREF hourglassColor = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
     shapes.push_back(std::make_unique<Hourglass>(hourglassCenter, hourglassWidth, hourglassHeight, hourglassColor));
    
-    int x1 = 500;
-    int y1 = 500;
     // Pentagon 인스턴스를 생성하고 shapes 벡터에 추가
     POINT pentagonPoints[5] = { {midX + 150, midY + 100}, {midX + 250, midY + 25}, {midX + 350, midY + 100}, {midX + 310, midY + 200}, {midX + 190, midY + 200} };
     for (int i = 0; i < 5; ++i) {
         pentagonPoints[i].x -= 250;
         pentagonPoints[i].y -= 100;
     }
-    COLORREF pentagonColor = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)); // 예: 파란색
+    COLORREF pentagonColor = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
     shapes.push_back(std::make_unique<Pentagon>(pentagonPoints, pentagonColor));
 
     // Pacman 인스턴스를 생성하고 shapes 벡터에 추가
-    POINT pacmanPoints[4] = {/* 타원의 경계 사각형 좌표와 입 시작 및 끝점 좌표 */ };
-    COLORREF pacmanColor = RGB(255, 255, 0); // 예: 노란색
+   // POINT pacmanPoints[4] = { {0,0}, {200, 200}, {100, 0},{200, 100} };
+    POINT pacmanPoints[4] = { {midX - 100, midY - 100}, {midX + 100, midY + 100}, {midX, midY - 50},{midX, midY} };
+
+    COLORREF pacmanColor = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
     shapes.push_back(std::make_unique<Pacman>(pacmanPoints, pacmanColor));
 }
