@@ -49,78 +49,137 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 
 }
 
+#define DEFAULT_COL 16
+
+
 class Shape {
 public:
-    virtual void draw(HDC hdc, RECT rect) const = 0; // 순수 가상 함수
     virtual ~Shape() {} // 가상 소멸자
 };
 
-// 오각형 클래스
-class PentagonShape : public Shape {
-    RECT rect;
-    COLORREF color;
-
+class Triangle : public Shape {
 public:
-    PentagonShape(RECT rect, COLORREF color) : rect(rect), color(color) {}
+    POINT p[3];
+    COLORREF color;
+    Triangle() {}
+    Triangle(POINT getP[3], COLORREF color) : color(color) {
+        for (int i = 0; i < 3; ++i) {
+            p[i] = getP[i];
+        }
+    }
 
-    void draw(HDC hdc,RECT rect) const override {
-        HBRUSH hBrush = CreateSolidBrush(color);
-        FillRect(hdc, &rect, hBrush);
-        DeleteObject(hBrush);
+    POINT* getPoints() {
+        return p;
+    }
+
+    // 설정자 함수: 꼭짓점 배열 설정
+    void setPoints(POINT newP[3]) {
+        for (int i = 0; i < 3; ++i) {
+            p[i] = newP[i];
+        }
     }
 };
 
-// 삼각형 클래스
-class TriangleShape : public Shape {
-    RECT rect;
+class Hourglass : public Shape {
+public:
+    POINT center;
+    int width, height;
+    // 상단 삼각형의 꼭짓점 계산
+    POINT topTriangle[3] = {
+        {center.x - width / 2, center.y - height / 2}, // 상단 삼각형 왼쪽 꼭지점
+        {center.x, center.y},                         // 상단 삼각형 끝점(모래시계 중심)
+        {center.x + width / 2, center.y - height / 2} // 상단 삼각형 오른쪽 꼭지점
+    };
+    // 하단 삼각형의 꼭짓점 계산
+    POINT bottomTriangle[3] = {
+        {center.x - width / 2, center.y + height / 2}, // 하단 삼각형 왼쪽 꼭지점
+        {center.x, center.y},                          // 하단 삼각형 끝점(모래시계 중심)
+        {center.x + width / 2, center.y + height / 2}  // 하단 삼각형 오른쪽 꼭지점
+    };
     COLORREF color;
 
-public:
-    TriangleShape(RECT rect, COLORREF color) : rect(rect), color(color) {}
+    Hourglass() {}
+    Hourglass(POINT center, int width, int height, COLORREF color) : color(color), center(center), width(width), height(height) {
+        topTriangle[0] = { center.x - width / 2, center.y - height / 2 };
+        topTriangle[1] = { center.x, center.y };
+        topTriangle[2] = { center.x + width / 2, center.y - height / 2 };
 
-    void draw(HDC hdc, RECT rect) const override {
-        HBRUSH hBrush = CreateSolidBrush(color);
-        FillRect(hdc, &rect, hBrush);
-        DeleteObject(hBrush);
+        bottomTriangle[0] = { center.x - width / 2, center.y + height / 2 };
+        bottomTriangle[1] = { center.x, center.y };
+        bottomTriangle[2] = { center.x + width / 2, center.y + height / 2 };
     }
+
+    POINT* getTopTriangle() {
+        return topTriangle;
+    }
+
+    POINT* getBottomTriangle() {
+        return bottomTriangle;
+    }
+
 };
 
-// 반원 클래스
-class SemicircleShape : public Shape {
-    RECT rect;
+class Pentagon : public Shape {
+public:
+    POINT p[5];
+    COLORREF color;
+    Pentagon() {}
+    Pentagon(POINT getP[5], COLORREF color) : color(color) {
+        for (int i = 0; i < 5; ++i) {
+            p[i] = getP[i];
+        }
+    }
+
+   /* void draw(HDC hdc) override {
+        HBRUSH hBrush = CreateSolidBrush(color);
+        HGDIOBJ hOldBrush = SelectObject(hdc, hBrush);
+        Polygon(hdc, p, 5);
+        SelectObject(hdc, hOldBrush);
+        DeleteObject(hBrush);
+    }*/
+};
+
+class Pacman : public Shape {
+public:
+    POINT p[4];
     COLORREF color;
 
-public:
-    SemicircleShape(RECT rect, COLORREF color) : rect(rect), color(color) {}
+    /*POINT topLeft = { xLeft, yTop };
+    POINT bottomRight = { xRight, yBottom };
+    POINT start = { xStart, yStart };
+    POINT end = { xEnd, yEnd };
 
-    void draw(HDC hdc, RECT rect) const override {
-        HBRUSH hBrush = CreateSolidBrush(color);
-        FillRect(hdc, &rect, hBrush);
-        DeleteObject(hBrush);
+    Pie(hDC, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, start.x, start.y, end.x, end.y);*/
+
+    Pacman() {}
+    Pacman(POINT getP[4], COLORREF color) : color(color) {
+        for (int i = 0; i < 4; ++i) {
+            p[i] = getP[i];
+        }
     }
-};
-// 모래시계 클래스
-class HourglassShape : public Shape {
-    RECT rect;
-    COLORREF color;
 
-public:
-    HourglassShape(RECT rect, COLORREF color) : rect(rect), color(color) {}
-
-    void draw(HDC hdc, RECT rect) const override {
+    /*void draw(HDC hdc) override {
         HBRUSH hBrush = CreateSolidBrush(color);
-        FillRect(hdc, &rect, hBrush);
+        HGDIOBJ hOldBrush = SelectObject(hdc, hBrush);
+        Pie(hdc, p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y, p[3].x, p[3].y);
+        SelectObject(hdc, hOldBrush);
         DeleteObject(hBrush);
-    }
+    }*/
 };
 
+struct PositionXY {
+    int x;
+    int y;
+};
 
-#define DEFAULT_COL 16
+void printShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, PositionXY positionXY, HBRUSH hBrush, HGDIOBJ hOldBrush);
+void default_shape(vector<unique_ptr<Shape>>& shapes, int midX, int midY);
+
 
 random_device rd;
 mt19937 gen(rd());
+uniform_int_distribution<int> uid_RGB(0, 255);
 uniform_int_distribution<int> uidX(0, 3);
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     PAINTSTRUCT ps;
     HDC hDC;
@@ -128,51 +187,71 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     HBRUSH hBrush, oldBrush;
     static RECT rect;
     static SIZE size;
+    static char shape_position[4];
+
     vector<unique_ptr<Shape>> shapes;
-    static RECT rect_point[4];
+    // Triangle 인스턴스를 생성하고 shapes 벡터에 추가
+
+    static PositionXY positionXY[4] = {
+        {0,-200},
+        {-300,0},
+        {0,200},
+        {300,0}
+    };
+
+    int midX, midY;
+
+    Triangle triangle;
+
     switch (uMsg)
     {
     case WM_CREATE:
+        shape_position[0] = 'T'; //삼각형
+        shape_position[1] = 'H'; //모래시계
+        shape_position[2] = 'P'; //오각형
+        shape_position[3] = 'C'; //팩맨
         break;
     case WM_CHAR:
         break;
     case WM_SIZE:
-
-        hDC = BeginPaint(hWnd, &ps);
-        GetClientRect(hWnd, &rect);
-        rect_point[0] = RECT{ (rect.right / 2) - 400,(rect.bottom / 2) - 400,(rect.right / 2) - 200, (rect.bottom / 2) - 200 };
-        EndPaint(hWnd, &ps);
-
-        InvalidateRect(hWnd, NULL, TRUE); // 창을 다시 그리도록 요청
-
         break;
     case WM_PAINT:
         hDC = BeginPaint(hWnd, &ps);
 
         GetClientRect(hWnd, &rect);
 
-        hPen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
-        oldPen = (HPEN)SelectObject(hDC, hPen);
-        hBrush = CreateSolidBrush(RGB(128, 128, 128));
-        oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
-        Rectangle(hDC, (rect.right / 2) - 100, (rect.bottom / 2) - 100, (rect.right / 2) + 100, (rect.bottom / 2) + 100);
-
-
-        SelectObject(hDC, oldPen); // 제자리 돌아가기
-        SelectObject(hDC, oldBrush);
-        DeleteObject(hPen); // 새로운 객체 삭제
-        DeleteObject(hBrush);
+        midX = (rect.right / 2);
+        midY = (rect.bottom / 2);
 
         hPen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
         oldPen = (HPEN)SelectObject(hDC, hPen);
         hBrush = CreateSolidBrush(RGB(128, 128, 128));
         oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
-        Rectangle(hDC, rect_point[0].left, rect_point[0].top, rect_point[0].right, rect_point[0].bottom);
-
+        Rectangle(hDC, midX - 100, midY - 100, midX + 100, midY + 100);
+        default_shape(shapes, midX, midY);
         SelectObject(hDC, oldPen); // 제자리 돌아가기
         SelectObject(hDC, oldBrush);
         DeleteObject(hPen); // 새로운 객체 삭제
         DeleteObject(hBrush);
+
+        //---------------------------------------------------------------
+
+        for (int i = 0; i < 4; ++i) {
+            switch (i) {
+            case 0: //가운데
+                printShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
+                break;
+            case 1: //왼쪽
+                printShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
+                break;
+            case 2: //아래
+                printShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
+                break;
+            case 3: //오른쪽
+                printShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
+                break;
+            }
+        }
 
         EndPaint(hWnd, &ps);
         ReleaseDC(hWnd, hDC);
@@ -188,4 +267,80 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+void printShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, PositionXY positionXY, HBRUSH hBrush, HGDIOBJ hOldBrush) {
+    Triangle* triangle;
+    POINT* p1;
+    POINT* p2;
+    Hourglass *hourglass;
+    switch (shape_c)
+    {
+    case 'T':
+        triangle = dynamic_cast<Triangle*>(shapes[0].get());
+        p1 = triangle->getPoints();
+        // 새로운 꼭짓점 좌표 계산
+        for (int i = 0; i < 3; ++i) {
+            p1[i].x += positionXY.x;
+            p1[i].y += positionXY.y;
+        }
+        hBrush = CreateSolidBrush(triangle->color);
+        hOldBrush = SelectObject(hDC, hBrush);
+        Polygon(hDC, p1, 3);
+        SelectObject(hDC, hOldBrush);
+        DeleteObject(hBrush);
+        break;
+    case 'H':
+        hourglass = dynamic_cast<Hourglass*>(shapes[1].get());
+        
+        hBrush = CreateSolidBrush(hourglass->color);
+        hOldBrush = SelectObject(hDC, hBrush);
+        // 상단 삼각형 그리기
+        Polygon(hDC, p1, 3);
+        // 하단 삼각형 그리기
+        Polygon(hDC, p2, 3);
+        SelectObject(hDC, hOldBrush);
+        DeleteObject(hBrush);
+        break;
+    case 'P':
+
+        break;
+    case 'C':
+
+        break;
+    default:
+        break;
+    }
+}
+
+void default_shape(vector<unique_ptr<Shape>>& shapes, int midX, int midY) {
+    // Triangle 인스턴스를 생성하고 shapes 벡터에 추가
+    POINT trianglePoints[3] = { {100, 200}, {200, 300}, {0, 300} };
+    int offsetX = midX - ((trianglePoints[0].x + trianglePoints[1].x + trianglePoints[2].x) / 3);
+    int offsetY = midY - ((trianglePoints[0].y + trianglePoints[1].y + trianglePoints[2].y) / 3);
+
+    // 새로운 꼭짓점 좌표 계산
+    for (int i = 0; i < 3; ++i) {
+        trianglePoints[i].x += offsetX;
+        trianglePoints[i].y += offsetY;
+    }
+    COLORREF triangleColor = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
+    shapes.push_back(std::make_unique<Triangle>(trianglePoints, triangleColor));
+
+    // Hourglass 인스턴스를 생성하고 shapes 벡터에 추가
+    POINT hourglassCenter = { 100, 100 };
+    int hourglassWidth = 50;
+    int hourglassHeight = 100;
+    COLORREF hourglassColor = RGB(0, 255, 0); // 예: 녹색
+    shapes.push_back(std::make_unique<Hourglass>(hourglassCenter, hourglassWidth, hourglassHeight, hourglassColor));
+
+    // Pentagon 인스턴스를 생성하고 shapes 벡터에 추가
+    POINT pentagonPoints[5] = {/* 꼭짓점 좌표들 */ };
+    COLORREF pentagonColor = RGB(0, 0, 255); // 예: 파란색
+    shapes.push_back(std::make_unique<Pentagon>(pentagonPoints, pentagonColor));
+
+    // Pacman 인스턴스를 생성하고 shapes 벡터에 추가
+    POINT pacmanPoints[4] = {/* 타원의 경계 사각형 좌표와 입 시작 및 끝점 좌표 */ };
+    COLORREF pacmanColor = RGB(255, 255, 0); // 예: 노란색
+    shapes.push_back(std::make_unique<Pacman>(pacmanPoints, pacmanColor));
 }
