@@ -3,6 +3,9 @@
 #include <random>
 #include <vector>
 #include <string>
+#include <cmath>
+
+#define M_PI 3.14159265358979323846
 
 using namespace std;
 
@@ -132,6 +135,10 @@ public:
         for (int i = 0; i < 5; ++i) {
             p[i] = getP[i];
         }
+    }
+
+    POINT* getPoints() {
+        return p;
     }
 
    /* void draw(HDC hdc) override {
@@ -279,6 +286,7 @@ void printShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, Positi
     POINT* p2;
     POINT p3;
     Hourglass *hourglass;
+    Pentagon* pentagon;
     switch (shape_c)
     {
     case 'T':
@@ -321,7 +329,17 @@ void printShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, Positi
         DeleteObject(hBrush);
         break;
     case 'P':
-
+        pentagon = dynamic_cast<Pentagon*>(shapes[2].get());
+        hBrush = CreateSolidBrush(pentagon->color);
+        hOldBrush = SelectObject(hDC, hBrush);
+        p1 = pentagon->getPoints();
+        for (int i = 0; i < 5; ++i) {
+            p1[i].x += positionXY.x;
+            p1[i].y += positionXY.y;
+        }
+        Polygon(hDC, p1, 5);
+        SelectObject(hDC, hOldBrush);
+        DeleteObject(hBrush);
         break;
     case 'C':
 
@@ -351,10 +369,16 @@ void default_shape(vector<unique_ptr<Shape>>& shapes, int midX, int midY) {
     int hourglassHeight = 150;
     COLORREF hourglassColor = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
     shapes.push_back(std::make_unique<Hourglass>(hourglassCenter, hourglassWidth, hourglassHeight, hourglassColor));
-
+   
+    int x1 = 500;
+    int y1 = 500;
     // Pentagon 인스턴스를 생성하고 shapes 벡터에 추가
-    POINT pentagonPoints[5] = {/* 꼭짓점 좌표들 */ };
-    COLORREF pentagonColor = RGB(0, 0, 255); // 예: 파란색
+    POINT pentagonPoints[5] = { {midX + 150, midY + 100}, {midX + 250, midY + 25}, {midX + 350, midY + 100}, {midX + 310, midY + 200}, {midX + 190, midY + 200} };
+    for (int i = 0; i < 5; ++i) {
+        pentagonPoints[i].x -= 250;
+        pentagonPoints[i].y -= 100;
+    }
+    COLORREF pentagonColor = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)); // 예: 파란색
     shapes.push_back(std::make_unique<Pentagon>(pentagonPoints, pentagonColor));
 
     // Pacman 인스턴스를 생성하고 shapes 벡터에 추가
