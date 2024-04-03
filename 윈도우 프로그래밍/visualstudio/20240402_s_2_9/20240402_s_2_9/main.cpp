@@ -117,6 +117,10 @@ public:
         return bottomTriangle;
     }
 
+    POINT getCenter() {
+        return center;
+    }
+
 };
 
 class Pentagon : public Shape {
@@ -273,6 +277,7 @@ void printShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, Positi
     Triangle* triangle;
     POINT* p1;
     POINT* p2;
+    POINT p3;
     Hourglass *hourglass;
     switch (shape_c)
     {
@@ -295,6 +300,19 @@ void printShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, Positi
         
         hBrush = CreateSolidBrush(hourglass->color);
         hOldBrush = SelectObject(hDC, hBrush);
+        p1 = hourglass->getTopTriangle();
+        p2 = hourglass->getBottomTriangle();
+
+        for (int i = 0; i < 3; ++i) {
+            p1[i].x += positionXY.x;
+            p1[i].y += positionXY.y;
+        }
+
+        for (int i = 0; i < 3; ++i) {
+            p2[i].x += positionXY.x;
+            p2[i].y += positionXY.y;
+        }
+
         // 상단 삼각형 그리기
         Polygon(hDC, p1, 3);
         // 하단 삼각형 그리기
@@ -328,10 +346,10 @@ void default_shape(vector<unique_ptr<Shape>>& shapes, int midX, int midY) {
     shapes.push_back(std::make_unique<Triangle>(trianglePoints, triangleColor));
 
     // Hourglass 인스턴스를 생성하고 shapes 벡터에 추가
-    POINT hourglassCenter = { 100, 100 };
-    int hourglassWidth = 50;
-    int hourglassHeight = 100;
-    COLORREF hourglassColor = RGB(0, 255, 0); // 예: 녹색
+    POINT hourglassCenter = { midX, midY };
+    int hourglassWidth = 150;
+    int hourglassHeight = 150;
+    COLORREF hourglassColor = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
     shapes.push_back(std::make_unique<Hourglass>(hourglassCenter, hourglassWidth, hourglassHeight, hourglassColor));
 
     // Pentagon 인스턴스를 생성하고 shapes 벡터에 추가
