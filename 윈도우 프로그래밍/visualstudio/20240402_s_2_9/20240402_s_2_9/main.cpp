@@ -253,10 +253,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         //ReleaseDC(hWnd, hDC);
 
         break;
-    case WM_CHAR:
+    case WM_KEYDOWN:
         switch (wParam)
         {
-        case 's':
+        case 0x53:
             hourglass = dynamic_cast<Hourglass*>(shapes[1].get());
             hourglass->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
 
@@ -265,6 +265,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         default:
             break;
         }
+        break;
+    case WM_CHAR:
         break;
     case WM_SIZE:
         break;
@@ -317,8 +319,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
-        break;
-    case WM_KEYDOWN:
         break;
     default:
         break;
