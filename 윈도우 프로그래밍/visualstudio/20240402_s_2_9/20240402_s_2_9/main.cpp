@@ -62,6 +62,7 @@ public:
 
 class Triangle : public Shape {
 public:
+    COLORREF originalColor; // 원래 색상을 저장하는 변수
     POINT p[3];
     COLORREF color;
     Triangle() {}
@@ -69,6 +70,7 @@ public:
         for (int i = 0; i < 3; ++i) {
             p[i] = getP[i];
         }
+        originalColor = color;
     }
 
     POINT* getPoints() {
@@ -85,10 +87,14 @@ public:
             p[i] = newP[i];
         }
     }
+    void restoreOriginalColor() {
+        color = originalColor; // 원래 색상으로 복구하는 함수
+    }
 };
 
 class Hourglass : public Shape {
 public:
+    COLORREF originalColor; // 원래 색상을 저장하는 변수
     POINT center;
     int width, height;
     // 상단 삼각형의 꼭짓점 계산
@@ -114,6 +120,7 @@ public:
         bottomTriangle[0] = { center.x - width / 2, center.y + height / 2 };
         bottomTriangle[1] = { center.x, center.y };
         bottomTriangle[2] = { center.x + width / 2, center.y + height / 2 };
+        originalColor = color;
     }
 
     POINT* getTopTriangle() {
@@ -131,10 +138,16 @@ public:
     void setColor(COLORREF color1) {
         color = color1;
     }
+
+    void restoreOriginalColor() {
+        color = originalColor; // 원래 색상으로 복구하는 함수
+    }
+
 };
 
 class Pentagon : public Shape {
 public:
+    COLORREF originalColor; // 원래 색상을 저장하는 변수
     POINT p[5];
     COLORREF color;
     Pentagon() {}
@@ -142,6 +155,7 @@ public:
         for (int i = 0; i < 5; ++i) {
             p[i] = getP[i];
         }
+        originalColor = color;
     }
 
     POINT* getPoints() {
@@ -151,32 +165,23 @@ public:
     void setColor(COLORREF color1) {
         color = color1;
     }
-   /* void draw(HDC hdc) override {
-        HBRUSH hBrush = CreateSolidBrush(color);
-        HGDIOBJ hOldBrush = SelectObject(hdc, hBrush);
-        Polygon(hdc, p, 5);
-        SelectObject(hdc, hOldBrush);
-        DeleteObject(hBrush);
-    }*/
+    void restoreOriginalColor() {
+        color = originalColor; // 원래 색상으로 복구하는 함수
+    }
 };
 
 class Pacman : public Shape {
 public:
+    COLORREF originalColor; // 원래 색상을 저장하는 변수
     POINT p[4];
     COLORREF color;
-
-    /*POINT topLeft = { xLeft, yTop };
-    POINT bottomRight = { xRight, yBottom };
-    POINT start = { xStart, yStart };
-    POINT end = { xEnd, yEnd };
-
-    Pie(hDC, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, start.x, start.y, end.x, end.y);*/
 
     Pacman() {}
     Pacman(POINT getP[4], COLORREF color) : color(color) {
         for (int i = 0; i < 4; ++i) {
             p[i] = getP[i];
         }
+        originalColor = color;
     }
     POINT* getPoints() {
         return p;
@@ -185,13 +190,9 @@ public:
     void setColor(COLORREF color1) {
         color = color1;
     }
-    /*void draw(HDC hdc) override {
-        HBRUSH hBrush = CreateSolidBrush(color);
-        HGDIOBJ hOldBrush = SelectObject(hdc, hBrush);
-        Pie(hdc, p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y, p[3].x, p[3].y);
-        SelectObject(hdc, hOldBrush);
-        DeleteObject(hBrush);
-    }*/
+    void restoreOriginalColor() {
+        color = originalColor; // 원래 색상으로 복구하는 함수
+    }
 };
 
 struct PositionXY {
@@ -253,13 +254,54 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         //ReleaseDC(hWnd, hDC);
 
         break;
+    case WM_KEYUP:
+        switch (wParam)
+        {
+        case 0x53:
+            hourglass = dynamic_cast<Hourglass*>(shapes[1].get());
+            hourglass->restoreOriginalColor();
+            InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        case 0x54:
+            triangle = dynamic_cast<Triangle*>(shapes[0].get());
+            triangle->restoreOriginalColor();
+            InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        case 0x50:
+            pentagon = dynamic_cast<Pentagon*>(shapes[2].get());
+            pentagon->restoreOriginalColor();
+            InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        case 0x45:
+            pacman = dynamic_cast<Pacman*>(shapes[3].get());
+            pacman->restoreOriginalColor();
+            InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        default:
+            break;
+        }
+        break;
     case WM_KEYDOWN:
         switch (wParam)
         {
         case 0x53:
             hourglass = dynamic_cast<Hourglass*>(shapes[1].get());
             hourglass->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
-
+            InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        case 0x54:
+            triangle = dynamic_cast<Triangle*>(shapes[0].get());
+            triangle->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
+            InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        case 0x50:
+            pentagon = dynamic_cast<Pentagon*>(shapes[2].get());
+            pentagon->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
+            InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        case 0x45:
+            pacman = dynamic_cast<Pacman*>(shapes[3].get());
+            pacman->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
             InvalidateRect(hWnd, NULL, TRUE);
             break;
         default:
@@ -296,7 +338,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             for (int i = 0; i < 4; ++i) {
                 switch (i) {
                 case 0: //가운데
-
                     printMidShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
                     printShape(hDC, shape_position[i], shapes, positionXY[i], hBrush, oldBrush);
                     break;
@@ -388,7 +429,7 @@ void printShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, Positi
     POINT* p1;
     POINT* p2;
     POINT p3;
-    Hourglass *hourglass;
+    Hourglass* hourglass;
     Pentagon* pentagon;
     Pacman* pacman;
 
@@ -401,7 +442,7 @@ void printShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, Positi
         triangle = dynamic_cast<Triangle*>(shapes[0].get());
         p1 = triangle->getPoints();
         // 새로운 꼭짓점 좌표 계산
-       
+
         for (int i = 0; i < 3; ++i) {
             p4[i].x += p1[i].x;
             p4[i].y += p1[i].y;
@@ -419,7 +460,7 @@ void printShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, Positi
         break;
     case 'H':
         hourglass = dynamic_cast<Hourglass*>(shapes[1].get());
-        
+
         hBrush = CreateSolidBrush(hourglass->color);
         hOldBrush = SelectObject(hDC, hBrush);
         p1 = hourglass->getTopTriangle();
@@ -516,7 +557,7 @@ void default_shape(vector<unique_ptr<Shape>>& shapes, int midX, int midY) {
     int hourglassHeight = 150;
     COLORREF hourglassColor = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
     shapes.push_back(std::make_unique<Hourglass>(hourglassCenter, hourglassWidth, hourglassHeight, hourglassColor));
-   
+
     // Pentagon 인스턴스를 생성하고 shapes 벡터에 추가
     POINT pentagonPoints[5] = { {midX + 150, midY + 100}, {midX + 250, midY + 25}, {midX + 350, midY + 100}, {midX + 310, midY + 200}, {midX + 190, midY + 200} };
     for (int i = 0; i < 5; ++i) {
