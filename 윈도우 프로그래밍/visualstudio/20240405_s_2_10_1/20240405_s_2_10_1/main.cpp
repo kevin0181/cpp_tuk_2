@@ -135,6 +135,7 @@ public:
     HBRUSH hBrush, oldBrush;
     HPEN hPen, oldPen;
     char shape_c;
+    bool mini_status = false; // false = Å«, true = ÀÛÀº
 
     void print_(HDC hDC) override {
         hBrush = CreateSolidBrush(color);
