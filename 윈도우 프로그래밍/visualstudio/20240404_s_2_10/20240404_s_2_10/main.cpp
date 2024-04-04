@@ -111,7 +111,7 @@ public:
 
 class ChangeShape : public shape{
 public:
-    POINT *sizePoint;
+    POINT sizePoint[6];
     int positionX{};
     int positionY{};
     COLORREF color = RGB(255, 165, 0); //주황
@@ -122,17 +122,31 @@ public:
     void print_(HDC hDC) override {
         hBrush = CreateSolidBrush(color);
         oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
-
+        hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+        oldPen = (HPEN)SelectObject(hDC, hPen);
         switch (shape_c)
         {
         case 'T': //세모
 
+            sizePoint[0] = { 0, 20 };
+            sizePoint[1] = { 10, static_cast<LONG>(round(2.68)) };
+            sizePoint[2] = { 20, 20 };
+
+            for (int i = 0; i < 3; ++i) {
+                sizePoint[i].x += positionX * cellSize;
+                sizePoint[i].y += positionY * cellSize - 2;
+            }
+
+            Polygon(hDC, sizePoint, 3);
             break;
         case 'R': //네모
+            RoundRect(hDC, 0 + (positionX - 1) * cellSize, 0 + (positionY - 1) * cellSize, 20 + (positionX - 1) * cellSize, 20 + (positionY - 1) * cellSize, 7, 7);
             break;
         case 'C': //원
+            Ellipse(hDC, 0 + (positionX - 1) * cellSize, 0 + (positionY - 1) * cellSize, 20 + (positionX - 1) * cellSize, 20 + (positionY - 1) * cellSize);
             break;
         case 'E': //타원
+            Ellipse(hDC, 0 + (positionX - 1) * cellSize, 5 + (positionY - 1) * cellSize, 20 + (positionX - 1) * cellSize, 17 + (positionY - 1) * cellSize);
             break;
         default:
             break;
@@ -212,6 +226,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static RECT rect;
     static SIZE size;
     static vector<shape*> shapes;
+
+    POINT point[6];
+
     RedBarricade* redBarricade;
     ChangeColor* changeColor;
     SizeUp* sizeUp;
@@ -257,13 +274,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
                 switch (uid_BlockShape(gen))
                 {
-                case 0:
+                case 0: //세모
+                    changeShape->shape_c = 'T';
                     break;
-                case 1:
+                case 1: //네모
+                    changeShape->shape_c = 'R';
                     break;
-                case 2:
+                case 2: //원
+                    changeShape->shape_c = 'C';
                     break;
-                case 3:
+                case 3: //타원
+                    changeShape->shape_c = 'E';
                     break;
                 default:
                     break;
