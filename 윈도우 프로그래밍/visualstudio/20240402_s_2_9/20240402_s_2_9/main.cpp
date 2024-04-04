@@ -282,22 +282,72 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_KEYDOWN:
         switch (wParam)
         {
+        case 0x51:
+            PostQuitMessage(0);
+            break;
         case 0x53:
             hourglass = dynamic_cast<Hourglass*>(shapes[1].get());
             hourglass->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
-          
+            while (true) {
+                if ('H' == shape_position[0]) {
+                    break;
+                }
+
+                shape_c = shape_position[0];
+                for (int i = 0; i < 3; ++i) {
+                    shape_position[i] = shape_position[i + 1];
+                }
+                shape_position[3] = shape_c;
+
+            }
             break;
         case 0x54:
             triangle = dynamic_cast<Triangle*>(shapes[0].get());
             triangle->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
+            while (true) {
+                if ('T' == shape_position[0]) {
+                    break;
+                }
+
+                shape_c = shape_position[0];
+                for (int i = 0; i < 3; ++i) {
+                    shape_position[i] = shape_position[i + 1];
+                }
+                shape_position[3] = shape_c;
+
+            }
             break;
         case 0x50:
             pentagon = dynamic_cast<Pentagon*>(shapes[2].get());
             pentagon->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
+            while (true) {
+                if ('P' == shape_position[0]) {
+                    break;
+                }
+
+                shape_c = shape_position[0];
+                for (int i = 0; i < 3; ++i) {
+                    shape_position[i] = shape_position[i + 1];
+                }
+                shape_position[3] = shape_c;
+
+            }
             break;
         case 0x45:
             pacman = dynamic_cast<Pacman*>(shapes[3].get());
             pacman->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
+            while (true) {
+                if ('C' == shape_position[0]) {
+                    break;
+                }
+
+                shape_c = shape_position[0];
+                for (int i = 0; i < 3; ++i) {
+                    shape_position[i] = shape_position[i + 1];
+                }
+                shape_position[3] = shape_c;
+
+            }
             break;
         case VK_LEFT:
             shape_c = shape_position[3];
