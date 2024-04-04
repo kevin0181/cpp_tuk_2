@@ -216,7 +216,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static RECT rect;
     static SIZE size;
     static char shape_position[4];
-
+    char shape_c;
     static vector<unique_ptr<Shape>> shapes;
     // Triangle 인스턴스를 생성하고 shapes 벡터에 추가
 
@@ -233,7 +233,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     Hourglass* hourglass;
     Pentagon* pentagon;
     Pacman* pacman;
-
+    
     switch (uMsg)
     {
     case WM_CREATE:
@@ -260,26 +260,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case 0x53:
             hourglass = dynamic_cast<Hourglass*>(shapes[1].get());
             hourglass->restoreOriginalColor();
-            InvalidateRect(hWnd, NULL, TRUE);
             break;
         case 0x54:
             triangle = dynamic_cast<Triangle*>(shapes[0].get());
             triangle->restoreOriginalColor();
-            InvalidateRect(hWnd, NULL, TRUE);
             break;
         case 0x50:
             pentagon = dynamic_cast<Pentagon*>(shapes[2].get());
             pentagon->restoreOriginalColor();
-            InvalidateRect(hWnd, NULL, TRUE);
             break;
         case 0x45:
             pacman = dynamic_cast<Pacman*>(shapes[3].get());
             pacman->restoreOriginalColor();
-            InvalidateRect(hWnd, NULL, TRUE);
             break;
         default:
             break;
         }
+        InvalidateRect(hWnd, NULL, TRUE);
+
         break;
     case WM_KEYDOWN:
         switch (wParam)
@@ -287,26 +285,42 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case 0x53:
             hourglass = dynamic_cast<Hourglass*>(shapes[1].get());
             hourglass->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
-            InvalidateRect(hWnd, NULL, TRUE);
+          
             break;
         case 0x54:
             triangle = dynamic_cast<Triangle*>(shapes[0].get());
             triangle->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
-            InvalidateRect(hWnd, NULL, TRUE);
             break;
         case 0x50:
             pentagon = dynamic_cast<Pentagon*>(shapes[2].get());
             pentagon->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
-            InvalidateRect(hWnd, NULL, TRUE);
             break;
         case 0x45:
             pacman = dynamic_cast<Pacman*>(shapes[3].get());
             pacman->setColor(RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)));
-            InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        case VK_LEFT:
+            shape_c = shape_position[3];
+
+            for (int i = 3; i >= 0; --i) {
+                shape_position[i] = shape_position[i - 1];
+            }
+            shape_position[0] = shape_c;
+
+            break;
+        case VK_RIGHT:
+
+            shape_c = shape_position[0];
+            for (int i = 0; i < 3; ++i) {
+                shape_position[i] = shape_position[i + 1];
+            }
+
+            shape_position[3] = shape_c;
             break;
         default:
             break;
         }
+        InvalidateRect(hWnd, NULL, TRUE);
         break;
     case WM_CHAR:
         break;
@@ -370,11 +384,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 void printMidShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, PositionXY positionXY, HBRUSH hBrush, HGDIOBJ hOldBrush) {
     POINT* p1;
     POINT* p2;
-    POINT p3;
+    POINT p4[3]{};
     Triangle* triangle;
     Hourglass* hourglass;
     Pentagon* pentagon;
     Pacman* pacman;
+    POINT centroid;
     switch (shape_c)
     {
     case 'T':
@@ -382,7 +397,16 @@ void printMidShape(HDC hDC, char shape_c, vector<unique_ptr<Shape>>& shapes, Pos
         p1 = triangle->getPoints();
         hBrush = CreateSolidBrush(triangle->color);
         hOldBrush = SelectObject(hDC, hBrush);
-        Polygon(hDC, p1, 3);
+        for (int i = 0; i < 3; ++i) {
+            p4[i] = p1[i];
+        }
+        /*centroid.x = (p4[0].x + p4[1].x + p4[2].x) / 3;
+        centroid.y = (p4[0].y + p4[1].y + p4[2].y) / 3;
+        for (int i = 0; i < 3; ++i) {
+            p4[i].x = centroid.x + static_cast<LONG>((p4[i].x - centroid.x) * 1.2);
+            p4[i].y = centroid.y + static_cast<LONG>((p4[i].y - centroid.y) * 1.2);
+        }*/
+        Polygon(hDC, p4, 3);
         SelectObject(hDC, hOldBrush);
         DeleteObject(hBrush);
         break;
