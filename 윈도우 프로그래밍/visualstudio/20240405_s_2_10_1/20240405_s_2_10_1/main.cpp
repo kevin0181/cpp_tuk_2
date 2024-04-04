@@ -157,13 +157,13 @@ public:
             Polygon(hDC, sizePoint, 3);
             break;
         case 'R': //네모
-            RoundRect(hDC, 0 + (positionX - 1) * cellSize, 0 + (positionY - 1) * cellSize, 20 + (positionX - 1) * cellSize, 20 + (positionY - 1) * cellSize, 7, 7);
+            RoundRect(hDC, 0 + (positionX) * cellSize, 0 + (positionY) * cellSize, 20 + (positionX) * cellSize, 20 + (positionY) * cellSize, 7, 7);
             break;
         case 'C': //원
-            Ellipse(hDC, 0 + (positionX - 1) * cellSize, 0 + (positionY - 1) * cellSize, 20 + (positionX - 1) * cellSize, 20 + (positionY - 1) * cellSize);
+            Ellipse(hDC, 0 + (positionX) * cellSize, 0 + (positionY) * cellSize, 20 + (positionX) * cellSize, 20 + (positionY) * cellSize);
             break;
         case 'E': //타원
-            Ellipse(hDC, 0 + (positionX - 1) * cellSize, 5 + (positionY - 1) * cellSize, 20 + (positionX - 1) * cellSize, 17 + (positionY - 1) * cellSize);
+            Ellipse(hDC, 0 + (positionX) * cellSize, 5 + (positionY) * cellSize, 20 + (positionX) * cellSize, 17 + (positionY) * cellSize);
             break;
         default:
             break;
@@ -202,7 +202,7 @@ public:
         oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
         hPen = CreatePen(PS_SOLID, 1, color);
         oldPen = (HPEN)SelectObject(hDC, hPen);
-        Rectangle(hDC, sizeRect.left + (positionX - 1) * cellSize + 6, sizeRect.top + (positionY - 1) * cellSize + 6, sizeRect.right + (positionX - 1) * cellSize + 6, sizeRect.bottom + (positionY - 1) * cellSize + 6);
+        Rectangle(hDC, sizeRect.left + (positionX) * cellSize + 6, sizeRect.top + (positionY) * cellSize + 6, sizeRect.right + (positionX) * cellSize + 6, sizeRect.bottom + (positionY) * cellSize + 6);
         SelectObject(hDC, oldBrush);
         DeleteObject(hBrush);
         DeleteObject(hPen);
@@ -236,7 +236,7 @@ public:
         oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
         hPen = CreatePen(PS_SOLID, 1, color);
         oldPen = (HPEN)SelectObject(hDC, hPen);
-        Rectangle(hDC, sizeRect.left + (positionX - 1) * cellSize, sizeRect.top + (positionY - 1) * cellSize, sizeRect.right + (positionX - 1)* cellSize, sizeRect.bottom + (positionY - 1)* cellSize);
+        Rectangle(hDC, sizeRect.left + (positionX) * cellSize, sizeRect.top + (positionY) * cellSize, sizeRect.right + (positionX)* cellSize, sizeRect.bottom + (positionY)* cellSize);
         SelectObject(hDC, oldBrush);
         DeleteObject(hBrush);
     }
@@ -254,9 +254,10 @@ public:
 random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
+uniform_int_distribution<int> uid_RGB2(0, 254);
 uniform_int_distribution<int> uid_BlockSize(20, 30);
 uniform_int_distribution<int> uid_Block(0, 4);
-uniform_int_distribution<int> uid_Position(1, 40);
+uniform_int_distribution<int> uid_Position(1, 39);
 uniform_int_distribution<int> uid_BlockShape(0, 3);
 
 bool IsPositionUsed(const vector<shape*>& shapes, int x, int y) { //중복 관리
@@ -267,10 +268,10 @@ bool IsPositionUsed(const vector<shape*>& shapes, int x, int y) { //중복 관리
         }
     }
 
-    if (x == 1 && y == 1)
+    if (x == 0 && y == 0)
         return true;
 
-    if (x == 40 && y == 40)
+    if (x == 39 && y == 39)
         return true;
 
     return false; // 사용되지 않은 위치
@@ -290,6 +291,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     int maxBlockSize;
     int num{};
 
+    static ChangeShape myShape;
     RedBarricade* redBarricade;
     ChangeColor* changeColor;
     SizeUp* sizeUp;
@@ -300,6 +302,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     {
     case WM_CREATE:
         maxBlockSize = uid_BlockSize(gen);
+        
+        myShape.positionX = 0;
+        myShape.positionY = 0;
+        switch (uid_BlockShape(gen))
+        {
+        case 0: //세모
+            myShape.shape_c = 'T';
+            break;
+        case 1: //네모
+            myShape.shape_c = 'R';
+            break;
+        case 2: //원
+            myShape.shape_c = 'C';
+            break;
+        case 3: //타원
+            myShape.shape_c = 'E';
+            break;
+        default:
+            break;
+        }
+
+        myShape.color = (RGB(uid_RGB2(gen), uid_RGB2(gen), uid_RGB2(gen)));
+
         for (int i = 0; i < maxBlockSize; ++i) {
 
             do {
@@ -307,14 +332,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 pY = uid_Position(gen);
             } while (IsPositionUsed(shapes, pX, pY));
 
-            
-
             switch (uid_Block(gen))
             {
             case 0: //장애물
                 redBarricade = new RedBarricade();
-                redBarricade->positionX = 1;
-                redBarricade->positionY = 1;
+                redBarricade->positionX = pX;
+                redBarricade->positionY = pY;
                 shapes.push_back(redBarricade);
                 break;
             case 1: //색상변경
@@ -375,10 +398,37 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             }
 
             shapes.clear(); 
+            maxBlockSize = uid_BlockSize(gen);
 
-            for (int i = 0; i < uid_BlockSize(gen); ++i) {
-                pX = uid_Position(gen);
-                pY = uid_Position(gen);
+            myShape.positionX = 0;
+            myShape.positionY = 0;
+            switch (uid_BlockShape(gen))
+            {
+            case 0: //세모
+                myShape.shape_c = 'T';
+                break;
+            case 1: //네모
+                myShape.shape_c = 'R';
+                break;
+            case 2: //원
+                myShape.shape_c = 'C';
+                break;
+            case 3: //타원
+                myShape.shape_c = 'E';
+                break;
+            default:
+                break;
+            }
+
+            myShape.color = (RGB(uid_RGB2(gen), uid_RGB2(gen), uid_RGB2(gen)));
+
+            for (int i = 0; i < maxBlockSize; ++i) {
+
+                do {
+                    pX = uid_Position(gen);
+                    pY = uid_Position(gen);
+                } while (IsPositionUsed(shapes, pX, pY));
+
                 switch (uid_Block(gen))
                 {
                 case 0: //장애물
@@ -463,6 +513,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         for (auto& shape : shapes) {
             shape->print_(hDC);
         }
+
+        // 내 모양
+        myShape.print_(hDC);
 
         EndPaint(hWnd, &ps);
         break;
