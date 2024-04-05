@@ -142,8 +142,6 @@ public:
         {
         case 'T': //세모
 
-           
-
             if (mini_status) {
                 sizePoint[0] = { 0, 10 };
                 sizePoint[1] = { 5, static_cast<LONG>(round(1.34)) };
@@ -281,13 +279,14 @@ random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
 uniform_int_distribution<int> uid_RGB2(0, 254);
-uniform_int_distribution<int> uid_BlockSize(20, 30);
+uniform_int_distribution<int> uid_BlockSize(30, 60);
 uniform_int_distribution<int> uid_Block(0, 4);
 uniform_int_distribution<int> uid_Position(1, 39);
 uniform_int_distribution<int> uid_BlockShape(0, 3);
 uniform_int_distribution<int> uid_SizeStatus(0, 1);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+
     PAINTSTRUCT ps;
     HDC hDC;
     HPEN hPen, oldPen;
@@ -299,6 +298,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static ChangeShape finishShape;
     int saveMyShapeX;
     int saveMyShapeY;
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -321,6 +321,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         }
         break;
     case WM_KEYDOWN:
+
+        hDC = BeginPaint(hWnd, &ps);
 
         saveMyShapeX = myShape.positionX;
         saveMyShapeY = myShape.positionY;
@@ -389,8 +391,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             }
         }
 
+        if (myShape.positionX == 39 && myShape.positionY == 39) {
+            if (myShape.shape_c == finishShape.shape_c && myShape.color == finishShape.color && myShape.mini_status == finishShape.mini_status) {
+                MessageBox(NULL, L"승리!!!!", L"", MB_OK | MB_ICONINFORMATION);
+
+                for (auto& shape : shapes) {
+                    delete shape;
+                }
+
+                shapes.clear();
+
+                printStartShape(shapes, myShape, finishShape);
+            }
+        }
+
         InvalidateRect(hWnd, NULL, TRUE);
 
+        EndPaint(hWnd, &ps);
         break;
     case WM_CHAR:
         break;
@@ -479,26 +496,7 @@ void printStartShape(vector<shape*> &shapes, ChangeShape &myShape, ChangeShape &
         break;
     }
 
-    switch (uid_BlockShape(gen))
-    {
-    case 0: //세모
-        finishShape.shape_c = 'T';
-        break;
-    case 1: //네모
-        finishShape.shape_c = 'R';
-        break;
-    case 2: //원
-        finishShape.shape_c = 'C';
-        break;
-    case 3: //타원
-        finishShape.shape_c = 'E';
-        break;
-    default:
-        break;
-    }
-
     myShape.color = (RGB(uid_RGB2(gen), uid_RGB2(gen), uid_RGB2(gen)));
-    finishShape.color = (RGB(uid_RGB2(gen), uid_RGB2(gen), uid_RGB2(gen)));
 
     maxBlockSize = uid_BlockSize(gen);
     for (int i = 0; i < maxBlockSize; ++i) {
@@ -521,6 +519,7 @@ void printStartShape(vector<shape*> &shapes, ChangeShape &myShape, ChangeShape &
             changeColor->positionX = pX;
             changeColor->positionY = pY;
             changeColor->color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
+            finishShape.color = changeColor->color;
             shapes.push_back(changeColor);
             break;
         case 2: //크기변경(확대)
@@ -543,15 +542,19 @@ void printStartShape(vector<shape*> &shapes, ChangeShape &myShape, ChangeShape &
             {
             case 0: //세모
                 changeShape->shape_c = 'T';
+                finishShape.shape_c = 'T';
                 break;
             case 1: //네모
                 changeShape->shape_c = 'R';
+                finishShape.shape_c = 'T';
                 break;
             case 2: //원
                 changeShape->shape_c = 'C';
+                finishShape.shape_c = 'T';
                 break;
             case 3: //타원
                 changeShape->shape_c = 'E';
+                finishShape.shape_c = 'T';
                 break;
             default:
                 break;
