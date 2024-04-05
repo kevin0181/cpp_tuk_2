@@ -128,6 +128,7 @@ struct Shape {
     int y2;
     int thickness;
     COLORREF color;
+    COLORREF borderColor;
 };
 void printShape(vector<Shape>& shapeList, int sh_cnt, HDC &hDC);
 
@@ -174,6 +175,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             wistringstream iss(str);
             iss >> shape.shapeType >> shape.x1 >> shape.y1 >> shape.x2 >> shape.y2 >> shape.thickness;
             shape.color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
+            shape.borderColor = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
             shapeList.push_back(shape);
             sh_cnt++;
 
@@ -228,18 +230,37 @@ void printShape(vector<Shape>& shapeList, int sh_cnt, HDC &hDC) {
     HBRUSH hBrush = CreateSolidBrush(shapeList[sh_cnt - 1].color);
     HBRUSH oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
     RECT rect;
+    HPEN hPen, oldPen;
 
     switch (shapeList[sh_cnt - 1].shapeType)
     {
     case 1:
+        hPen = CreatePen(PS_SOLID, shapeList[sh_cnt - 1].thickness, shapeList[sh_cnt - 1].borderColor);
+        oldPen = (HPEN)SelectObject(hDC, hPen);
+        hBrush = CreateSolidBrush(shapeList[sh_cnt - 1].color);
+        oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
         rect = { shapeList[sh_cnt - 1].x1 - shapeList[sh_cnt - 1].thickness / 2, shapeList[sh_cnt - 1].y1 - shapeList[sh_cnt - 1].thickness / 2, shapeList[sh_cnt - 1].x2 + shapeList[sh_cnt - 1].thickness / 2, shapeList[sh_cnt - 1].y2 + shapeList[sh_cnt - 1].thickness / 2 };
-        FillRect(hDC, &rect, hBrush);
+        Rectangle(hDC, rect.left, rect.top, rect.right, rect.bottom);
         break;
     case 2:
+        hPen = CreatePen(PS_SOLID, shapeList[sh_cnt - 1].thickness, shapeList[sh_cnt - 1].borderColor);
+        oldPen = (HPEN)SelectObject(hDC, hPen);
         MoveToEx(hDC, shapeList[sh_cnt - 1].x1, shapeList[sh_cnt - 1].y1, NULL);
         LineTo(hDC, shapeList[sh_cnt - 1].x2, shapeList[sh_cnt - 1].y2);
         break;
     case 3:
+
+        hPen = CreatePen(PS_SOLID, shapeList[sh_cnt - 1].thickness, shapeList[sh_cnt - 1].borderColor);
+
+        POINT points[3];
+        points[0] = { shapeList[sh_cnt - 1].x1, shapeList[sh_cnt - 1].y1 }; // 첫 번째 점
+        points[1] = { shapeList[sh_cnt - 1].x2, shapeList[sh_cnt - 1].y1 }; // 두 번째 점 (변경 가능)
+        points[2] = { shapeList[sh_cnt - 1].x1, shapeList[sh_cnt - 1].y2 }; // 세 번째 점 (변경 가능)
+
+        SelectObject(hDC, hPen);
+        SelectObject(hDC, hBrush);
+
+        Polygon(hDC, points, 3); // 세 점으로 삼각형 그리기
         break;
     case 4:
         break;
