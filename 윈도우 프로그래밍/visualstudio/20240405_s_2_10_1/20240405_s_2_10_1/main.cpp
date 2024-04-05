@@ -5,8 +5,6 @@
 #include <string>
 #include <cmath>
 
-#define M_PI 3.14159265358979323846
-
 using namespace std;
 
 HINSTANCE g_hInst;
@@ -325,6 +323,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         }
         break;
     case WM_KEYDOWN:
+
+        switch (wParam)
+        {
+        case VK_LEFT:
+            myShape.positionX -= 1;
+            break;
+        case VK_RIGHT:
+            myShape.positionX += 1;
+            break;
+        case VK_UP:
+            break;
+        case VK_DOWN:
+            break;
+        default:
+            break;
+        }
+
+        InvalidateRect(hWnd, NULL, TRUE);
+
         break;
     case WM_CHAR:
         break;
