@@ -222,6 +222,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
+#define M_PI 3.14159265358979323846
+
 void printShape(vector<Shape>& shapeList, int sh_cnt, HDC &hDC) {
 
     if (sh_cnt == 0)
@@ -230,7 +232,14 @@ void printShape(vector<Shape>& shapeList, int sh_cnt, HDC &hDC) {
     HBRUSH hBrush = CreateSolidBrush(shapeList[sh_cnt - 1].color);
     HBRUSH oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
     RECT rect;
-    HPEN hPen, oldPen;
+    HPEN hPen = CreatePen(PS_SOLID, shapeList[sh_cnt - 1].thickness, shapeList[sh_cnt - 1].borderColor);
+    HPEN oldPen = (HPEN)SelectObject(hDC, hPen);
+
+    int centerX;
+    int centerY;
+    int radius;
+    float angle;
+    POINT points1[5];
 
     switch (shapeList[sh_cnt - 1].shapeType)
     {
@@ -253,26 +262,69 @@ void printShape(vector<Shape>& shapeList, int sh_cnt, HDC &hDC) {
         hPen = CreatePen(PS_SOLID, shapeList[sh_cnt - 1].thickness, shapeList[sh_cnt - 1].borderColor);
 
         POINT points[3];
-        points[0] = { shapeList[sh_cnt - 1].x1, shapeList[sh_cnt - 1].y1 }; // 첫 번째 점
-        points[1] = { shapeList[sh_cnt - 1].x2, shapeList[sh_cnt - 1].y1 }; // 두 번째 점 (변경 가능)
-        points[2] = { shapeList[sh_cnt - 1].x1, shapeList[sh_cnt - 1].y2 }; // 세 번째 점 (변경 가능)
+        points[0] = { shapeList[sh_cnt - 1].x1, shapeList[sh_cnt - 1].y1 };
+        points[1] = { shapeList[sh_cnt - 1].x2, shapeList[sh_cnt - 1].y1 };
+        points[2] = { shapeList[sh_cnt - 1].x1, shapeList[sh_cnt - 1].y2 };
 
         SelectObject(hDC, hPen);
         SelectObject(hDC, hBrush);
 
-        Polygon(hDC, points, 3); // 세 점으로 삼각형 그리기
+        Polygon(hDC, points, 3);
         break;
     case 4:
+        hPen = CreatePen(PS_SOLID, shapeList[sh_cnt - 1].thickness, shapeList[sh_cnt - 1].borderColor);
+        oldPen = (HPEN)SelectObject(hDC, hPen);
+        hBrush = CreateSolidBrush(shapeList[sh_cnt - 1].color);
+        oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
+        rect = { shapeList[sh_cnt - 1].x1 - shapeList[sh_cnt - 1].thickness / 2, shapeList[sh_cnt - 1].y1 - shapeList[sh_cnt - 1].thickness / 2, shapeList[sh_cnt - 1].x2 + shapeList[sh_cnt - 1].thickness / 2, shapeList[sh_cnt - 1].y2 + shapeList[sh_cnt - 1].thickness / 2 };
+        Rectangle(hDC, rect.left, rect.top, rect.right, rect.bottom);
         break;
     case 5:
+        centerX = (shapeList[sh_cnt - 1].x1 + shapeList[sh_cnt - 1].x2) / 2;
+        centerY = (shapeList[sh_cnt - 1].y1 + shapeList[sh_cnt - 1].y2) / 2;
+
+        radius = min(shapeList[sh_cnt - 1].x2 - centerX, shapeList[sh_cnt - 1].y2 - centerY);
+        
+        for (int i = 0; i < 5; ++i) {
+            angle = 2 * M_PI / 5 * i;
+            points1[i].x = static_cast<LONG>(centerX + radius * sin(angle));
+            points1[i].y = static_cast<LONG>(centerY - radius * cos(angle)); 
+        }
+
+        hPen = CreatePen(PS_SOLID, shapeList[sh_cnt - 1].thickness, shapeList[sh_cnt - 1].borderColor);
+        hBrush = CreateSolidBrush(shapeList[sh_cnt - 1].color);
+
+        oldPen = (HPEN)SelectObject(hDC, hPen);
+        oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
+
+        Polygon(hDC, points1, 5);
+
+        break;
         break;
     case 6:
+        hPen = CreatePen(PS_SOLID, shapeList[sh_cnt - 1].thickness, shapeList[sh_cnt - 1].borderColor);
+        oldPen = (HPEN)SelectObject(hDC, hPen);
+        hBrush = CreateSolidBrush(shapeList[sh_cnt - 1].color);
+        oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
+
+        rect = {
+            shapeList[sh_cnt - 1].x1,
+            shapeList[sh_cnt - 1].y1,
+            shapeList[sh_cnt - 1].x1 + shapeList[sh_cnt - 1].x2,
+            shapeList[sh_cnt - 1].y1 + shapeList[sh_cnt - 1].y2 
+        };
+
+        Ellipse(hDC, rect.left, rect.top, rect.right, rect.bottom);
         break;
     default:
         break;
     }
 
+
+    // Restore the old pen and brush.
+    SelectObject(hDC, oldPen);
     SelectObject(hDC, oldBrush);
     DeleteObject(hBrush);
+    DeleteObject(hPen);
 
 }
