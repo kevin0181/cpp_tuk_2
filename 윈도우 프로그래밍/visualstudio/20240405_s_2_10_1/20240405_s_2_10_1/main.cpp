@@ -328,15 +328,27 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         {
         case VK_LEFT:
             myShape.positionX -= 1;
+            if (myShape.positionX == -1) {
+                myShape.positionX = 39;
+            }
             break;
         case VK_RIGHT:
             myShape.positionX += 1;
+            if (myShape.positionX == 40) {
+                myShape.positionX = 0;
+            }
             break;
         case VK_UP:
             myShape.positionY -= 1;
+            if (myShape.positionY == -1) {
+                myShape.positionY = 39;
+            }
             break;
         case VK_DOWN:
             myShape.positionY += 1;
+            if (myShape.positionY == 40) {
+                myShape.positionY = 0;
+            }
             break;
         default:
             break;
