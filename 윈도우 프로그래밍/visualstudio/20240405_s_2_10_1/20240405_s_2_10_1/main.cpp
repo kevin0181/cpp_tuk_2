@@ -333,8 +333,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             myShape.positionX += 1;
             break;
         case VK_UP:
+            myShape.positionY -= 1;
             break;
         case VK_DOWN:
+            myShape.positionY += 1;
             break;
         default:
             break;
