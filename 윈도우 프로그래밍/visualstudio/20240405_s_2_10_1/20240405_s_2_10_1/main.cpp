@@ -366,29 +366,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             else if (dynamic_cast<ChangeColor*>(shape)) {
                 ChangeColor* changeColor = dynamic_cast<ChangeColor*>(shape);
                 if (myShape.positionX + 1 == changeColor->positionX && myShape.positionY + 1 == changeColor->positionY) {
-                    myShape.positionX = saveMyShapeX;
-                    myShape.positionY = saveMyShapeY;
+                    myShape.color = changeColor->color;
                 }
             }
             else if (dynamic_cast<ChangeShape*>(shape)) {
                 ChangeShape* getChangeShape = dynamic_cast<ChangeShape*>(shape);
                 if (myShape.positionX == getChangeShape->positionX && myShape.positionY == getChangeShape->positionY) {
-                    myShape.positionX = saveMyShapeX;
-                    myShape.positionY = saveMyShapeY;
+                    myShape.shape_c = getChangeShape->shape_c;
                 }
             }
             else if (dynamic_cast<SizeDown*>(shape)) {
                 SizeDown* sizeDown = dynamic_cast<SizeDown*>(shape);
                 if (myShape.positionX == sizeDown->positionX && myShape.positionY == sizeDown->positionY) {
-                    myShape.positionX = saveMyShapeX;
-                    myShape.positionY = saveMyShapeY;
+                    myShape.mini_status = true;
                 }
             }
             else if (dynamic_cast<SizeUp*>(shape)) {
                 SizeUp* sizeUp = dynamic_cast<SizeUp*>(shape);
                 if (myShape.positionX == sizeUp->positionX && myShape.positionY == sizeUp->positionY) {
-                    myShape.positionX = saveMyShapeX;
-                    myShape.positionY = saveMyShapeY;
+                    myShape.mini_status = false;
                 }
             }
         }
