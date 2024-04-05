@@ -56,8 +56,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 
 class shape {
 public:
-    int positionX{};
-    int positionY{};
     virtual void print_(HDC hDC) = 0;
     virtual int getX() = 0;
     virtual int getY() = 0;
@@ -207,7 +205,6 @@ public:
     int getY() {
         return positionY;
     }
-
 };
 
 class SizeDown : public shape {
@@ -300,7 +297,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static vector<shape*> shapes;
     static ChangeShape myShape;
     static ChangeShape finishShape;
-
+    int saveMyShapeX;
+    int saveMyShapeY;
     switch (uMsg)
     {
     case WM_CREATE:
@@ -324,7 +322,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_KEYDOWN:
 
-        switch (wParam)
+        saveMyShapeX = myShape.positionX;
+        saveMyShapeY = myShape.positionY;
+
+        switch (wParam) // myShape ¿Ãµø
         {
         case VK_LEFT:
             myShape.positionX -= 1;
@@ -352,6 +353,44 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
         default:
             break;
+        }
+
+        for (auto& shape : shapes) {
+            if (dynamic_cast<RedBarricade*>(shape)) {
+                RedBarricade* redBarricade = dynamic_cast<RedBarricade*>(shape);
+                if (myShape.positionX + 1 == redBarricade->positionX && myShape.positionY + 1 == redBarricade->positionY) {
+                    myShape.positionX = saveMyShapeX;
+                    myShape.positionY = saveMyShapeY;
+                }
+            }
+            else if (dynamic_cast<ChangeColor*>(shape)) {
+                ChangeColor* changeColor = dynamic_cast<ChangeColor*>(shape);
+                if (myShape.positionX + 1 == changeColor->positionX && myShape.positionY + 1 == changeColor->positionY) {
+                    myShape.positionX = saveMyShapeX;
+                    myShape.positionY = saveMyShapeY;
+                }
+            }
+            else if (dynamic_cast<ChangeShape*>(shape)) {
+                ChangeShape* getChangeShape = dynamic_cast<ChangeShape*>(shape);
+                if (myShape.positionX == getChangeShape->positionX && myShape.positionY == getChangeShape->positionY) {
+                    myShape.positionX = saveMyShapeX;
+                    myShape.positionY = saveMyShapeY;
+                }
+            }
+            else if (dynamic_cast<SizeDown*>(shape)) {
+                SizeDown* sizeDown = dynamic_cast<SizeDown*>(shape);
+                if (myShape.positionX == sizeDown->positionX && myShape.positionY == sizeDown->positionY) {
+                    myShape.positionX = saveMyShapeX;
+                    myShape.positionY = saveMyShapeY;
+                }
+            }
+            else if (dynamic_cast<SizeUp*>(shape)) {
+                SizeUp* sizeUp = dynamic_cast<SizeUp*>(shape);
+                if (myShape.positionX == sizeUp->positionX && myShape.positionY == sizeUp->positionY) {
+                    myShape.positionX = saveMyShapeX;
+                    myShape.positionY = saveMyShapeY;
+                }
+            }
         }
 
         InvalidateRect(hWnd, NULL, TRUE);
