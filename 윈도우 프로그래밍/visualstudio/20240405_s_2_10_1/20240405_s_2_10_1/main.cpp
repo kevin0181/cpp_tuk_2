@@ -146,13 +146,25 @@ public:
         {
         case 'T': //¼¼¸ð
 
-            sizePoint[0] = { 0, 20 };
-            sizePoint[1] = { 10, static_cast<LONG>(round(2.68)) };
-            sizePoint[2] = { 20, 20 };
+           
 
-            for (int i = 0; i < 3; ++i) {
-                sizePoint[i].x += positionX * cellSize;
-                sizePoint[i].y += positionY * cellSize - 2;
+            if (mini_status) {
+                sizePoint[0] = { 0, 10 };
+                sizePoint[1] = { 5, static_cast<LONG>(round(1.34)) };
+                sizePoint[2] = { 10, 10 };
+                for (int i = 0; i < 3; ++i) {
+                    sizePoint[i].x += positionX * cellSize + 5;
+                    sizePoint[i].y += positionY * cellSize + 5;
+                }
+            }
+            else {
+                sizePoint[0] = { 0, 20 };
+                sizePoint[1] = { 10, static_cast<LONG>(round(2.68)) };
+                sizePoint[2] = { 20, 20 };
+                for (int i = 0; i < 3; ++i) {
+                    sizePoint[i].x += positionX * cellSize;
+                    sizePoint[i].y += positionY * cellSize - 2;
+                }
             }
 
             Polygon(hDC, sizePoint, 3);
