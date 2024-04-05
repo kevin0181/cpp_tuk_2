@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <sstream>
 
 using namespace std;
 
@@ -119,6 +120,17 @@ random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
 
+struct Shape {
+    int shapeType;
+    int x1;
+    int y1;
+    int x2;
+    int y2;
+    int thickness;
+    COLORREF color;
+};
+void printShape(vector<Shape>& shapeList, int sh_cnt, HDC &hDC);
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     PAINTSTRUCT ps;
@@ -130,6 +142,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static vector<shape*> shapes;
     static TCHAR str[30];
     static int cnt_x;
+    Shape shape;
+    static int sh_cnt;
+    static vector<Shape> shapeList;
 
     switch (uMsg)
     {
@@ -137,14 +152,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         CreateCaret(hWnd, NULL, 5, 15);
         ShowCaret(hWnd);
         cnt_x = 0;
+        sh_cnt = 0;
         break;
     case WM_KEYUP:
+
         break;
     case WM_KEYDOWN:
-        InvalidateRect(hWnd, NULL, TRUE);
+
+      
         break;
     case WM_CHAR:
+
+        if (wParam == VK_BACK && cnt_x > 0) {
+            cnt_x--;
+            str[cnt_x] = '\0';
+            InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        }
+
+        if (wParam == VK_RETURN) {
+            wistringstream iss(str);
+            iss >> shape.shapeType >> shape.x1 >> shape.y1 >> shape.x2 >> shape.y2 >> shape.thickness;
+            shape.color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
+            shapeList.push_back(shape);
+            sh_cnt++;
+            InvalidateRect(hWnd, NULL, TRUE);
+            break;
+        }
+
         str[cnt_x++] = wParam;
+        str[cnt_x] = '\0';
         InvalidateRect(hWnd, NULL, TRUE);
         break;
     case WM_SIZE:
@@ -161,6 +198,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         SetCaretPos((size.cx), rect.bottom - (COL + 5)); //caret 위치 표시
         ShowCaret(hWnd);
 
+        printShape(shapeList, sh_cnt, hDC);
+
         EndPaint(hWnd, &ps);
         break;
     case WM_DESTROY:
@@ -173,4 +212,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+void printShape(vector<Shape>& shapeList, int sh_cnt, HDC &hDC) {
+
+    if (sh_cnt == 0)
+        return;
+
+    HBRUSH hBrush = CreateSolidBrush(shapeList[sh_cnt - 1].color);
+    HBRUSH oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
+    RECT rect;
+
+    switch (shapeList[sh_cnt - 1].shapeType)
+    {
+    case 1:
+        rect = { shapeList[sh_cnt - 1].x1 - shapeList[sh_cnt - 1].thickness / 2, shapeList[sh_cnt - 1].y1 - shapeList[sh_cnt - 1].thickness / 2, shapeList[sh_cnt - 1].x2 + shapeList[sh_cnt - 1].thickness / 2, shapeList[sh_cnt - 1].y2 + shapeList[sh_cnt - 1].thickness / 2 };
+        FillRect(hDC, &rect, hBrush);
+        break;
+    case 2:
+        break;
+    case 3:
+        break;
+    case 4:
+        break;
+    case 5:
+        break;
+    case 6:
+        break;
+    default:
+        break;
+    }
+
+    SelectObject(hDC, oldBrush);
+    DeleteObject(hBrush);
+
 }
