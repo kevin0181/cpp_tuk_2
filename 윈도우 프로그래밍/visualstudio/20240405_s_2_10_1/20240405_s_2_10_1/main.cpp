@@ -158,13 +158,28 @@ public:
             Polygon(hDC, sizePoint, 3);
             break;
         case 'R': //네모
-            RoundRect(hDC, 0 + (positionX) * cellSize, 0 + (positionY) * cellSize, 20 + (positionX) * cellSize, 20 + (positionY) * cellSize, 7, 7);
+            if (mini_status) {
+                RoundRect(hDC, 0 + (positionX)*cellSize + 3, 0 + (positionY)*cellSize + 3, 15 + (positionX)*cellSize + 3, 15 + (positionY)*cellSize + 3, 5, 5);
+            }
+            else {
+                RoundRect(hDC, 0 + (positionX)*cellSize, 0 + (positionY)*cellSize, 20 + (positionX)*cellSize, 20 + (positionY)*cellSize, 7, 7);
+            }
             break;
         case 'C': //원
-            Ellipse(hDC, 0 + (positionX) * cellSize, 0 + (positionY) * cellSize, 20 + (positionX) * cellSize, 20 + (positionY) * cellSize);
+            if (mini_status) {
+                Ellipse(hDC, 0 + (positionX)*cellSize + 3, 0 + (positionY)*cellSize + 3, 15 + (positionX)*cellSize + 3, 15 + (positionY)*cellSize + 3);
+            }
+            else {
+                Ellipse(hDC, 0 + (positionX)*cellSize, 0 + (positionY)*cellSize, 20 + (positionX)*cellSize, 20 + (positionY)*cellSize);
+            }
             break;
         case 'E': //타원
-            Ellipse(hDC, 0 + (positionX) * cellSize, 5 + (positionY) * cellSize, 20 + (positionX) * cellSize, 17 + (positionY) * cellSize);
+            if (mini_status) {
+                Ellipse(hDC, 0 + (positionX)*cellSize, 7 + (positionY)*cellSize, 20 + (positionX)*cellSize, 17 + (positionY)*cellSize);
+            }
+            else {
+                Ellipse(hDC, 0 + (positionX)*cellSize, 3 + (positionY)*cellSize, 20 + (positionX)*cellSize, 17 + (positionY)*cellSize);
+            }
             break;
         default:
             break;
@@ -252,6 +267,9 @@ public:
 
 };
 
+void printStartShape(vector<shape*>& shapes, ChangeShape &myShape);
+bool IsPositionUsed(const vector<shape*>& shapes, int x, int y);
+
 random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
@@ -260,23 +278,7 @@ uniform_int_distribution<int> uid_BlockSize(20, 30);
 uniform_int_distribution<int> uid_Block(0, 4);
 uniform_int_distribution<int> uid_Position(1, 39);
 uniform_int_distribution<int> uid_BlockShape(0, 3);
-
-bool IsPositionUsed(const vector<shape*>& shapes, int x, int y) { //중복 관리
-
-    for (const auto& shape : shapes) {
-        if (shape->getX() == x && shape->getY() == y) {
-            return true; // 이미 사용 중인 위치 발견
-        }
-    }
-
-    if (x == 0 && y == 0)
-        return true;
-
-    if (x == 39 && y == 39)
-        return true;
-
-    return false; // 사용되지 않은 위치
-}
+uniform_int_distribution<int> uid_SizeStatus(0, 1);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     PAINTSTRUCT ps;
@@ -286,109 +288,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static RECT rect;
     static SIZE size;
     static vector<shape*> shapes;
-
-    int pX;
-    int pY;
-    int maxBlockSize;
-    int num{};
-
     static ChangeShape myShape;
-    RedBarricade* redBarricade;
-    ChangeColor* changeColor;
-    SizeUp* sizeUp;
-    SizeDown* sizeDown;
-    ChangeShape* changeShape;
 
     switch (uMsg)
     {
     case WM_CREATE:
-        maxBlockSize = uid_BlockSize(gen);
         
-        myShape.positionX = 0;
-        myShape.positionY = 0;
-        switch (uid_BlockShape(gen))
-        {
-        case 0: //세모
-            myShape.shape_c = 'T';
-            break;
-        case 1: //네모
-            myShape.shape_c = 'R';
-            break;
-        case 2: //원
-            myShape.shape_c = 'C';
-            break;
-        case 3: //타원
-            myShape.shape_c = 'E';
-            break;
-        default:
-            break;
-        }
-
-        myShape.color = (RGB(uid_RGB2(gen), uid_RGB2(gen), uid_RGB2(gen)));
-
-        for (int i = 0; i < maxBlockSize; ++i) {
-
-            do {
-                pX = uid_Position(gen);
-                pY = uid_Position(gen);
-            } while (IsPositionUsed(shapes, pX, pY));
-
-            switch (uid_Block(gen))
-            {
-            case 0: //장애물
-                redBarricade = new RedBarricade();
-                redBarricade->positionX = pX;
-                redBarricade->positionY = pY;
-                shapes.push_back(redBarricade);
-                break;
-            case 1: //색상변경
-                changeColor = new ChangeColor();
-                changeColor->positionX = pX;
-                changeColor->positionY = pY;
-                changeColor->color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
-                shapes.push_back(changeColor);
-                break;
-            case 2: //크기변경(확대)
-                sizeUp = new SizeUp();
-                sizeUp->positionX = pX;
-                sizeUp->positionY = pY;
-                shapes.push_back(sizeUp);
-                break;
-            case 3: //크기변경(축소)
-                sizeDown = new SizeDown();
-                sizeDown->positionX = pX;
-                sizeDown->positionY = pY;
-                shapes.push_back(sizeDown);
-                break;
-            case 4: //모양변경
-                changeShape = new ChangeShape();
-                changeShape->positionX = pX;
-                changeShape->positionY = pY;
-
-                switch (uid_BlockShape(gen))
-                {
-                case 0: //세모
-                    changeShape->shape_c = 'T';
-                    break;
-                case 1: //네모
-                    changeShape->shape_c = 'R';
-                    break;
-                case 2: //원
-                    changeShape->shape_c = 'C';
-                    break;
-                case 3: //타원
-                    changeShape->shape_c = 'E';
-                    break;
-                default:
-                    break;
-                }
-
-                shapes.push_back(changeShape);
-                break;
-            default:
-                break;
-            }
-        }
+        printStartShape(shapes, myShape);
 
         break;
     case WM_KEYUP:
@@ -399,93 +305,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             }
 
             shapes.clear(); 
-            maxBlockSize = uid_BlockSize(gen);
 
-            myShape.positionX = 0;
-            myShape.positionY = 0;
-            switch (uid_BlockShape(gen))
-            {
-            case 0: //세모
-                myShape.shape_c = 'T';
-                break;
-            case 1: //네모
-                myShape.shape_c = 'R';
-                break;
-            case 2: //원
-                myShape.shape_c = 'C';
-                break;
-            case 3: //타원
-                myShape.shape_c = 'E';
-                break;
-            default:
-                break;
-            }
-
-            myShape.color = (RGB(uid_RGB2(gen), uid_RGB2(gen), uid_RGB2(gen)));
-
-            for (int i = 0; i < maxBlockSize; ++i) {
-
-                do {
-                    pX = uid_Position(gen);
-                    pY = uid_Position(gen);
-                } while (IsPositionUsed(shapes, pX, pY));
-
-                switch (uid_Block(gen))
-                {
-                case 0: //장애물
-                    redBarricade = new RedBarricade();
-                    redBarricade->positionX = pX;
-                    redBarricade->positionY = pY;
-                    shapes.push_back(redBarricade);
-                    break;
-                case 1: //색상변경
-                    changeColor = new ChangeColor();
-                    changeColor->positionX = pX;
-                    changeColor->positionY = pY;
-                    changeColor->color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
-                    shapes.push_back(changeColor);
-                    break;
-                case 2: //크기변경(확대)
-                    sizeUp = new SizeUp();
-                    sizeUp->positionX = pX;
-                    sizeUp->positionY = pY;
-                    shapes.push_back(sizeUp);
-                    break;
-                case 3: //크기변경(축소)
-                    sizeDown = new SizeDown();
-                    sizeDown->positionX = pX;
-                    sizeDown->positionY = pY;
-                    shapes.push_back(sizeDown);
-                    break;
-                case 4: //모양변경
-                    changeShape = new ChangeShape();
-                    changeShape->positionX = pX;
-                    changeShape->positionY = pY;
-
-                    switch (uid_BlockShape(gen))
-                    {
-                    case 0: //세모
-                        changeShape->shape_c = 'T';
-                        break;
-                    case 1: //네모
-                        changeShape->shape_c = 'R';
-                        break;
-                    case 2: //원
-                        changeShape->shape_c = 'C';
-                        break;
-                    case 3: //타원
-                        changeShape->shape_c = 'E';
-                        break;
-                    default:
-                        break;
-                    }
-
-                    shapes.push_back(changeShape);
-                    break;
-                default:
-                    break;
-                }
-            }
+            printStartShape(shapes, myShape);
 
             InvalidateRect(hWnd, NULL, TRUE);
         }
@@ -528,4 +349,130 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+void printStartShape(vector<shape*> &shapes, ChangeShape &myShape) {
+
+
+    int pX;
+    int pY;
+    int maxBlockSize;
+    int num{};
+
+    RedBarricade* redBarricade;
+    ChangeColor* changeColor;
+    SizeUp* sizeUp;
+    SizeDown* sizeDown;
+    ChangeShape* changeShape;
+
+    maxBlockSize = uid_BlockSize(gen);
+
+    myShape.positionX = 0;
+    myShape.positionY = 0;
+
+    if (uid_SizeStatus(gen)) // size change
+        myShape.mini_status = true;
+    else
+        myShape.mini_status = false;
+
+    switch (uid_BlockShape(gen))
+    {
+    case 0: //세모
+        myShape.shape_c = 'T';
+        break;
+    case 1: //네모
+        myShape.shape_c = 'R';
+        break;
+    case 2: //원
+        myShape.shape_c = 'C';
+        break;
+    case 3: //타원
+        myShape.shape_c = 'E';
+        break;
+    default:
+        break;
+    }
+
+    myShape.color = (RGB(uid_RGB2(gen), uid_RGB2(gen), uid_RGB2(gen)));
+
+    for (int i = 0; i < maxBlockSize; ++i) {
+
+        do {
+            pX = uid_Position(gen);
+            pY = uid_Position(gen);
+        } while (IsPositionUsed(shapes, pX, pY));
+
+        switch (uid_Block(gen))
+        {
+        case 0: //장애물
+            redBarricade = new RedBarricade();
+            redBarricade->positionX = pX;
+            redBarricade->positionY = pY;
+            shapes.push_back(redBarricade);
+            break;
+        case 1: //색상변경
+            changeColor = new ChangeColor();
+            changeColor->positionX = pX;
+            changeColor->positionY = pY;
+            changeColor->color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
+            shapes.push_back(changeColor);
+            break;
+        case 2: //크기변경(확대)
+            sizeUp = new SizeUp();
+            sizeUp->positionX = pX;
+            sizeUp->positionY = pY;
+            shapes.push_back(sizeUp);
+            break;
+        case 3: //크기변경(축소)
+            sizeDown = new SizeDown();
+            sizeDown->positionX = pX;
+            sizeDown->positionY = pY;
+            shapes.push_back(sizeDown);
+            break;
+        case 4: //모양변경
+            changeShape = new ChangeShape();
+            changeShape->positionX = pX;
+            changeShape->positionY = pY;
+            switch (uid_BlockShape(gen))
+            {
+            case 0: //세모
+                changeShape->shape_c = 'T';
+                break;
+            case 1: //네모
+                changeShape->shape_c = 'R';
+                break;
+            case 2: //원
+                changeShape->shape_c = 'C';
+                break;
+            case 3: //타원
+                changeShape->shape_c = 'E';
+                break;
+            default:
+                break;
+            }
+
+            shapes.push_back(changeShape);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+
+bool IsPositionUsed(const vector<shape*>& shapes, int x, int y) { //중복 관리
+
+    for (const auto& shape : shapes) {
+        if (shape->getX() == x && shape->getY() == y) {
+            return true; // 이미 사용 중인 위치 발견
+        }
+    }
+
+    if (x == 0 && y == 0)
+        return true;
+
+    if (x == 39 && y == 39)
+        return true;
+
+    return false; // 사용되지 않은 위치
 }
