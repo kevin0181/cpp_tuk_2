@@ -279,7 +279,7 @@ public:
 
 };
 
-void printStartShape(vector<shape*>& shapes, ChangeShape &myShape);
+void printStartShape(vector<shape*>& shapes, ChangeShape& myShape, ChangeShape& finishShape);
 bool IsPositionUsed(const vector<shape*>& shapes, int x, int y);
 
 random_device rd;
@@ -301,12 +301,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static SIZE size;
     static vector<shape*> shapes;
     static ChangeShape myShape;
+    static ChangeShape finishShape;
 
     switch (uMsg)
     {
     case WM_CREATE:
         
-        printStartShape(shapes, myShape);
+        printStartShape(shapes, myShape, finishShape);
 
         break;
     case WM_KEYUP:
@@ -318,7 +319,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
             shapes.clear(); 
 
-            printStartShape(shapes, myShape);
+            printStartShape(shapes, myShape, finishShape);
 
             InvalidateRect(hWnd, NULL, TRUE);
         }
@@ -350,6 +351,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         // 내 모양
         myShape.print_(hDC);
+        // 목표 모양
+        finishShape.print_(hDC);
 
         EndPaint(hWnd, &ps);
         break;
@@ -363,7 +366,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-void printStartShape(vector<shape*> &shapes, ChangeShape &myShape) {
+void printStartShape(vector<shape*> &shapes, ChangeShape &myShape, ChangeShape &finishShape) {
 
 
     int pX;
@@ -377,10 +380,15 @@ void printStartShape(vector<shape*> &shapes, ChangeShape &myShape) {
     SizeDown* sizeDown;
     ChangeShape* changeShape;
 
-    maxBlockSize = uid_BlockSize(gen);
-
     myShape.positionX = 0;
     myShape.positionY = 0;
+    finishShape.positionX = 39;
+    finishShape.positionY = 39;
+
+    if (uid_SizeStatus(gen)) // size change
+        finishShape.mini_status = true;
+    else
+        finishShape.mini_status = false;
 
     if (uid_SizeStatus(gen)) // size change
         myShape.mini_status = true;
@@ -405,8 +413,28 @@ void printStartShape(vector<shape*> &shapes, ChangeShape &myShape) {
         break;
     }
 
-    myShape.color = (RGB(uid_RGB2(gen), uid_RGB2(gen), uid_RGB2(gen)));
+    switch (uid_BlockShape(gen))
+    {
+    case 0: //세모
+        finishShape.shape_c = 'T';
+        break;
+    case 1: //네모
+        finishShape.shape_c = 'R';
+        break;
+    case 2: //원
+        finishShape.shape_c = 'C';
+        break;
+    case 3: //타원
+        finishShape.shape_c = 'E';
+        break;
+    default:
+        break;
+    }
 
+    myShape.color = (RGB(uid_RGB2(gen), uid_RGB2(gen), uid_RGB2(gen)));
+    finishShape.color = (RGB(uid_RGB2(gen), uid_RGB2(gen), uid_RGB2(gen)));
+
+    maxBlockSize = uid_BlockSize(gen);
     for (int i = 0; i < maxBlockSize; ++i) {
 
         do {
