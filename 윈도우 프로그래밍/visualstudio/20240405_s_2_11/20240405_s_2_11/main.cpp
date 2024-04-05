@@ -176,6 +176,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             shape.color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
             shapeList.push_back(shape);
             sh_cnt++;
+
+            for (int i = 29; i >= 0; --i) {
+                str[i] = '\0';
+            }
+            cnt_x = 0;
+
             InvalidateRect(hWnd, NULL, TRUE);
             break;
         }
@@ -230,6 +236,8 @@ void printShape(vector<Shape>& shapeList, int sh_cnt, HDC &hDC) {
         FillRect(hDC, &rect, hBrush);
         break;
     case 2:
+        MoveToEx(hDC, shapeList[sh_cnt - 1].x1, shapeList[sh_cnt - 1].y1, NULL);
+        LineTo(hDC, shapeList[sh_cnt - 1].x2, shapeList[sh_cnt - 1].y2);
         break;
     case 3:
         break;
