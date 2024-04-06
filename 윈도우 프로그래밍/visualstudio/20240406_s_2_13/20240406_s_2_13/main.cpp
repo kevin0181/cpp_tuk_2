@@ -59,7 +59,7 @@ mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
 uniform_int_distribution<int> uid_getWord(0, 5);
 uniform_int_distribution<int> uid_position(0, 19);
-
+uniform_int_distribution<int> uid_ranSize(10, 30);
 
 struct Word_s {
     TCHAR w;
@@ -67,7 +67,7 @@ struct Word_s {
     int y;
 };
 
-void randChar(TCHAR* selectWord, HDC hDC, int rand_i, vector<Word_s>& words);
+void randChar(TCHAR* selectWord, vector<Word_s>& words);
 void start(TCHAR* selectWord, HDC hDC, int rand_i);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -90,11 +90,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     static TCHAR *selectWord;
     static vector<Word_s> words;
-
+    static  int rand_i;
     switch (uMsg)
     {
     case WM_CREATE:
+    {
         selectWord = word[uid_getWord(gen)];
+
+        uniform_int_distribution<int> uid_ri(0, lstrlen(selectWord) - 1);
+        rand_i = uid_ri(gen);
+
+        int rand2 = uid_ranSize(gen);
+
+        for (int i = 0; i < rand2; ++i) {
+            randChar(selectWord, words);
+        }
+    }
         break;
     case WM_KEYUP:
         break;
@@ -137,15 +148,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             LineTo(hDC, gridSize * cellSize, x * cellSize);
         }
 
-        uniform_int_distribution<int> uid_ri(0, lstrlen(selectWord) - 1);
-        int rand_i = uid_ri(gen);
         start(selectWord, hDC, rand_i);
-        randChar(selectWord, hDC, rand_i, words);
+
         for (auto& word : words) {
             SIZE textSize;
             GetTextExtentPoint32(hDC, &word.w, 1, &textSize); // 글자의 크기를 가져옴
             int letterX = (cellSize - textSize.cx) / 2 + (cellSize * word.x); // 가운데 정렬을 위해 X 좌표 계산
-            int letterY = 0; // 가운데 정렬을 위해 Y 좌표 계산
+            int letterY = (cellSize - textSize.cy) / 2 + (cellSize * word.y); // 가운데 정렬을 위해 Y 좌표 계산
             TextOut(hDC, letterX, letterY, &word.w, 1); // 글자 출력
         }
 
@@ -162,12 +171,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-void randChar(TCHAR* selectWord, HDC hDC, int rand_i, vector<Word_s> &words) {
+void randChar(TCHAR* selectWord, vector<Word_s> &words) {
+
+    int p_x;
+    int p_y;
+
+    p_x = uid_position(gen);
+    p_y = uid_position(gen);
+
+    if (p_x == 0 && p_y == 0) {
+        return;
+    }
+
     uniform_int_distribution<> uid_Alpha('A', 'z');
     Word_s word;
     word.w = uid_Alpha(gen);
-    word.x = uid_position(gen);
-    word.y = uid_position(gen);
+    word.x = p_x;
+    word.y = p_y;
 
     words.push_back(word);
 }
