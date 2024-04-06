@@ -146,7 +146,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     Shape shape;
     static int sh_cnt;
     static vector<Shape> shapeList;
-
     switch (uMsg)
     {
     case WM_CREATE:
@@ -159,6 +158,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         break;
     case WM_KEYDOWN:
+
+        if (shapeList.size() == 0) {
+            break;
+        }
+        else {
+            auto& lastShape = shapeList.back();
+
+            switch (wParam)
+            {
+            case VK_LEFT:
+                lastShape.x1 -= 10; // 왼쪽으로 10 단위 이동
+                lastShape.x2 -= 10;
+                break;
+            case VK_RIGHT:
+                lastShape.x1 += 10; // 오른쪽으로 10 단위 이동
+                lastShape.x2 += 10;
+                break;
+            case VK_UP:
+                lastShape.y1 -= 10; // 위로 10 단위 이동
+                lastShape.y2 -= 10;
+                break;
+            case VK_DOWN:
+                lastShape.y1 += 10; // 아래로 10 단위 이동
+                lastShape.y2 += 10;
+                break;
+            default:
+                break;
+            }
+        }
+        InvalidateRect(hWnd, NULL, TRUE);
 
         break;
     case WM_CHAR:
@@ -205,7 +234,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         }
         else {
 
-            auto& lastShape = shapeList.back();
+           auto& lastShape = shapeList.back();
 
             switch (wParam)
             {
@@ -232,6 +261,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     lastShape.thickness = max(1, lastShape.thickness - 1);
                 }
                 break;
+           
             default:
                 break;
             }
