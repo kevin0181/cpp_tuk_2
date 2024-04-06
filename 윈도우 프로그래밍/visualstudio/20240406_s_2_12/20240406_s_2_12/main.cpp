@@ -153,12 +153,11 @@ uniform_int_distribution<int> uid_RGB(0, 255);
 uniform_int_distribution<int> uid_RGB2(0, 254);
 uniform_int_distribution<int> uid_BlockSize(30, 60);
 uniform_int_distribution<int> uid_Block(0, 4);
-uniform_int_distribution<int> uid_Position(1, 39);
+
 uniform_int_distribution<int> uid_BlockShape(0, 3);
 uniform_int_distribution<int> uid_SizeStatus(0, 1);
 
 int gridSize{};
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     PAINTSTRUCT ps;
@@ -244,6 +243,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case 'l':
             gridSize = 50;
             break;
+        case 'e':
+            printStartShape(shapes, 'C');
+            break;
+        case 't':
+            printStartShape(shapes, 'T');
+            break;
+        case 'r':
+            printStartShape(shapes, 'R');
+            break;
         default:
             break;
         }
@@ -286,6 +294,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 void printStartShape(vector<shape*>& shapes, char order_ch) {
 
+    uniform_int_distribution<int> uid_Position(0, gridSize-1);
     int pX;
     int pY;
     int maxBlockSize;
@@ -303,19 +312,18 @@ void printStartShape(vector<shape*>& shapes, char order_ch) {
     changeShape = new ChangeShape();
     changeShape->positionX = pX;
     changeShape->positionY = pY;
+    changeShape->color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
     switch (order_ch)
     {
-    case 0: //세모
+    case 'T': //세모
         changeShape->shape_c = 'T';
         break;
-    case 1: //네모
+    case 'R': //네모
         changeShape->shape_c = 'R';
         break;
-    case 2: //원
+    case 'C': //원
         changeShape->shape_c = 'C';
         break;
-    case 3: //타원
-        changeShape->shape_c = 'E';
         break;
     default:
         break;
