@@ -194,8 +194,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static RECT rect;
     static SIZE size;
     static vector<shape*> shapes;
-    int saveMyShapeX;
-    int saveMyShapeY;
     static int selectShape;
     static bool c_status = false;
     switch (uMsg)
@@ -262,6 +260,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         switch (wParam)
         {
+        case 'q':
+            PostQuitMessage(0);
+            break;
         case 's':
             gridSize = 30;
             break;
@@ -279,6 +280,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
         case 'r':
             printStartShape(shapes, 'R');
+            break;
+        case 'd':
+            if (shapes.size() != 0) {
+                for (int i = selectShape; i < shapes.size() - 1; ++i)
+                {
+                    shapes[i] = shapes[i + 1];
+                }
+                shapes.pop_back();
+                selectShape = 0;
+            }
             break;
         case'c':
         {
@@ -381,7 +392,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 void printStartShape(vector<shape*>& shapes, char order_ch) {
 
     if (shapes.size() >= 10) {
-        return;
+        for (int i = 1; i < shapes.size(); ++i)
+        {
+            shapes[i - 1] = shapes[i];
+        }
+        shapes.pop_back();
     }
 
     uniform_int_distribution<int> uid_Position(0, gridSize-1);
