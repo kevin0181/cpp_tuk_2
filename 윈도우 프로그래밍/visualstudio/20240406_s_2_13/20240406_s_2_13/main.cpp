@@ -57,6 +57,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
+uniform_int_distribution<int> uid_getWord(0, 5);
+uniform_int_distribution<int> uid_position(0, 19);
+
+
+struct Word_s {
+    TCHAR w;
+    int x;
+    int y;
+};
+
+void randChar(TCHAR* selectWord, HDC hDC, int rand_i, vector<Word_s>& words);
+void start(TCHAR* selectWord, HDC hDC, int rand_i);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
@@ -67,10 +79,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static RECT rect;
     static SIZE size;
 
+    static TCHAR word[6][100] = {
+         _T("APPLE"),
+         _T("BANANA"),
+         _T("CHERRY"),
+         _T("Hello, World!"),
+         _T("Goodbye!"),
+         _T("Win32 API.")
+    };
+
+    static TCHAR *selectWord;
+    static vector<Word_s> words;
+
     switch (uMsg)
     {
     case WM_CREATE:
-
+        selectWord = word[uid_getWord(gen)];
         break;
     case WM_KEYUP:
         break;
@@ -99,7 +123,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_SIZE:
         break;
     case WM_PAINT:
-
+    {
         hDC = BeginPaint(hWnd, &ps);
 
         // 바둑판 선 그리기
@@ -113,8 +137,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             LineTo(hDC, gridSize * cellSize, x * cellSize);
         }
 
+        uniform_int_distribution<int> uid_ri(0, lstrlen(selectWord) - 1);
+        int rand_i = uid_ri(gen);
+        start(selectWord, hDC, rand_i);
+        randChar(selectWord, hDC, rand_i, words);
+        for (auto& word : words) {
+            SIZE textSize;
+            GetTextExtentPoint32(hDC, &word.w, 1, &textSize); // 글자의 크기를 가져옴
+            int letterX = (cellSize - textSize.cx) / 2 + (cellSize * word.x); // 가운데 정렬을 위해 X 좌표 계산
+            int letterY = 0; // 가운데 정렬을 위해 Y 좌표 계산
+            TextOut(hDC, letterX, letterY, &word.w, 1); // 글자 출력
+        }
+
         EndPaint(hWnd, &ps);
         break;
+    }
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
@@ -123,4 +160,37 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+void randChar(TCHAR* selectWord, HDC hDC, int rand_i, vector<Word_s> &words) {
+    uniform_int_distribution<> uid_Alpha('A', 'z');
+    Word_s word;
+    word.w = uid_Alpha(gen);
+    word.x = uid_position(gen);
+    word.y = uid_position(gen);
+
+    words.push_back(word);
+}
+
+void start(TCHAR* selectWord, HDC hDC, int rand_i) {
+    // 선택된 단어 출력하기
+    int wordLength = lstrlen(selectWord);
+    SIZE textSize;
+    int startX = (gridSize - wordLength) / 2 * cellSize; // 그리드 가운데에 단어를 배치
+    for (int i = 0; i < wordLength; ++i) {
+        if (rand_i == i) {
+            TCHAR letter[2] = { ' ', _T('\0') }; // 단어에서 글자를 가져옴
+            GetTextExtentPoint32(hDC, letter, 1, &textSize); // 글자의 크기를 가져옴
+            int letterX = startX + i * cellSize + (cellSize - textSize.cx) / 2; // 가운데 정렬을 위해 X 좌표 계산
+            int letterY = ((gridSize / 2) * cellSize + (cellSize - textSize.cy) / 2) - (cellSize * 9); // 가운데 정렬을 위해 Y 좌표 계산
+            TextOut(hDC, letterX, letterY, letter, 1); // 글자 출력
+        }
+        else {
+            TCHAR letter[2] = { selectWord[i], _T('\0') }; // 단어에서 글자를 가져옴
+            GetTextExtentPoint32(hDC, letter, 1, &textSize); // 글자의 크기를 가져옴
+            int letterX = startX + i * cellSize + (cellSize - textSize.cx) / 2; // 가운데 정렬을 위해 X 좌표 계산
+            int letterY = ((gridSize / 2) * cellSize + (cellSize - textSize.cy) / 2) - (cellSize * 9); // 가운데 정렬을 위해 Y 좌표 계산
+            TextOut(hDC, letterX, letterY, letter, 1); // 글자 출력
+        }
+    }
 }
