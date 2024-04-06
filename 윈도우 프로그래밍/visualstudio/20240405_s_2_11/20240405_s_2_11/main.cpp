@@ -121,12 +121,12 @@ mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
 
 struct Shape {
-    int shapeType;
-    int x1;
-    int y1;
-    int x2;
-    int y2;
-    int thickness;
+    int shapeType = -1;
+    int x1 = -1;
+    int y1 = -1;
+    int x2 = -1;
+    int y2 = -1;
+    int thickness = -1;
     COLORREF color;
     COLORREF borderColor;
 };
@@ -160,7 +160,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_KEYDOWN:
 
-      
         break;
     case WM_CHAR:
 
@@ -174,6 +173,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         if (wParam == VK_RETURN) {
             wistringstream iss(str);
             iss >> shape.shapeType >> shape.x1 >> shape.y1 >> shape.x2 >> shape.y2 >> shape.thickness;
+
+            if (shape.shapeType == -1 || shape.x1 == -1 || shape.y1 == -1 || shape.x2 == -1 || shape.y2 == -1 || shape.thickness == -1) {
+                for (int i = 29; i >= 0; --i) {
+                    str[i] = '\0';
+                }
+
+                cnt_x = 0;
+
+                InvalidateRect(hWnd, NULL, TRUE);
+                break;
+            }
+
             shape.color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
             shape.borderColor = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
             shapeList.push_back(shape);
@@ -188,8 +199,45 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
         }
 
-        str[cnt_x++] = wParam;
-        str[cnt_x] = '\0';
+        if (wParam >= '0' && wParam <= '9' || wParam == ' ') {
+            str[cnt_x++] = wParam;
+            str[cnt_x] = '\0';
+        }
+        else {
+
+            auto& lastShape = shapeList.back();
+
+            switch (wParam)
+            {
+            case 'p':
+                
+                if (lastShape.thickness > 10) {
+                    lastShape.x1--;
+                    lastShape.y1--;
+                    lastShape.x2++;
+                    lastShape.y2++;
+                }
+                else {
+                    lastShape.thickness++; // ±½±β Αυ°‘
+                }
+                break;
+            case 'o':
+                if (lastShape.thickness <= 1) {
+                    lastShape.x1++;
+                    lastShape.y1++;
+                    lastShape.x2--;
+                    lastShape.y2--;
+                }
+                else {
+                    lastShape.thickness = max(1, lastShape.thickness - 1);
+                }
+                break;
+            default:
+                break;
+            }
+        }
+
+
         InvalidateRect(hWnd, NULL, TRUE);
         break;
     case WM_SIZE:
