@@ -261,7 +261,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     lastShape.thickness = max(1, lastShape.thickness - 1);
                 }
                 break;
-           
+            case 'i':
+                lastShape.borderColor = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
+                break;
+            case 'u':
+                lastShape.color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
+                break;
+            case '[':
+                sh_cnt--;
+                if (sh_cnt <= 0) {
+                    sh_cnt = 1;
+                    MessageBox(NULL, L"첫번째 도형입니다.", L"알림", MB_OK | MB_ICONINFORMATION);
+                }
+                break;
+            case ']':
+                sh_cnt++;
+                if (sh_cnt >= shapeList.size()) {
+                    sh_cnt = shapeList.size();
+                    MessageBox(NULL, L"마지막 도형입니다.", L"알림", MB_OK | MB_ICONINFORMATION);
+                }
+                break;
             default:
                 break;
             }
