@@ -59,6 +59,11 @@ public:
     virtual void print_(HDC hDC) = 0;
     virtual int getX() = 0;
     virtual int getY() = 0;
+    virtual void sizeUp() = 0;
+    virtual void sizeDown() = 0;
+    virtual COLORREF getColor() = 0;
+    virtual void setOriginalShape(char c) = 0;
+    virtual void resetShape() = 0;
 };
 
 class ChangeShape : public shape {
@@ -71,6 +76,7 @@ public:
     HBRUSH hBrush, oldBrush;
     HPEN hPen, oldPen;
     char shape_c;
+    char original_c;
     bool mini_status = false; // false = Å«, true = ÀÛÀº
 
     void print_(HDC hDC) override {
@@ -143,6 +149,26 @@ public:
     int getY() {
         return positionY;
     }
+
+    void sizeUp() {
+        mini_status = false;
+    }
+
+    void sizeDown() {
+        mini_status = true;
+    }
+
+    COLORREF getColor() {
+        return color;
+    }
+
+    void setOriginalShape(char c) {
+        shape_c = original_c;
+        shape_c = c;
+    }
+    void resetShape() {
+        shape_c = original_c;
+    }
 };
 
 void printStartShape(vector<shape*>& shapes, char order_ch);
@@ -171,7 +197,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     int saveMyShapeX;
     int saveMyShapeY;
     static int selectShape;
-
+    static bool c_status = false;
     switch (uMsg)
     {
     case WM_CREATE:
@@ -254,6 +280,45 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case 'r':
             printStartShape(shapes, 'R');
             break;
+        case'c':
+        {
+            ChangeShape* changeShape = static_cast<ChangeShape*>(shapes[selectShape]);
+            if (c_status) {
+                for (auto& shape : shapes) {
+                    if (changeShape->color == shape->getColor()) {
+                        changeShape->shape_c = changeShape->original_c;
+                        shape->resetShape();
+                    }
+                }
+                c_status = false;
+            }
+            else {
+               
+                for (auto& shape : shapes) {
+                    if (changeShape->color == shape->getColor()) {
+                        changeShape->original_c = changeShape->shape_c;
+                        changeShape->shape_c = 'E';
+
+                        shape->setOriginalShape('E');
+                    }
+                }
+                c_status = true;
+            }
+           
+        }
+            break;
+        case ']':
+        {
+            auto& changeShape = shapes[selectShape];
+            changeShape->sizeUp();
+            break;
+        }
+        case '[':
+        {
+            auto& changeShape = shapes[selectShape];
+            changeShape->sizeDown();
+            break;
+        }
         default:
             break;
         }
