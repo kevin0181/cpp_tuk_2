@@ -67,6 +67,7 @@ public:
     int positionX{};
     int positionY{};
     COLORREF color = RGB(255, 165, 0); //주황
+    COLORREF bolderColor = RGB(255, 255, 255);
     HBRUSH hBrush, oldBrush;
     HPEN hPen, oldPen;
     char shape_c;
@@ -75,7 +76,7 @@ public:
     void print_(HDC hDC) override {
         hBrush = CreateSolidBrush(color);
         oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
-        hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+        hPen = CreatePen(PS_SOLID, 2, bolderColor);
         oldPen = (HPEN)SelectObject(hDC, hPen);
         switch (shape_c)
         {
@@ -169,6 +170,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static vector<shape*> shapes;
     int saveMyShapeX;
     int saveMyShapeY;
+    static int selectShape;
 
     switch (uMsg)
     {
@@ -191,40 +193,40 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_KEYDOWN:
 
         hDC = BeginPaint(hWnd, &ps);
-
-        //saveMyShapeX = myShape.positionX;
-        //saveMyShapeY = myShape.positionY;
-
-        //switch (wParam) // myShape 이동
-        //{
-        //case VK_LEFT:
-        //    myShape.positionX -= 1;
-        //    if (myShape.positionX == -1) {
-        //        myShape.positionX = 39;
-        //    }
-        //    break;
-        //case VK_RIGHT:
-        //    myShape.positionX += 1;
-        //    if (myShape.positionX == 40) {
-        //        myShape.positionX = 0;
-        //    }
-        //    break;
-        //case VK_UP:
-        //    myShape.positionY -= 1;
-        //    if (myShape.positionY == -1) {
-        //        myShape.positionY = 39;
-        //    }
-        //    break;
-        //case VK_DOWN:
-        //    myShape.positionY += 1;
-        //    if (myShape.positionY == 40) {
-        //        myShape.positionY = 0;
-        //    }
-        //    break;
-        //default:
-        //    break;
-        //}
-
+        
+        if (shapes.size() >= 1) {
+            ChangeShape* changeShape = static_cast<ChangeShape*>(shapes[selectShape]);
+            switch (wParam) // myShape 이동
+            {
+            case VK_LEFT:
+                changeShape->positionX -= 1;
+                if (changeShape->positionX == -1) {
+                    changeShape->positionX = 39;
+                }
+                break;
+            case VK_RIGHT:
+                changeShape->positionX += 1;
+                if (changeShape->positionX == 40) {
+                    changeShape->positionX = 0;
+                }
+                break;
+            case VK_UP:
+                changeShape->positionY -= 1;
+                if (changeShape->positionY == -1) {
+                    changeShape->positionY = 39;
+                }
+                break;
+            case VK_DOWN:
+                changeShape->positionY += 1;
+                if (changeShape->positionY == 40) {
+                    changeShape->positionY = 0;
+                }
+                break;
+            default:
+                break;
+            }
+        }
+        
 
         InvalidateRect(hWnd, NULL, TRUE);
 
@@ -256,6 +258,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
         }
 
+        if (wParam >= '0' && wParam <= '9') {
+            if (wParam - '0' < shapes.size()) {
+                //변경 전
+                ChangeShape* changeShapeB = static_cast<ChangeShape*>(shapes[selectShape]);
+                changeShapeB->bolderColor = RGB(255, 255, 255);
+
+
+                //변경
+                selectShape = wParam - '0';
+                ChangeShape* changeShapeA = static_cast<ChangeShape*>(shapes[selectShape]);
+                changeShapeA->bolderColor = RGB(100, 100, 100);
+            }
+        }
+
         InvalidateRect(hWnd, NULL, TRUE);
 
         break;
@@ -280,6 +296,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             shape->print_(hDC);
         }
 
+        if (shapes.size() != 0) {
+            auto& shapeP = shapes[selectShape];
+            shapeP->print_(hDC);
+        }
+
         EndPaint(hWnd, &ps);
         break;
     case WM_DESTROY:
@@ -293,6 +314,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 }
 
 void printStartShape(vector<shape*>& shapes, char order_ch) {
+
+    if (shapes.size() >= 10) {
+        return;
+    }
 
     uniform_int_distribution<int> uid_Position(0, gridSize-1);
     int pX;
