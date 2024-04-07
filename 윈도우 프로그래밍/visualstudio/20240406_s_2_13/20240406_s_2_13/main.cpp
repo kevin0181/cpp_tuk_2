@@ -119,6 +119,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static TCHAR *selectWord;
     static vector<Word_s> words;
     static  int rand_i;
+
+    int position_arrow;
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -145,6 +148,76 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_KEYDOWN:
 
         hDC = BeginPaint(hWnd, &ps);
+
+        switch (wParam) // myShape ¿Ãµø
+        {
+        case VK_LEFT:
+            myShape.positionX -= 1;
+            if (myShape.positionX == -1) {
+                myShape.positionX = 19;
+            }
+            position_arrow = 0;
+            break;
+        case VK_RIGHT:
+            myShape.positionX += 1;
+            if (myShape.positionX == 20) {
+                myShape.positionX = 0;
+            }
+            position_arrow = 1;
+            break;
+        case VK_UP:
+            myShape.positionY -= 1;
+            if (myShape.positionY == -1) {
+                myShape.positionY = 19;
+            }
+            position_arrow = 2;
+            break;
+        case VK_DOWN:
+            myShape.positionY += 1;
+            if (myShape.positionY == 20) {
+                myShape.positionY = 0;
+            }
+            position_arrow = 3;
+            break;
+        default:
+            break;
+        }
+
+        for (auto& word : words) {
+            if (word.x == myShape.positionX && word.y == myShape.positionY) {
+
+                switch (position_arrow)
+                {
+                case 0:
+                    word.x -= 1;
+                    if (word.x == -1) {
+                        word.x = 19;
+                    }
+                    break;
+                case 1:
+                    word.x += 1;
+                    if (word.x == 20) {
+                        word.x = 0;
+                    }
+                    break;
+                case 2:
+                    word.y -= 1;
+                    if (word.y == -1) {
+                        word.y = 19;
+                    }
+                    break;
+                case 3:
+                    word.y += 1;
+                    if (word.y == 20) {
+                        word.y = 0;
+                    }
+                    break;
+                default:
+                    break;
+                }
+
+            }
+        }
 
         InvalidateRect(hWnd, NULL, TRUE);
 
