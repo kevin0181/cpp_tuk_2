@@ -59,11 +59,11 @@ mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
 uniform_int_distribution<int> uid_position(0, 19);
 uniform_int_distribution<int> uid_ranSize(10, 30);
-uniform_int_distribution<> uid_ranAlpha('A', 'z');
+uniform_int_distribution<> uid_ranAlpha('a', 'z');
 uniform_int_distribution<int> uid_num(0, 9);
 
 struct Word_s {
-    TCHAR w;
+    vector<TCHAR> w;
     int x;
     int y;
 };
@@ -96,6 +96,8 @@ public:
 };
 
 void randChar(vector<Word_s>& words, int status);
+char addCharacters(char ch1, char ch2);
+char addCharAndNumber(char ch, int num);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
@@ -111,6 +113,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     int position_arrow;
 
+    Word_s wo;
+    static int mode_status;
     switch (uMsg)
     {
     case WM_CREATE:
@@ -159,9 +163,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
         }
 
-        Word_s wo;
         int change_i;
-        for (int i = 0; i < words.size();++i) {
+        for (int i = 0; i < words.size(); ++i) {
             if (words[i].x == myShape.positionX && words[i].y == myShape.positionY) {
                 switch (position_arrow)
                 {
@@ -197,22 +200,66 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             }
         }
 
-        /*for (int i = 0; i < words.size(); ++i) {
-            if (wo.x == words[i].x && wo.y == words[i].y && change_i != i) {
-                wo.w = (wo.w - '0') + (words[i].w - '0') + '0';
-                words[i] = wo;
-                words.erase(words.begin() + change_i);
-            }
-        }*/
 
-        for (int i = 0; i < words.size(); ++i) {
-            if (wo.x == words[i].x && wo.y == words[i].y && change_i != i) {
-                wo.w = (wo.w - '0') + (words[i].w - '0') + '0';
-                words[i] = wo;
-                words.erase(words.begin() + change_i);
+
+        switch (mode_status)
+        {
+        case 1:
+            for (int i = 0; i < words.size(); ++i) {
+                if (wo.x == words[i].x && wo.y == words[i].y && change_i != i) {
+
+                    int sum = stoi(wstring(wo.w.begin(), wo.w.end())) + stoi(wstring(words[i].w.begin(), words[i].w.end()));
+
+                    wo.w.clear();
+
+                    for (auto ch : to_wstring(sum)) {
+                        wo.w.push_back(ch);
+                    }
+
+                    words[i] = wo;
+                    words.erase(words.begin() + change_i);
+                }
             }
+            break;
+        default:
+            for (int i = 0; i < words.size(); ++i) {
+                if (wo.x == words[i].x && wo.y == words[i].y && change_i != i) {
+                    int num1, num2, sum;
+                    if (std::isalpha(wo.w[0]) && std::isalpha(words[i].w[0])) {
+                        // 두 값 모두 문자일 때
+                        num1 = wo.w[0] - 'a' + 1;
+                        num2 = words[i].w[0] - 'a' + 1;
+                        sum = (num1 + num2 - 1) % 26 + 1;
+                        words[i].w[0] = 'a' + sum - 1;
+                    }
+                    else if (std::isalpha(wo.w[0]) && std::isdigit(words[i].w[0])) {
+                        // wo.w가 문자이고 words[i].w가 숫자일 때
+                        num1 = wo.w[0] - 'a' + 1;
+                        num2 = words[i].w[0] - '0'; // ASCII '0'부터 '9'까지 1부터 10까지 매핑
+                        sum = (num1 + num2 - 1) % 26 + 1;
+                        words[i].w[0] = 'a' + sum - 1;
+                    }
+                    else if (std::isdigit(wo.w[0]) && std::isalpha(words[i].w[0])) {
+                        // wo.w가 숫자이고 words[i].w가 문자일 때
+                        num1 = wo.w[0] - '0';
+                        num2 = words[i].w[0] - 'a' + 1;
+                        sum = (num1 + num2 - 1) % 26 + 1;
+                        words[i].w[0] = 'a' + sum - 1;
+                    }
+                    else {
+                        // 두 값 모두 숫자일 때
+                        num1 = wo.w[0] - '0';
+                        num2 = words[i].w[0] - '0';
+                        sum = (num1 + num2) % 10;
+                        words[i].w[0] = '0' + sum;
+                    }
+
+                    words.erase(words.begin() + change_i);
+                    break; // 일치하는 첫 번째 요소를 처리한 후 반복 종료
+                }
+            }
+            break;
         }
-
 
         InvalidateRect(hWnd, NULL, TRUE);
 
@@ -230,6 +277,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case '1':
         {
             words.clear();
+            myShape.positionX = 0;
+            myShape.positionY = 0;
+
+            mode_status = 1;
 
             int rand2 = uid_ranSize(gen);
 
@@ -241,7 +292,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case '2':
         {
             words.clear();
-
+            myShape.positionX = 0;
+            myShape.positionY = 0;
+            mode_status = 2;
             int rand2 = uid_ranSize(gen);
 
             for (int i = 0; i < rand2; ++i) {
@@ -252,6 +305,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case '3':
         {
             words.clear();
+            myShape.positionX = 0;
+            myShape.positionY = 0;
+
+            mode_status = 3;
 
             int rand2 = uid_ranSize(gen);
 
@@ -286,10 +343,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         for (auto& word : words) {
             SIZE textSize;
-            GetTextExtentPoint32(hDC, &word.w, 1, &textSize); // 글자의 크기를 가져옴
+            GetTextExtentPoint32(hDC, word.w.data(), 1, &textSize); // 글자의 크기를 가져옴
             int letterX = (cellSize - textSize.cx) / 2 + (cellSize * word.x); // 가운데 정렬을 위해 X 좌표 계산
             int letterY = (cellSize - textSize.cy) / 2 + (cellSize * word.y); // 가운데 정렬을 위해 Y 좌표 계산
-            TextOut(hDC, letterX, letterY, &word.w, 1); // 글자 출력
+            TextOut(hDC, letterX, letterY, word.w.data(), word.w.size()); // 글자 출력
         }
 
         myShape.print_(hDC);
@@ -322,28 +379,48 @@ void randChar(vector<Word_s>& words, int status) {
     switch (status)
     {
     case 0: // 숫자만
-        word.w = uid_num(gen) + '0';
+        word.w.push_back(uid_num(gen) + '0');
         break;
     case 1: // 영어만
-        word.w = uid_ranAlpha(gen);
+        word.w.push_back(uid_ranAlpha(gen));
         break;
     case 2: // 둘다
     {
         uniform_int_distribution<int> uid_ii(0, 1);
         if (uid_ii(gen) == 0) {
-            word.w = uid_num(gen) + '0';
+            word.w.push_back(uid_num(gen) + '0');
         }
         else {
-            word.w = uid_ranAlpha(gen);
+            word.w.push_back(uid_ranAlpha(gen));
         }
         break;
     }
     default:
         break;
     }
-    
+
     word.x = p_x;
     word.y = p_y;
 
     words.push_back(word);
+}// ASCII 값을 사용하여 문자를 더하는 함수
+char addCharacters(char ch1, char ch2) {
+    // 두 문자가 모두 알파벳 소문자인지 확인
+    if ((ch1 >= 'a' && ch1 <= 'z') && (ch2 >= 'a' && ch2 <= 'z')) {
+        int offset = (ch1 - 'a' + ch2 - 'a' + 1) % 26;
+        return 'a' + offset;
+    }
+    return ch1; // 기본 반환값, 예외 상황 처리가 필요할 수 있음
+}
+
+char addCharAndNumber(char ch, int num) {
+    if (ch >= 'a' && ch <= 'z') {
+        int offset = (ch - 'a' + num) % 26;
+        if (offset < 0) {
+            offset += 26; // 음수 보정
+        }
+        // 명시적으로 char로 캐스팅하여 축소 변환 오류 방지
+        return static_cast<char>('a' + offset);
+    }
+    return ch;
 }
