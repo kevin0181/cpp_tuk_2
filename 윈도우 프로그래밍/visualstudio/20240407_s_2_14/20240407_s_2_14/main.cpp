@@ -109,6 +109,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     static vector<Word_s> words;
 
+    int position_arrow;
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -130,28 +132,87 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             if (myShape.positionX == -1) {
                 myShape.positionX = 19;
             }
+            position_arrow = 0;
             break;
         case VK_RIGHT:
             myShape.positionX += 1;
             if (myShape.positionX == 20) {
                 myShape.positionX = 0;
             }
+            position_arrow = 1;
             break;
         case VK_UP:
             myShape.positionY -= 1;
             if (myShape.positionY == -1) {
                 myShape.positionY = 19;
             }
+            position_arrow = 2;
             break;
         case VK_DOWN:
             myShape.positionY += 1;
             if (myShape.positionY == 20) {
                 myShape.positionY = 0;
             }
+            position_arrow = 3;
             break;
         default:
             break;
         }
+
+        Word_s wo;
+        int change_i;
+        for (int i = 0; i < words.size();++i) {
+            if (words[i].x == myShape.positionX && words[i].y == myShape.positionY) {
+                switch (position_arrow)
+                {
+                case 0:
+                    words[i].x -= 1;
+                    if (words[i].x == -1) {
+                        words[i].x = 19;
+                    }
+                    break;
+                case 1:
+                    words[i].x += 1;
+                    if (words[i].x == 20) {
+                        words[i].x = 0;
+                    }
+                    break;
+                case 2:
+                    words[i].y -= 1;
+                    if (words[i].y == -1) {
+                        words[i].y = 19;
+                    }
+                    break;
+                case 3:
+                    words[i].y += 1;
+                    if (words[i].y == 20) {
+                        words[i].y = 0;
+                    }
+                    break;
+                default:
+                    break;
+                }
+                wo = words[i];
+                change_i = i;
+            }
+        }
+
+        /*for (int i = 0; i < words.size(); ++i) {
+            if (wo.x == words[i].x && wo.y == words[i].y && change_i != i) {
+                wo.w = (wo.w - '0') + (words[i].w - '0') + '0';
+                words[i] = wo;
+                words.erase(words.begin() + change_i);
+            }
+        }*/
+
+        for (int i = 0; i < words.size(); ++i) {
+            if (wo.x == words[i].x && wo.y == words[i].y && change_i != i) {
+                wo.w = (wo.w - '0') + (words[i].w - '0') + '0';
+                words[i] = wo;
+                words.erase(words.begin() + change_i);
+            }
+        }
+
 
         InvalidateRect(hWnd, NULL, TRUE);
 
