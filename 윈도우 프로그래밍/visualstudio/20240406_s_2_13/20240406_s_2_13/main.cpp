@@ -97,7 +97,9 @@ public:
 void randChar(TCHAR* selectWord, vector<Word_s>& words);
 void start(TCHAR* selectWord, HDC hDC, int rand_i);
 void insertWord(TCHAR ch_1, vector<Word_s>& words);
+bool resultCheck(Word_s word, TCHAR selectWord, HWND hWnd);
 
+static int result;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     PAINTSTRUCT ps;
@@ -183,33 +185,115 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
         }
 
-        for (auto& word : words) {
-            if (word.x == myShape.positionX && word.y == myShape.positionY) {
+        for (auto& word1 : words) {
+            if (word1.x == myShape.positionX && word1.y == myShape.positionY) {
 
                 switch (position_arrow)
                 {
                 case 0:
-                    word.x -= 1;
-                    if (word.x == -1) {
-                        word.x = 19;
+                    word1.x -= 1;
+                    if (word1.x == -1) {
+                        word1.x = 19;
                     }
+
+                    if(resultCheck(word1, selectWord[rand_i], hWnd))
+                    {
+                        words.clear();
+
+                        selectWord = word[uid_getWord(gen)];
+
+                        uniform_int_distribution<int> uid_ri(0, lstrlen(selectWord) - 1);
+                        rand_i = uid_ri(gen);
+
+                        int rand2 = uid_ranSize(gen);
+
+                        insertWord(selectWord[rand_i], words);
+
+                        for (int i = 0; i < rand2; ++i) {
+                            randChar(selectWord, words);
+                        }
+
+                        myShape.positionX = 0;
+                        myShape.positionY = 0;
+                    }
+
                     break;
                 case 1:
-                    word.x += 1;
-                    if (word.x == 20) {
-                        word.x = 0;
+                    word1.x += 1;
+                    if (word1.x == 20) {
+                        word1.x = 0;
+                    }
+                    if (resultCheck(word1, selectWord[rand_i], hWnd))
+                    {
+                        words.clear();
+
+                        selectWord = word[uid_getWord(gen)];
+
+                        uniform_int_distribution<int> uid_ri(0, lstrlen(selectWord) - 1);
+                        rand_i = uid_ri(gen);
+
+                        int rand2 = uid_ranSize(gen);
+
+                        insertWord(selectWord[rand_i], words);
+
+                        for (int i = 0; i < rand2; ++i) {
+                            randChar(selectWord, words);
+                        }
+
+                        myShape.positionX = 0;
+                        myShape.positionY = 0;
                     }
                     break;
                 case 2:
-                    word.y -= 1;
-                    if (word.y == -1) {
-                        word.y = 19;
+                    word1.y -= 1;
+                    if (word1.y == -1) {
+                        word1.y = 19;
+                    }
+                    if (resultCheck(word1, selectWord[rand_i], hWnd))
+                    {
+                        words.clear();
+
+                        selectWord = word[uid_getWord(gen)];
+
+                        uniform_int_distribution<int> uid_ri(0, lstrlen(selectWord) - 1);
+                        rand_i = uid_ri(gen);
+
+                        int rand2 = uid_ranSize(gen);
+
+                        insertWord(selectWord[rand_i], words);
+
+                        for (int i = 0; i < rand2; ++i) {
+                            randChar(selectWord, words);
+                        }
+
+                        myShape.positionX = 0;
+                        myShape.positionY = 0;
                     }
                     break;
                 case 3:
-                    word.y += 1;
-                    if (word.y == 20) {
-                        word.y = 0;
+                    word1.y += 1;
+                    if (word1.y == 20) {
+                        word1.y = 0;
+                    }
+                    if (resultCheck(word1, selectWord[rand_i], hWnd))
+                    {
+                        words.clear();
+
+                        selectWord = word[uid_getWord(gen)];
+
+                        uniform_int_distribution<int> uid_ri(0, lstrlen(selectWord) - 1);
+                        rand_i = uid_ri(gen);
+
+                        int rand2 = uid_ranSize(gen);
+
+                        insertWord(selectWord[rand_i], words);
+
+                        for (int i = 0; i < rand2; ++i) {
+                            randChar(selectWord, words);
+                        }
+
+                        myShape.positionX = 0;
+                        myShape.positionY = 0;
                     }
                     break;
                 default:
@@ -229,6 +313,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         {
         case 'q':
             PostQuitMessage(0);
+            break;
+        case's':
+
+            words.clear();
+
+            {
+                selectWord = word[uid_getWord(gen)];
+
+                uniform_int_distribution<int> uid_ri(0, lstrlen(selectWord) - 1);
+                rand_i = uid_ri(gen);
+
+                int rand2 = uid_ranSize(gen);
+
+                insertWord(selectWord[rand_i], words);
+
+                for (int i = 0; i < rand2; ++i) {
+                    randChar(selectWord, words);
+                }
+
+                myShape.positionX = 0;
+                myShape.positionY = 0;
+            }
+
             break;
         default:
             break;
@@ -282,6 +389,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
+bool resultCheck(Word_s word, TCHAR selectWord, HWND hWnd) {
+    if (word.x == result && word.y == 1) {
+        if (selectWord == word.w) {
+            MessageBox(
+                hWnd,                  // 부모 윈도우의 핸들
+                L"승리 !!",         // 표시할 메시지 텍스트
+                L"",         // 메시지 박스의 타이틀
+                MB_OK | MB_ICONINFORMATION // 메시지 박스 스타일
+            );
+            return true;
+        }
+    }
+    return false;
+}
+
 void randChar(TCHAR* selectWord, vector<Word_s> &words) {
 
     int p_x;
@@ -331,6 +453,7 @@ void start(TCHAR* selectWord, HDC hDC, int rand_i) {
             int letterX = startX + i * cellSize + (cellSize - textSize.cx) / 2; // 가운데 정렬을 위해 X 좌표 계산
             int letterY = ((gridSize / 2) * cellSize + (cellSize - textSize.cy) / 2) - (cellSize * 9); // 가운데 정렬을 위해 Y 좌표 계산
             TextOut(hDC, letterX, letterY, letter, 1); // 글자 출력
+            result = (startX / cellSize) + rand_i;
         }
         else {
             TCHAR letter[2] = { selectWord[i], _T('\0') }; // 단어에서 글자를 가져옴
