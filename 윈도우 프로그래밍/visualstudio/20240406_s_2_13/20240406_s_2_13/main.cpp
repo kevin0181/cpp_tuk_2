@@ -66,9 +66,37 @@ struct Word_s {
     int x;
     int y;
 };
+class Shape {
+public:
+    POINT sizePoint[6];
+    int positionX{};
+    int positionY{};
+    COLORREF color = RGB(255, 0, 0); //주황
+    COLORREF bolderColor = RGB(255, 255, 255);
+    HBRUSH hBrush, oldBrush;
+    HPEN hPen, oldPen;
+    char shape_c;
+    char original_c;
+    bool mini_status = false; // false = 큰, true = 작은
+
+    void print_(HDC hDC) {
+        hBrush = CreateSolidBrush(color);
+        oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
+        hPen = CreatePen(PS_SOLID, 2, bolderColor);
+        oldPen = (HPEN)SelectObject(hDC, hPen);
+
+        Ellipse(hDC, 0 + (positionX)*cellSize + 5, 0 + (positionY)*cellSize + 5, 35 + (positionX)*cellSize, 35 + (positionY)*cellSize);
+
+        SelectObject(hDC, oldBrush);
+        DeleteObject(hBrush);
+        DeleteObject(hPen);
+    }
+
+};
 
 void randChar(TCHAR* selectWord, vector<Word_s>& words);
 void start(TCHAR* selectWord, HDC hDC, int rand_i);
+void insertWord(TCHAR ch_1, vector<Word_s>& words);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
@@ -78,7 +106,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     HBRUSH hBrush, oldBrush;
     static RECT rect;
     static SIZE size;
-
+    static Shape myShape;
     static TCHAR word[6][100] = {
          _T("APPLE"),
          _T("BANANA"),
@@ -102,9 +130,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         int rand2 = uid_ranSize(gen);
 
+        insertWord(selectWord[rand_i], words);
+
         for (int i = 0; i < rand2; ++i) {
             randChar(selectWord, words);
         }
+
+        myShape.positionX = 0;
+        myShape.positionY = 0;
     }
         break;
     case WM_KEYUP:
@@ -148,7 +181,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             LineTo(hDC, gridSize * cellSize, x * cellSize);
         }
 
-        start(selectWord, hDC, rand_i);
 
         for (auto& word : words) {
             SIZE textSize;
@@ -157,6 +189,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             int letterY = (cellSize - textSize.cy) / 2 + (cellSize * word.y); // 가운데 정렬을 위해 Y 좌표 계산
             TextOut(hDC, letterX, letterY, &word.w, 1); // 글자 출력
         }
+
+        start(selectWord, hDC, rand_i);
+
+        selectWord[rand_i];
+
+        myShape.print_(hDC);
 
         EndPaint(hWnd, &ps);
         break;
@@ -189,6 +227,22 @@ void randChar(TCHAR* selectWord, vector<Word_s> &words) {
     word.x = p_x;
     word.y = p_y;
 
+    words.push_back(word);
+}
+
+void insertWord(TCHAR char_1, vector<Word_s>& words) {
+    int p_x;
+    int p_y;
+
+    do {
+        p_x = uid_position(gen);
+        p_y = uid_position(gen);
+    } while (p_x != 0 && p_y != 0);
+
+    Word_s word;
+    word.w = char_1;
+    word.x = p_x;
+    word.y = p_y;
     words.push_back(word);
 }
 
