@@ -273,6 +273,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             PostQuitMessage(0);
             break;
         case's':
+            words.clear();
+            myShape.positionX = 0;
+            myShape.positionY = 0;
             break;
         case '1':
         {

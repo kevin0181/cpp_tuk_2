@@ -146,6 +146,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     Shape shape;
     static int sh_cnt;
     static vector<Shape> shapeList;
+    static bool a_status = false;
     switch (uMsg)
     {
     case WM_CREATE:
@@ -191,6 +192,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         break;
     case WM_CHAR:
+
+        hDC = BeginPaint(hWnd, &ps);
 
         if (wParam == VK_BACK && cnt_x > 0) {
             cnt_x--;
@@ -281,13 +284,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     MessageBox(NULL, L"마지막 도형입니다.", L"알림", MB_OK | MB_ICONINFORMATION);
                 }
                 break;
+            case 'a':
+                a_status = !a_status;
+                break;
             default:
                 break;
             }
         }
 
-
         InvalidateRect(hWnd, NULL, TRUE);
+        EndPaint(hWnd, &ps);
         break;
     case WM_SIZE:
         break;
@@ -303,7 +309,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         SetCaretPos((size.cx), rect.bottom - (COL + 5)); //caret 위치 표시
         ShowCaret(hWnd);
 
-        printShape(shapeList, sh_cnt, hDC);
+         
+        if (a_status) {
+            for (int i = 0; i < shapeList.size(); ++i) {
+                printShape(shapeList, i + 1, hDC);
+            }
+        }
+        else {
+            printShape(shapeList, sh_cnt, hDC);
+        }
 
         EndPaint(hWnd, &ps);
         break;

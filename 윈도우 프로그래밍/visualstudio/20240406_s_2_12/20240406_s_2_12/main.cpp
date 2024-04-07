@@ -203,7 +203,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_KEYUP:
         if (wParam == 'P' || wParam == 'p') {
-
+            selectShape = 0;
             for (auto& shape : shapes) {
                 delete shape;
             }
