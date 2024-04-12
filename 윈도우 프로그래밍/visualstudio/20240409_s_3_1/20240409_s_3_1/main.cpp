@@ -57,6 +57,7 @@ struct shape {
     RECT circleRect;
     int cellSizeX;
     int cellSizeY;
+    int move_i;
 
     void print_shape(HDC& mDC) {
 
@@ -82,6 +83,7 @@ struct shape {
 random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
+uniform_int_distribution<int> uid_ran_4(0, 3);
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     PAINTSTRUCT ps;
@@ -108,8 +110,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     {
         SetTimer(hWnd, 1, 1, NULL);
 
-        shape shape_hero;
-        shapes.push_back(shape_hero);
+        for (int i = 0; i < 20; ++i) {
+            shape shape1;
+            shape1.move_i = uid_ran_4(gen);
+            shapes.push_back(shape1);
+        }
 
     }
     break;
@@ -160,9 +165,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             MoveToEx(mDC, 0, x * cellSizeY, NULL);
             LineTo(mDC, gridSize * cellSizeX, x * cellSizeY);
         }
-
         
-
         shapes[0].cellSizeX = cellSizeX;
         shapes[0].cellSizeY = cellSizeY;
 
