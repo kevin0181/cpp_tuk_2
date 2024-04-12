@@ -50,30 +50,36 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 
 }
 
+void hero_circle(int cellSizeX, int cellSizeY, HDC& mDC, int positionX, int positionY);
+
 #define gridSize 20
 
 random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     PAINTSTRUCT ps;
     HDC hDC, mDC;
     HBITMAP hBitmap;
-    HPEN hPen, oldPen;
-    HBRUSH hBrush, oldBrush;
+    HPEN mPen, oldPen;
+    HBRUSH mBrush, oldBrush;
     static RECT rect;
     static SIZE size;
-
     int cellSizeX;
     int cellSizeY;
+    static int hero_positionX{};
+    static int hero_positionY{};
+    static bool start_status = false;
+    static int Timer1Count = 0;
+    static bool hero_lineX_status = false;
+    static bool hero_lineY_status = false;
 
     switch (uMsg)
     {
     case WM_CREATE:
     {
-
+        SetTimer(hWnd, 1, 1, NULL);
     }
     break;
     case WM_KEYUP:
@@ -90,6 +96,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         switch (wParam)
         {
+        case  's': //start
+            start_status = true;
+            break;
         default:
             break;
         }
@@ -110,6 +119,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         Rectangle(mDC, 0, 0, rect.right, rect.bottom);
         cellSizeX = rect.right / gridSize;
         cellSizeY = rect.bottom / gridSize;
+
         for (int y = 0; y <= gridSize; ++y) {
             MoveToEx(mDC, y * cellSizeX, 0, NULL);
             LineTo(mDC, y * cellSizeX, gridSize * cellSizeY);
@@ -120,7 +130,51 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             LineTo(mDC, gridSize * cellSizeX, x * cellSizeY);
         }
 
+        if (start_status) {
+            if (Timer1Count % 2 == 0) {
 
+                if (hero_lineX_status) {
+                    hero_positionX--;
+                }
+                else {
+                    hero_positionX++;
+                }
+
+                if (hero_lineY_status && hero_positionX == 19) {
+                    hero_positionY--;
+                }
+                else if(hero_lineY_status && hero_positionX == -1){
+                    hero_positionY--;
+                }
+
+                if (hero_positionX > 19) {
+                    hero_positionY++;
+                    hero_lineX_status = true;
+                    hero_positionX = 19;
+                }
+
+                if (hero_positionX < 0) {
+                    hero_positionY++;
+                    hero_lineX_status = false;
+                    hero_positionX = 0;
+                }
+
+                if (hero_positionY < 1) {
+                    hero_lineY_status = false;
+                }
+
+                if (hero_positionY > 18) {
+                    hero_lineY_status = true;
+                }
+
+
+            }
+            hero_circle(cellSizeX, cellSizeY, mDC, hero_positionX, hero_positionY);
+        }
+        else {
+            hero_circle(cellSizeX, cellSizeY, mDC, 0, 0);
+        }
+        
         //--- 마지막에 메모리 DC의 내용을 화면 DC로 복사한다.
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
         DeleteDC(mDC);
@@ -128,6 +182,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_TIMER:
+        switch (wParam) {
+        case 1:
+            Timer1Count++;
+            break;
+        }
         InvalidateRect(hWnd, NULL, false);
         break;
     case WM_DESTROY:
@@ -138,4 +197,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+void hero_circle(int cellSizeX, int cellSizeY, HDC& mDC, int positionX, int positionY) {
+    HBRUSH mBrush, oldBrush;
+    static RECT circleRect;
+    // 도형 만들기
+    circleRect.left = 0;
+    circleRect.top = 0;
+    circleRect.right = cellSizeX;
+    circleRect.bottom = cellSizeY;
+
+    circleRect.left += (positionX * cellSizeX);
+    circleRect.right += (positionX * cellSizeX);
+    circleRect.top += (positionY * cellSizeY);
+    circleRect.bottom += (positionY * cellSizeY);
+
+    mBrush = CreateSolidBrush(RGB(255, 0, 0));
+    oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
+    Ellipse(mDC, circleRect.left, circleRect.top, circleRect.right, circleRect.bottom);
+    DeleteObject(mBrush);
 }
