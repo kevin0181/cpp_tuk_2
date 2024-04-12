@@ -132,42 +132,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         if (start_status) {
             if (Timer1Count % 2 == 0) {
+                // 수평 이동
+                hero_positionX += hero_lineX_status ? -1 : 1;
 
-                if (hero_lineX_status) {
-                    hero_positionX--;
-                }
-                else {
-                    hero_positionX++;
-                }
-
-                if (hero_lineY_status && hero_positionX == 19) {
-                    hero_positionY--;
-                }
-                else if(hero_lineY_status && hero_positionX == -1){
-                    hero_positionY--;
-                }
-
+                // 수평 이동에 대한 경계 검사
                 if (hero_positionX > 19) {
-                    hero_positionY++;
-                    hero_lineX_status = true;
-                    hero_positionX = 19;
+                    hero_positionX = 19; // 최대값으로 제한
+                    hero_lineX_status = true; // 방향을 왼쪽으로 변경
+                    hero_positionY += hero_lineY_status ? -1 : 1; // 수직 이동
+                }
+                else if (hero_positionX < 0) {
+                    hero_positionX = 0; // 최소값으로 제한
+                    hero_lineX_status = false; // 방향을 오른쪽으로 변경
+                    hero_positionY += hero_lineY_status ? -1 : 1; // 수직 이동
                 }
 
-                if (hero_positionX < 0) {
-                    hero_positionY++;
-                    hero_lineX_status = false;
-                    hero_positionX = 0;
+                // 수직 경계 검사 및 방향 변경
+                if (hero_positionY > 19) {
+                    hero_positionY = 19; // 아래쪽으로 제한
+                    hero_lineY_status = true; // 방향을 위로 변경
                 }
-
-                if (hero_positionY < 1) {
-                    hero_lineY_status = false;
+                else if (hero_positionY < 0) {
+                    hero_positionY = 0; // 위쪽으로 제한
+                    hero_lineY_status = false; // 방향을 아래로 변경
                 }
-
-                if (hero_positionY > 18) {
-                    hero_lineY_status = true;
-                }
-
-
             }
             hero_circle(cellSizeX, cellSizeY, mDC, hero_positionX, hero_positionY);
         }
