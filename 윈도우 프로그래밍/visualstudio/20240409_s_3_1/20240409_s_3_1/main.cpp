@@ -11,8 +11,8 @@ HINSTANCE g_hInst;
 LPCTSTR lpszClass = L"실습 3-1";
 LPCTSTR lpszWindowName = L"실습 3-1";
 
-#define WIDTH 1200
-#define HEIGHT 860
+#define WIDTH 900
+#define HEIGHT 800
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
@@ -50,7 +50,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 
 }
 
-#define cellSize 40
 #define gridSize 20
 
 random_device rd;
@@ -60,11 +59,16 @@ uniform_int_distribution<int> uid_RGB(0, 255);
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     PAINTSTRUCT ps;
-    HDC hDC;
+    HDC hDC, mDC;
+    HBITMAP hBitmap;
     HPEN hPen, oldPen;
     HBRUSH hBrush, oldBrush;
     static RECT rect;
     static SIZE size;
+
+    int cellSizeX;
+    int cellSizeY;
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -97,10 +101,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_PAINT:
     {
+        GetClientRect(hWnd, &rect);
         hDC = BeginPaint(hWnd, &ps);
+        mDC = CreateCompatibleDC(hDC);
+        hBitmap = CreateCompatibleBitmap(hDC, rect.right, rect.bottom);
+        SelectObject(mDC, (HBITMAP)hBitmap);
+
+        Rectangle(mDC, 0, 0, rect.right, rect.bottom);
+        cellSizeX = rect.right / gridSize;
+        cellSizeY = rect.bottom / gridSize;
+        for (int y = 0; y <= gridSize; ++y) {
+            MoveToEx(mDC, y * cellSizeX, 0, NULL);
+            LineTo(mDC, y * cellSizeX, gridSize * cellSizeY);
+        }
+
+        for (int x = 0; x <= gridSize; ++x) {
+            MoveToEx(mDC, 0, x * cellSizeY, NULL);
+            LineTo(mDC, gridSize * cellSizeX, x * cellSizeY);
+        }
+
+
+        //--- 마지막에 메모리 DC의 내용을 화면 DC로 복사한다.
+        BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
+        DeleteDC(mDC);
         EndPaint(hWnd, &ps);
         break;
     }
+    case WM_TIMER:
+        InvalidateRect(hWnd, NULL, false);
+        break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
