@@ -50,7 +50,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 
 }
 
-void hero_circle(int cellSizeX, int cellSizeY, HDC& mDC, int positionX, int positionY);
+struct shape {
+    int positionX;
+    int positionY;
+    HBRUSH mBrush, oldBrush;
+    RECT circleRect;
+    int cellSizeX;
+    int cellSizeY;
+
+    void print_shape(HDC& mDC) {
+
+        circleRect.left = 0;
+        circleRect.top = 0;
+        circleRect.right = cellSizeX;
+        circleRect.bottom = cellSizeY;
+
+        circleRect.left += (positionX * cellSizeX);
+        circleRect.right += (positionX * cellSizeX);
+        circleRect.top += (positionY * cellSizeY);
+        circleRect.bottom += (positionY * cellSizeY);
+
+        mBrush = CreateSolidBrush(RGB(255, 0, 0));
+        oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
+        Ellipse(mDC, circleRect.left, circleRect.top, circleRect.right, circleRect.bottom);
+        DeleteObject(mBrush);
+    }
+};
 
 #define gridSize 20
 
@@ -75,11 +100,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static bool hero_lineX_status = false;
     static bool hero_lineY_status = false;
 
+    static vector<shape> shapes;
+
     switch (uMsg)
     {
     case WM_CREATE:
     {
         SetTimer(hWnd, 1, 1, NULL);
+
+        shape shape_hero;
+        shapes.push_back(shape_hero);
+
     }
     break;
     case WM_KEYUP:
@@ -130,6 +161,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             LineTo(mDC, gridSize * cellSizeX, x * cellSizeY);
         }
 
+        
+
+        shapes[0].cellSizeX = cellSizeX;
+        shapes[0].cellSizeY = cellSizeY;
+
         if (start_status) {
             if (Timer1Count % 2 == 0) {
                 // 수평 이동
@@ -157,10 +193,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     hero_lineY_status = false; // 방향을 아래로 변경
                 }
             }
-            hero_circle(cellSizeX, cellSizeY, mDC, hero_positionX, hero_positionY);
+            shapes[0].positionX = hero_positionX;
+            shapes[0].positionY = hero_positionY;
+            shapes[0].print_shape(mDC);
         }
         else {
-            hero_circle(cellSizeX, cellSizeY, mDC, 0, 0);
+            shapes[0].positionX = 0;
+            shapes[0].positionY = 0;
+            shapes[0].print_shape(mDC);
         }
         
         //--- 마지막에 메모리 DC의 내용을 화면 DC로 복사한다.
@@ -185,24 +225,4 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
-}
-
-void hero_circle(int cellSizeX, int cellSizeY, HDC& mDC, int positionX, int positionY) {
-    HBRUSH mBrush, oldBrush;
-    static RECT circleRect;
-    // 도형 만들기
-    circleRect.left = 0;
-    circleRect.top = 0;
-    circleRect.right = cellSizeX;
-    circleRect.bottom = cellSizeY;
-
-    circleRect.left += (positionX * cellSizeX);
-    circleRect.right += (positionX * cellSizeX);
-    circleRect.top += (positionY * cellSizeY);
-    circleRect.bottom += (positionY * cellSizeY);
-
-    mBrush = CreateSolidBrush(RGB(255, 0, 0));
-    oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
-    Ellipse(mDC, circleRect.left, circleRect.top, circleRect.right, circleRect.bottom);
-    DeleteObject(mBrush);
 }
