@@ -149,6 +149,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     static RECT crossRect;
 
+    static int x_mouse;
+    static int y_mouse;
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -176,6 +179,52 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     }
     break;
+    case WM_LBUTTONDOWN:
+    {
+        x_mouse = LOWORD(lParam);
+        y_mouse = HIWORD(lParam);
+
+        POINT pt;
+        pt.x = x_mouse;
+        pt.y = y_mouse;
+        for (int i = 1; i < hero_shapes.size(); ++i) {
+            if (PtInRect(&hero_shapes[i].circleRect, pt)) {
+                // 마우스 클릭으로 선택된 세그먼트부터 끝까지 반복
+                while (i < hero_shapes.size()) {
+                    // 현재 세그먼트를 food_shapes로 이동
+                    hero_shapes[i].view_status = true; // 보이도록 설정
+                    hero_shapes[i].move_i = uid_ran_4(gen); // 무작위 방향 설정
+                    hero_shapes[i].shape_status = true; // 형태 상태 설정
+                    hero_shapes[i].ready_status = true; // 준비 상태 설정
+                    food_shapes.push_back(hero_shapes[i]); // food_shapes에 추가
+
+                    // hero_shapes에서 현재 세그먼트 제거
+                    hero_shapes.erase(hero_shapes.begin() + i); // i번째 세그먼트를 제거
+                    // 이 경우 i를 증가시키지 않음으로써 다음 세그먼트가 현재 인덱스에 올 것임
+                }
+                break; // 세그먼트 제거 후 반복문 종료
+            }
+        }
+
+        int x = x_mouse - hero_shapes[0].circleRect.left;
+        int y = y_mouse - hero_shapes[0].circleRect.top;
+
+        if (y < 0) {
+            key_status = 0;
+        }
+        else {
+            key_status = 1;
+        }
+
+        if (x < 0) {
+            key_status = 2;
+        }
+        else {
+            key_status = 3;
+        }
+        InvalidateRect(hWnd, NULL, false);
+        break;
+    }
     case WM_KEYUP:
         break;
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
@@ -218,6 +267,41 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             timerInterval = min(1000, timerInterval + 10); // 최대 간격은 1000ms로 제한
             SetTimer(hWnd, 1, timerInterval, NULL); // 타이머 재설정
             break;
+        case 'j':
+            switch (key_status)
+            {
+            case 0:
+                hero_shapes[0].positionX += 1;
+                break;
+            case 1:
+                hero_shapes[0].positionX += 1;
+                break;
+            case 2:
+                hero_shapes[0].positionY -= 1;
+                break;
+            case 3:
+                hero_shapes[0].positionY -= 1;
+                break;
+            default:
+                break;
+            }
+            break;
+        case 't':
+        {
+            if (!hero_shapes.empty()) {
+                // 첫 번째 세그먼트 저장
+                shape first_segment = hero_shapes.front();
+
+                // 첫 번째 세그먼트를 제외하고 나머지 세그먼트를 한 칸씩 앞으로 이동
+                for (size_t i = 1; i < hero_shapes.size(); ++i) {
+                    hero_shapes[i - 1] = hero_shapes[i];
+                }
+
+                // 저장해둔 첫 번째 세그먼트를 맨 끝에 삽입
+                hero_shapes.back() = first_segment;
+            }
+            break;
+        }
         default:
             break;
         }
@@ -359,7 +443,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 
             if (Timer2Count % 2 == 0) {
-                for (int i = 1; i < 20; ++i) {
+                for (int i = 1; i < food_shapes.size(); ++i) {
 
                     //부딪히면
                     for (int i = 1; i < food_shapes.size(); ++i) {
