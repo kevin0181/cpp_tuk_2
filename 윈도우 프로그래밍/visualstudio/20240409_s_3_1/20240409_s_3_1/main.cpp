@@ -66,8 +66,7 @@ struct shape {
     int cellSizeX;
     int cellSizeY;
     int move_i;
-    COLORREF colorCircle = RGB(255, 0, 0);
-    COLORREF colorFood = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
+    COLORREF color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
     bool m1_status = false;
 
     void print_circle_shape(HDC& mDC) {
@@ -82,7 +81,7 @@ struct shape {
         circleRect.top += (positionY * cellSizeY);
         circleRect.bottom += (positionY * cellSizeY);
 
-        mBrush = CreateSolidBrush(colorCircle);
+        mBrush = CreateSolidBrush(color);
         oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
         Ellipse(mDC, circleRect.left, circleRect.top, circleRect.right, circleRect.bottom);
         DeleteObject(mBrush);
@@ -100,7 +99,7 @@ struct shape {
         circleRect.right += (positionX * cellSizeX) - 2;
         circleRect.bottom += (positionY * cellSizeY) - 2;
 
-        mBrush = CreateSolidBrush(colorFood);
+        mBrush = CreateSolidBrush(color);
         oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
         Rectangle(mDC, circleRect.left, circleRect.top, circleRect.right, circleRect.bottom);
         DeleteObject(mBrush);
@@ -127,20 +126,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static bool hero_lineX_status = false;
     static bool hero_lineY_status = false;
 
-    static vector<shape> shapes;
+    static vector<shape> food_shapes;
+    static vector<shape> hero_shapes;
 
     switch (uMsg)
     {
     case WM_CREATE:
     {
-        SetTimer(hWnd, 1, 100, NULL);
-        SetTimer(hWnd, 2, 3000, NULL);
+
+        SetTimer(hWnd, 2, 50, NULL);
+
+        shape shape1;
+        
+        shape1.positionX = 0;
+        shape1.positionY = 0;
+        shape1.color = RGB(255, 0, 0);
+        hero_shapes.push_back(shape1);
+
         for (int i = 0; i < 20; ++i) {
-            shape shape1;
             shape1.move_i = uid_ran_4(gen);
             shape1.positionX = uid_position(gen);
             shape1.positionY = uid_position(gen);
-            shapes.push_back(shape1);
+            shape1.color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
+            food_shapes.push_back(shape1);
         }
 
     }
@@ -151,7 +159,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         hDC = BeginPaint(hWnd, &ps);
 
-        InvalidateRect(hWnd, NULL, TRUE);
+        InvalidateRect(hWnd, NULL, false);
 
         EndPaint(hWnd, &ps);
         break;
@@ -161,12 +169,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         {
         case  's': //start
             start_status = true;
+            SetTimer(hWnd, 1, 50, NULL);
             break;
         default:
             break;
         }
-        
-        InvalidateRect(hWnd, NULL, TRUE);
+
+        InvalidateRect(hWnd, NULL, true);
 
         break;
     case WM_SIZE:
@@ -192,79 +201,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             MoveToEx(mDC, 0, x * cellSizeY, NULL);
             LineTo(mDC, gridSize * cellSizeX, x * cellSizeY);
         }
-        
-        shapes[0].cellSizeX = cellSizeX;
-        shapes[0].cellSizeY = cellSizeY;
 
-        if (start_status) {
-            if (Timer1Count % 2 == 0) {
-                // 수평 이동
-                hero_positionX += hero_lineX_status ? -1 : 1;
-
-                // 수평 이동에 대한 경계 검사
-                if (hero_positionX > 39) {
-                    hero_positionX = 39; // 최대값으로 제한
-                    hero_lineX_status = true; // 방향을 왼쪽으로 변경
-                    hero_positionY += hero_lineY_status ? -1 : 1; // 수직 이동
-                }
-                else if (hero_positionX < 0) {
-                    hero_positionX = 0; // 최소값으로 제한
-                    hero_lineX_status = false; // 방향을 오른쪽으로 변경
-                    hero_positionY += hero_lineY_status ? -1 : 1; // 수직 이동
-                }
-
-                // 수직 경계 검사 및 방향 변경
-                if (hero_positionY > 39) {
-                    hero_positionY = 39; // 아래쪽으로 제한
-                    hero_lineY_status = true; // 방향을 위로 변경
-                }
-                else if (hero_positionY < 0) {
-                    hero_positionY = 0; // 위쪽으로 제한
-                    hero_lineY_status = false; // 방향을 아래로 변경
-                }
-            }
-            shapes[0].positionX = hero_positionX;
-            shapes[0].positionY = hero_positionY;
-            shapes[0].print_circle_shape(mDC);
-        }
-        else {
-            shapes[0].positionX = 0;
-            shapes[0].positionY = 0;
-            shapes[0].print_circle_shape(mDC);
+        for (auto& shape : food_shapes) {
+            shape.cellSizeX = cellSizeX;
+            shape.cellSizeY = cellSizeY;
+            shape.print_food_shape(mDC);  // 먹이 도형
         }
 
-        //먹이 생성
-        //if (Timer1Count % 2 == 0) {
-            for (int i = 1; i < 20; ++i) {
-                shapes[i].cellSizeX = cellSizeX;
-                shapes[i].cellSizeY = cellSizeY;
-                shapes[i].print_food_shape(mDC);
+        for (auto& shape : hero_shapes) {
+            shape.cellSizeX = cellSizeX;
+            shape.cellSizeY = cellSizeY;
+            shape.print_circle_shape(mDC);  // 주인공 도형
+        }
 
-                switch (shapes[i].move_i)
-                {
-                case 0: // 먹이 이동 방법 1
-
-                    if (shapes[i].positionX == 39)
-                        shapes[i].m1_status = true;
-                    if (shapes[i].positionX == 0)
-                        shapes[i].m1_status = false;
-
-                    shapes[i].positionX += (shapes[i].m1_status == true ? -1 : 1); // 방향에 따라 오른쪽 또는 왼쪽으로 이동
-                    break;
-                case 1: // 먹이 이동 방법 2
-                    break;
-                case 2: // 먹이 이동 방법 3
-                    break;
-                case 3: // 먹이 이동 방법 4
-                    break;
-                default:
-                    break;
-                }
-
-            }
-       // }
-       
-        //--- 마지막에 메모리 DC의 내용을 화면 DC로 복사한다.
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
         DeleteDC(mDC);
         EndPaint(hWnd, &ps);
@@ -273,15 +222,77 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_TIMER:
         switch (wParam) {
         case 1:
+            if (start_status) {
+                if (Timer1Count % 2 == 0) {
+                    // 수평 이동
+                    hero_positionX += hero_lineX_status ? -1 : 1;
+
+                    // 수평 이동에 대한 경계 검사
+                    if (hero_positionX > 39) {
+                        hero_positionX = 39; // 최대값으로 제한
+                        hero_lineX_status = true; // 방향을 왼쪽으로 변경
+                        hero_positionY += hero_lineY_status ? -1 : 1; // 수직 이동
+                    }
+                    else if (hero_positionX < 0) {
+                        hero_positionX = 0; // 최소값으로 제한
+                        hero_lineX_status = false; // 방향을 오른쪽으로 변경
+                        hero_positionY += hero_lineY_status ? -1 : 1; // 수직 이동
+                    }
+
+                    // 수직 경계 검사 및 방향 변경
+                    if (hero_positionY > 39) {
+                        hero_positionY = 39; // 아래쪽으로 제한
+                        hero_lineY_status = true; // 방향을 위로 변경
+                    }
+                    else if (hero_positionY < 0) {
+                        hero_positionY = 0; // 위쪽으로 제한
+                        hero_lineY_status = false; // 방향을 아래로 변경
+                    }
+                }
+                hero_shapes[0].positionX = hero_positionX;
+                hero_shapes[0].positionY = hero_positionY;
+                hero_shapes[0].print_circle_shape(mDC);
+            }
             Timer1Count++;
             break;
         case 2:
+        {
+           
+            //먹이 생성
+            if (Timer2Count % 2 == 0) {
+                for (int i = 1; i < 20; ++i) {
+                    switch (food_shapes[i].move_i)
+                    {
+                    case 0: // 먹이 이동 방법 1
+
+                        if (food_shapes[i].positionX == 39)
+                            food_shapes[i].m1_status = true;
+                        if (food_shapes[i].positionX == 0)
+                            food_shapes[i].m1_status = false;
+
+                        food_shapes[i].positionX += (food_shapes[i].m1_status == true ? -1 : 1); // 방향에 따라 오른쪽 또는 왼쪽으로 이동
+                        break;
+                    case 1: // 먹이 이동 방법 2
+                        break;
+                    case 2: // 먹이 이동 방법 3
+                        break;
+                    case 3: // 먹이 이동 방법 4
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
             Timer2Count++;
+            break;
+        }
+        default:
             break;
         }
         InvalidateRect(hWnd, NULL, false);
         break;
     case WM_DESTROY:
+        KillTimer(hWnd, 1);
         PostQuitMessage(0);
         break;
     default:
