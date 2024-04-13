@@ -70,9 +70,11 @@ struct shape {
     bool m1_status = false;
     bool hero_lineX_status = false;
     bool hero_lineY_status = false;
-    int move_R_i{ 0 };
-    bool shape_status = false;
-    int move_count = 0;
+    bool shape_status = false; //삼각형 or 원
+    int move_R_i{ 0 }; // 네모 계산
+    int move_count = 0; //네모 움직이는 횟수
+    bool view_status = true;
+
     void print_circle_shape(HDC& mDC) {
 
         circleRect.left = 0;
@@ -137,9 +139,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static bool start_status = false;
     static int Timer1Count = 0;
     static int Timer2Count = 0;
+    static int Timer3Count = 0;
     static int timerInterval = 50; // 초기 타이머 간격을 100ms로 설정
 
-
+    static int key_status;
     static vector<shape> food_shapes;
     static vector<shape> hero_shapes;
 
@@ -147,9 +150,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     {
     case WM_CREATE:
     {
-
+        key_status = 3;
         SetTimer(hWnd, 2, 50, NULL);
-
+       // SetTimer(hWnd, 3, timerInterval, NULL);
         shape shape1;
         
         shape1.positionX = 0;
@@ -169,13 +172,27 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     break;
     case WM_KEYUP:
         break;
-    case WM_KEYDOWN:
-
-        hDC = BeginPaint(hWnd, &ps);
-
-        InvalidateRect(hWnd, NULL, false);
-
-        EndPaint(hWnd, &ps);
+    case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
+        switch (wParam) {
+        case VK_UP:    // 위쪽 화살표 키
+            // 위쪽 키가 눌렸을 때 실행할 코드
+            key_status = 0;
+            break;
+        case VK_DOWN:  // 아래쪽 화살표 키
+            // 아래쪽 키가 눌렸을 때 실행할 코드
+            key_status = 1;
+            break;
+        case VK_LEFT:  // 왼쪽 화살표 키
+            // 왼쪽 키가 눌렸을 때 실행할 코드
+            key_status = 2;
+            break;
+        case VK_RIGHT: // 오른쪽 화살표 키
+            // 오른쪽 키가 눌렸을 때 실행할 코드
+            key_status = 3;
+            break;
+        default:
+            break;
+        }
         break;
     case WM_CHAR:
 
@@ -227,22 +244,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         }
 
         for (auto& shape : food_shapes) {
-            shape.cellSizeX = cellSizeX;
-            shape.cellSizeY = cellSizeY;
-            shape.print_s(mDC);  // 먹이 도형
+            if (shape.view_status) {
+                shape.cellSizeX = cellSizeX;
+                shape.cellSizeY = cellSizeY;
+                shape.print_s(mDC);  // 먹이 도형
+            }
         }
 
         for (auto& shape : hero_shapes) {
             shape.cellSizeX = cellSizeX;
             shape.cellSizeY = cellSizeY;
             shape.print_circle_shape(mDC);  // 주인공 도형
-        }
-
-        for (auto& shape_f : food_shapes) {
-            if (hero_shapes[0].positionX == shape_f.positionX && hero_shapes[0].positionY == shape_f.positionY && shape_f.shape_status == false) {
-                shape_f.move_i = uid_ran_4(gen);
-                shape_f.shape_status = true;
-            }
         }
 
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
@@ -254,33 +266,50 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         switch (wParam) {
         case 1:
             if (start_status) {
-                if (Timer1Count % 2 == 0) {
-                    for (int i = 0; i < hero_shapes.size(); ++i) {
-                        // 수평 이동
-                        hero_shapes[i].positionX += hero_shapes[i].hero_lineX_status ? -1 : 1;
+                for (int i = 0; i < hero_shapes.size(); ++i) {
 
-                        // 수평 이동에 대한 경계 검사
-                        if (hero_shapes[i].positionX > 39) {
-                            hero_shapes[i].positionX = 39; // 최대값으로 제한
-                            hero_shapes[i].hero_lineX_status = true; // 방향을 왼쪽으로 변경
-                            hero_shapes[i].positionY += hero_shapes[i].hero_lineY_status ? -1 : 1; // 수직 이동
-                        }
-                        else if (hero_shapes[i].positionX < 0) {
-                            hero_shapes[i].positionX = 0; // 최소값으로 제한
-                            hero_shapes[i].hero_lineX_status = false; // 방향을 오른쪽으로 변경
-                            hero_shapes[i].positionY += hero_shapes[i].hero_lineY_status ? -1 : 1; // 수직 이동
-                        }
-
-                        // 수직 경계 검사 및 방향 변경
-                        if (hero_shapes[i].positionY > 39) {
-                            hero_shapes[i].positionY = 39; // 아래쪽으로 제한
-                            hero_shapes[i].hero_lineY_status = true; // 방향을 위로 변경
-                        }
-                        else if (hero_shapes[i].positionY < 0) {
-                            hero_shapes[i].positionY = 0; // 위쪽으로 제한
-                            hero_shapes[i].hero_lineY_status = false; // 방향을 아래로 변경
-                        }
+                    switch (key_status)
+                    {
+                    case 0: // 위
+                        hero_shapes[i].positionY--;
+                        break;
+                    case 1: // 아래
+                        hero_shapes[i].positionY++;
+                        break;
+                    case 2: // 왼쪽
+                        hero_shapes[i].positionX--;
+                        break;
+                    case 3: // 오른쪽
+                        hero_shapes[i].positionX++;
+                        break;
+                    default:
+                        break;
                     }
+
+                    if (hero_shapes[i].positionX > 39) {
+                        hero_shapes[i].positionY++;
+                        hero_shapes[i].positionX = 39;
+                        key_status = 2;
+                    }
+
+                    if (hero_shapes[i].positionX < 0) {
+                        hero_shapes[i].positionY++;
+                        hero_shapes[i].positionX = 0;
+                        key_status = 3;
+                    }
+
+                    if (hero_shapes[i].positionY > 39) {
+                        hero_shapes[i].positionX++;
+                        hero_shapes[i].positionY = 39;
+                        key_status = 0;
+                    }
+
+                    if (hero_shapes[i].positionY < 0) {
+                        hero_shapes[i].positionX++;
+                        hero_shapes[i].positionY = 0;
+                        key_status = 1;
+                    }
+                    
                 }
             }
             Timer1Count++;
@@ -335,7 +364,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
                         food_shapes[i].move_count++; // 이동 카운트 증가
                         break;
-                    case 3: // 먹이 이동 방법 4 
+                    case 3:
                         break;
                     default:
                         break;
@@ -345,6 +374,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             Timer2Count++;
             break;
         }
+        case 3:
+            Timer3Count++;
+            break;
         default:
             break;
         }
