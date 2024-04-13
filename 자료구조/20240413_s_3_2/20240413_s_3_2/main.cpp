@@ -56,6 +56,10 @@ struct Block {
     RECT rect;
 };
 
+struct Circle {
+    int x, y, radius;
+};
+
 #define BLOCK_WIDTH 50  // 블록의 가로 크기
 #define BLOCK_HEIGHT 30 // 블록의 세로 크기
 #define BLOCK_COUNT 20  // 한 줄에 들어가는 블록 수
@@ -77,6 +81,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static vector<Block> blocks;
     static int blockSpeed = 5;   // 벽돌의 움직임 속도
     static int blockDirection = 1; // 벽돌의 움직임 방향 (1: 오른쪽, -1: 왼쪽)
+
+    static Circle ball;
     switch (uMsg)
     {
     case WM_CREATE:
@@ -96,6 +102,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 blocks.push_back(b);
             }
         }
+
+        // 공의 초기 위치를 윈도우의 상단 중앙에 설정합니다.
+        ball.x = WIDTH / 2;
+        ball.y = 30; // 상단에서 30픽셀 아래에 위치
+        ball.radius = 20; // 반지름은 20픽셀로 설정
+
         break;
     }
     case WM_RBUTTONDOWN:
@@ -107,15 +119,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_CHAR:
         switch (wParam)
         {
+        case 's':
+            SetTimer(hWnd, 2, 10, NULL);
+            break;
         case 'q':
             PostQuitMessage(0);
             break;
         default:
             break;
         }
-        InvalidateRect(hWnd, NULL, true);
-        break;
-    case WM_SIZE:
+        InvalidateRect(hWnd, NULL, false);
         break;
     case WM_PAINT:
     {
@@ -127,13 +140,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         Rectangle(mDC, 0, 0, rect.right, rect.bottom);
 
         // Draw blocks
+        mBrush = CreateSolidBrush(RGB(255, 0, 0)); // 빨간색 브러시 생성
+        oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
         for (const auto& block : blocks) {
-            mBrush = CreateSolidBrush(RGB(255, 0, 0)); // Red color for the brush
-            oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
-
             Rectangle(mDC, block.rect.left, block.rect.top, block.rect.right, block.rect.bottom);
-
         }
+        SelectObject(mDC, oldBrush); // 이전 브러시로 복원
+        DeleteObject(mBrush); // 브러시 객체 삭제
+
+        // 공 그리기
+        mBrush = CreateSolidBrush(RGB(0, 0, 255)); // 파란색 브러시 생성
+        oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
+        Ellipse(mDC, ball.x - ball.radius, ball.y - ball.radius, ball.x + ball.radius, ball.y + ball.radius);
+        SelectObject(mDC, oldBrush); // 이전 브러시로 복원
+        DeleteObject(mBrush); // 브러시 객체 삭제
 
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
         DeleteDC(mDC);
@@ -155,6 +175,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 block.rect = { block.x, block.y, block.x + BLOCK_WIDTH, block.y + BLOCK_HEIGHT };
             }
 
+            break;
+        case 2:
+            ball.y = ball.y + 3;
             break;
         default:
             break;
