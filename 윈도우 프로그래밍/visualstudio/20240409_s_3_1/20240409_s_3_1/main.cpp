@@ -91,6 +91,15 @@ struct shape {
         DeleteObject(mBrush);
     }
 
+    void print_s(HDC& mDC) {
+        if (shape_status) {
+            print_circle_shape(mDC);
+        }
+        else {
+            print_food_shape(mDC);
+        }
+    }
+
     void print_food_shape(HDC& mDC) {
         circleRect.left = 0;
         circleRect.top = 0;
@@ -148,13 +157,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         shape1.color = RGB(255, 0, 0);
         hero_shapes.push_back(shape1);
 
-        shape1.positionX = -1;
-        shape1.positionY = 0;
-        shape1.color = RGB(255, 255, 0);
-
-        hero_shapes.push_back(shape1);
         for (int i = 0; i < 20; ++i) {
-            shape1.move_i = uid_ran_4(gen);
+            //shape1.move_i = uid_ran_4(gen);
             shape1.positionX = uid_position(gen);
             shape1.positionY = uid_position(gen);
             shape1.color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
@@ -225,13 +229,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         for (auto& shape : food_shapes) {
             shape.cellSizeX = cellSizeX;
             shape.cellSizeY = cellSizeY;
-            shape.print_food_shape(mDC);  // 먹이 도형
+            shape.print_s(mDC);  // 먹이 도형
         }
 
         for (auto& shape : hero_shapes) {
             shape.cellSizeX = cellSizeX;
             shape.cellSizeY = cellSizeY;
             shape.print_circle_shape(mDC);  // 주인공 도형
+        }
+
+        for (auto& shape_f : food_shapes) {
+            if (hero_shapes[0].positionX == shape_f.positionX && hero_shapes[0].positionY == shape_f.positionY && shape_f.shape_status == false) {
+                shape_f.move_i = uid_ran_4(gen);
+                shape_f.shape_status = true;
+            }
         }
 
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
