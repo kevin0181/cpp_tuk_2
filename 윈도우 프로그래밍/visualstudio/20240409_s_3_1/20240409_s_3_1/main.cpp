@@ -37,7 +37,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
     WndClass.hIconSm = LoadIcon(NULL, IDI_QUESTION);
     RegisterClassEx(&WndClass);
 
-    hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW | WS_VSCROLL, 2000, 0, WIDTH, HEIGHT, NULL, (HMENU)NULL, hInstance, NULL);
+    hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW | WS_VSCROLL, 0, 0, WIDTH, HEIGHT, NULL, (HMENU)NULL, hInstance, NULL);
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
@@ -71,7 +71,7 @@ struct shape {
     bool m1_status = false;
     bool hero_lineX_status = false;
     bool hero_lineY_status = false;
-    bool shape_status = false; //삼각형 or 원
+    bool shape_status; //삼각형 or 원
     int move_R_i{ 0 }; // 네모 계산
     int move_count = 0; //네모 움직이는 횟수
     bool view_status = true;
@@ -146,7 +146,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int key_status;
     static vector<shape> food_shapes;
     static vector<shape> hero_shapes;
-
+    static vector<shape> black_rock;
     static RECT crossRect;
 
     static int x_mouse;
@@ -164,6 +164,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         shape1.positionX = 0;
         shape1.positionY = 0;
         shape1.color = RGB(255, 0, 0);
+        shape1.shape_status = true;
         hero_shapes.push_back(shape1);
 
         for (int i = 0; i < 20; ++i) {
@@ -173,12 +174,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
             shape1.positionX = uid_position(gen);
             shape1.positionY = uid_position(gen);
+            shape1.shape_status = false;
             shape1.color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
             food_shapes.push_back(shape1);
         }
 
     }
     break;
+    case WM_RBUTTONDOWN:
+    {
+        if (black_rock.size() < 20)
+        {
+            shape shape1;
+            shape1.positionX = uid_position(gen);
+            shape1.positionY = uid_position(gen);
+            shape1.shape_status = false;
+            shape1.color = RGB(0, 0, 0);
+            black_rock.push_back(shape1);
+        }
+    }
+        break;
     case WM_LBUTTONDOWN:
     {
         x_mouse = LOWORD(lParam);
@@ -302,6 +317,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             }
             break;
         }
+        case 'a':
+            if (!start_status) {
+                start_status = true;
+                SetTimer(hWnd, 1, 1, NULL);
+
+                for (int i = 0; i < food_shapes.size(); ++i) {
+                    hero_shapes.push_back(food_shapes[i]);
+                    food_shapes[i].view_status = false;
+                }
+
+                for (int i = 0; i < hero_shapes.size(); ++i) {
+                    hero_shapes[i].shape_status = true;
+                }
+            }
+            else {
+                start_status = false;
+                SetTimer(hWnd, 1, timerInterval, NULL);
+                for (int i = 0; i < food_shapes.size(); ++i) {
+                    food_shapes[i].view_status = true;
+                }
+
+                shape h = hero_shapes[0];
+
+                hero_shapes.clear();
+                hero_shapes.push_back(h);
+            }
+            break;
+        case 'q':
+            KillTimer(hWnd, 1);
+            KillTimer(hWnd, 2);
+            PostQuitMessage(0);
+            break;
         default:
             break;
         }
@@ -345,6 +392,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             shape.cellSizeX = cellSizeX;
             shape.cellSizeY = cellSizeY;
             shape.print_circle_shape(mDC);  // 주인공 도형
+        }
+
+        for (auto& black_r : black_rock) {
+            black_r.cellSizeX = cellSizeX;
+            black_r.cellSizeY = cellSizeY;
+            black_r.print_circle_shape(mDC);  // 바리게이트 도형
         }
 
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
@@ -406,6 +459,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 }
 
                 // 경계 조건 검사 및 조정
+
+                for (int i = 0; i < black_rock.size(); ++i) {
+                    if (black_rock[i].positionX == hero_shapes[0].positionX && black_rock[i].positionY == hero_shapes[0].positionY) {
+                        switch (key_status)
+                        {
+                        case 0:
+                            key_status = 1;
+                            break;
+                        case 1:
+                            key_status = 0;
+                            break;
+                        case 2:
+                            key_status = 3;
+                            break;
+                        case 3:
+                            key_status = 2;
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                }
+                
                 if (hero_shapes[0].positionX > 39) {
                     hero_shapes[0].positionX = 39;
                     hero_shapes[0].positionY++;
