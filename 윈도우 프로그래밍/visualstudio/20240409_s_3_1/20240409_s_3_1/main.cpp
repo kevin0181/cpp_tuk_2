@@ -68,6 +68,8 @@ struct shape {
     int move_i;
     COLORREF color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
     bool m1_status = false;
+    bool hero_lineX_status = false;
+    bool hero_lineY_status = false;
 
     void print_circle_shape(HDC& mDC) {
 
@@ -107,6 +109,7 @@ struct shape {
 
 };
 
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     PAINTSTRUCT ps;
@@ -123,8 +126,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static bool start_status = false;
     static int Timer1Count = 0;
     static int Timer2Count = 0;
-    static bool hero_lineX_status = false;
-    static bool hero_lineY_status = false;
+    static int timerInterval = 50; // 초기 타이머 간격을 100ms로 설정
+
 
     static vector<shape> food_shapes;
     static vector<shape> hero_shapes;
@@ -143,6 +146,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         shape1.color = RGB(255, 0, 0);
         hero_shapes.push_back(shape1);
 
+        shape1.positionX = -1;
+        shape1.positionY = 0;
+        shape1.color = RGB(255, 255, 0);
+
+        hero_shapes.push_back(shape1);
         for (int i = 0; i < 20; ++i) {
             shape1.move_i = uid_ran_4(gen);
             shape1.positionX = uid_position(gen);
@@ -169,7 +177,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         {
         case  's': //start
             start_status = true;
-            SetTimer(hWnd, 1, 50, NULL);
+            SetTimer(hWnd, 1, timerInterval, NULL);
+            break;
+        case '=':
+            // 속도 증가: 간격 감소
+            timerInterval = max(10, timerInterval - 10); // 최소 간격은 10ms로 제한
+            SetTimer(hWnd, 1, timerInterval, NULL); // 타이머 재설정
+            break;
+        case '-':
+            // 속도 감소: 간격 증가
+            timerInterval = min(1000, timerInterval + 10); // 최대 간격은 1000ms로 제한
+            SetTimer(hWnd, 1, timerInterval, NULL); // 타이머 재설정
             break;
         default:
             break;
@@ -224,34 +242,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case 1:
             if (start_status) {
                 if (Timer1Count % 2 == 0) {
-                    // 수평 이동
-                    hero_positionX += hero_lineX_status ? -1 : 1;
+                    for (int i = 0; i < hero_shapes.size(); ++i) {
+                        // 수평 이동
+                        hero_shapes[i].positionX += hero_shapes[i].hero_lineX_status ? -1 : 1;
 
-                    // 수평 이동에 대한 경계 검사
-                    if (hero_positionX > 39) {
-                        hero_positionX = 39; // 최대값으로 제한
-                        hero_lineX_status = true; // 방향을 왼쪽으로 변경
-                        hero_positionY += hero_lineY_status ? -1 : 1; // 수직 이동
-                    }
-                    else if (hero_positionX < 0) {
-                        hero_positionX = 0; // 최소값으로 제한
-                        hero_lineX_status = false; // 방향을 오른쪽으로 변경
-                        hero_positionY += hero_lineY_status ? -1 : 1; // 수직 이동
-                    }
+                        // 수평 이동에 대한 경계 검사
+                        if (hero_shapes[i].positionX > 39) {
+                            hero_shapes[i].positionX = 39; // 최대값으로 제한
+                            hero_shapes[i].hero_lineX_status = true; // 방향을 왼쪽으로 변경
+                            hero_shapes[i].positionY += hero_shapes[i].hero_lineY_status ? -1 : 1; // 수직 이동
+                        }
+                        else if (hero_shapes[i].positionX < 0) {
+                            hero_shapes[i].positionX = 0; // 최소값으로 제한
+                            hero_shapes[i].hero_lineX_status = false; // 방향을 오른쪽으로 변경
+                            hero_shapes[i].positionY += hero_shapes[i].hero_lineY_status ? -1 : 1; // 수직 이동
+                        }
 
-                    // 수직 경계 검사 및 방향 변경
-                    if (hero_positionY > 39) {
-                        hero_positionY = 39; // 아래쪽으로 제한
-                        hero_lineY_status = true; // 방향을 위로 변경
-                    }
-                    else if (hero_positionY < 0) {
-                        hero_positionY = 0; // 위쪽으로 제한
-                        hero_lineY_status = false; // 방향을 아래로 변경
+                        // 수직 경계 검사 및 방향 변경
+                        if (hero_shapes[i].positionY > 39) {
+                            hero_shapes[i].positionY = 39; // 아래쪽으로 제한
+                            hero_shapes[i].hero_lineY_status = true; // 방향을 위로 변경
+                        }
+                        else if (hero_shapes[i].positionY < 0) {
+                            hero_shapes[i].positionY = 0; // 위쪽으로 제한
+                            hero_shapes[i].hero_lineY_status = false; // 방향을 아래로 변경
+                        }
                     }
                 }
-                hero_shapes[0].positionX = hero_positionX;
-                hero_shapes[0].positionY = hero_positionY;
-                hero_shapes[0].print_circle_shape(mDC);
             }
             Timer1Count++;
             break;
