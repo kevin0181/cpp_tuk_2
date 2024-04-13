@@ -57,6 +57,7 @@ random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
 uniform_int_distribution<int> uid_ran_4(0, 3);
+uniform_int_distribution<int> uid_ran_3(1, 3);
 uniform_int_distribution<int> uid_position(0, 39);
 struct shape {
     int positionX;
@@ -75,6 +76,7 @@ struct shape {
     int move_count = 0; //네모 움직이는 횟수
     bool view_status = true;
     bool ready_status;
+    bool isWorm = false; // 이것이 먹이 지렁이인지 나타내는 플래그
 
     void print_circle_shape(HDC& mDC) {
 
@@ -123,6 +125,10 @@ struct shape {
 
 };
 
+struct Worm {
+    vector<shape> segments; // 지렁이의 각 세그먼트(먹이)를 저장하는 벡터
+    int moveDirection; // 지렁이가 현재 움직이는 방향
+};
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
@@ -140,10 +146,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int Timer2Count = 0;
     static int Timer3Count = 0;
     static int timerInterval = 50; // 초기 타이머 간격을 100ms로 설정
-
+   
     static int key_status;
     static vector<shape> food_shapes;
     static vector<shape> hero_shapes;
+    static vector<Worm> worms;
 
     static RECT crossRect;
 
@@ -200,7 +207,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         switch (wParam)
         {
         case  's': //start
-            start_status = true;
+            start_status = !start_status;
             SetTimer(hWnd, 1, timerInterval, NULL);
             break;
         case '=':
@@ -352,9 +359,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case 2:
         {
            
+            // 위치 저장을 위한 임시 벡터
+            vector<pair<int, int>> new_food_positions;
+
+            // 현재 각 부분의 위치 저장
+            for (auto& shape_f : food_shapes) {
+                new_food_positions.push_back({ shape_f.positionX, shape_f.positionY });
+            }
+
             //먹이 생성
             if (Timer2Count % 2 == 0) {
                 for (int i = 1; i < 20; ++i) {
+
+                    for (int i = 1; i < food_shapes.size(); ++i) {
+                        if (!food_shapes[i].isWorm) {
+                            for (int j = 1; j < food_shapes.size(); ++j) {
+                                if (food_shapes[i].shape_status && food_shapes[j].shape_status &&
+                                    food_shapes[i].positionX == food_shapes[j].positionX &&
+                                    food_shapes[i].positionY == food_shapes[j].positionY) {
+                                    if (i != j) {
+                                        food_shapes[i].isWorm = true;
+                                        food_shapes[j].isWorm = true;
+                                        int r_m{ 2 };
+                                        food_shapes[i].move_i = r_m;
+                                        food_shapes[j].move_i = r_m;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     switch (food_shapes[i].move_i)
                     {
                     case 0: // 먹이 이동 방법 1
@@ -396,7 +430,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                         default:
                             break;
                         }
-
                         food_shapes[i].move_count++; // 이동 카운트 증가
                         break;
                     case 3:
@@ -415,6 +448,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         default:
             break;
         }
+
         InvalidateRect(hWnd, NULL, false);
         break;
     case WM_DESTROY:
