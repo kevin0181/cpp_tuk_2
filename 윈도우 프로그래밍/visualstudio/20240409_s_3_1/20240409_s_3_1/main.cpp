@@ -70,7 +70,9 @@ struct shape {
     bool m1_status = false;
     bool hero_lineX_status = false;
     bool hero_lineY_status = false;
-
+    int move_R_i{ 0 };
+    bool shape_status = false;
+    int move_count = 0;
     void print_circle_shape(HDC& mDC) {
 
         circleRect.left = 0;
@@ -290,10 +292,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                         food_shapes[i].positionX += (food_shapes[i].m1_status == true ? -1 : 1); // 방향에 따라 오른쪽 또는 왼쪽으로 이동
                         break;
                     case 1: // 먹이 이동 방법 2
+                        if (food_shapes[i].positionY == 39)
+                            food_shapes[i].m1_status = true; // 위로 이동하는 방향으로 변경
+                        if (food_shapes[i].positionY == 0)
+                            food_shapes[i].m1_status = false; // 아래로 이동하는 방향으로 변경
+
+                        food_shapes[i].positionY += (food_shapes[i].m1_status ? -1 : 1); // 현재 방향에 따라 위 또는 아래로 이동
                         break;
                     case 2: // 먹이 이동 방법 3
+                        if (food_shapes[i].move_count >= 5) { // 5칸을 이동했다면 방향 전환
+                            food_shapes[i].move_count = 0; // 카운트 리셋
+                            food_shapes[i].move_R_i = (food_shapes[i].move_R_i + 1) % 4; // 다음 방향 설정
+                        }
+
+                        switch (food_shapes[i].move_R_i) {
+                        case 0: // 오른쪽으로 이동
+                            food_shapes[i].positionX++;
+                            break;
+                        case 1: // 아래로 이동
+                            food_shapes[i].positionY++;
+                            break;
+                        case 2: // 왼쪽으로 이동
+                            food_shapes[i].positionX--;
+                            break;
+                        case 3: // 위로 이동
+                            food_shapes[i].positionY--;
+                            break;
+                        default:
+                            break;
+                        }
+
+                        food_shapes[i].move_count++; // 이동 카운트 증가
                         break;
-                    case 3: // 먹이 이동 방법 4
+                    case 3: // 먹이 이동 방법 4 
                         break;
                     default:
                         break;
