@@ -37,7 +37,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
     WndClass.hIconSm = LoadIcon(NULL, IDI_QUESTION);
     RegisterClassEx(&WndClass);
 
-    hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW | WS_VSCROLL, 0, 0, WIDTH, HEIGHT, NULL, (HMENU)NULL, hInstance, NULL);
+    hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW | WS_VSCROLL, 2000, 0, WIDTH, HEIGHT, NULL, (HMENU)NULL, hInstance, NULL);
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
@@ -74,6 +74,7 @@ struct shape {
     int move_R_i{ 0 }; // 네모 계산
     int move_count = 0; //네모 움직이는 횟수
     bool view_status = true;
+    bool ready_status;
 
     void print_circle_shape(HDC& mDC) {
 
@@ -134,8 +135,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static SIZE size;
     int cellSizeX;
     int cellSizeY;
-    static int hero_positionX{};
-    static int hero_positionY{};
     static bool start_status = false;
     static int Timer1Count = 0;
     static int Timer2Count = 0;
@@ -145,6 +144,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int key_status;
     static vector<shape> food_shapes;
     static vector<shape> hero_shapes;
+
+    static RECT crossRect;
 
     switch (uMsg)
     {
@@ -266,51 +267,85 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         switch (wParam) {
         case 1:
             if (start_status) {
-                for (int i = 0; i < hero_shapes.size(); ++i) {
+                shape hero_s1;
 
-                    switch (key_status)
-                    {
-                    case 0: // 위
-                        hero_shapes[i].positionY--;
-                        break;
-                    case 1: // 아래
-                        hero_shapes[i].positionY++;
-                        break;
-                    case 2: // 왼쪽
-                        hero_shapes[i].positionX--;
-                        break;
-                    case 3: // 오른쪽
-                        hero_shapes[i].positionX++;
-                        break;
-                    default:
+                for (int j = 0; j < food_shapes.size(); ++j) {
+                    if (hero_shapes[0].positionX == food_shapes[j].positionX && hero_shapes[0].positionY == food_shapes[j].positionY
+                        && food_shapes[j].shape_status && food_shapes[j].ready_status) {
+                        food_shapes[j].ready_status = false;
+                        food_shapes[j].view_status = false;
+                        hero_s1 = food_shapes[j];
+                        hero_s1.positionX = food_shapes[j].positionX;
+                        hero_s1.positionY = food_shapes[j].positionY;
+                        hero_shapes.push_back(hero_s1);
                         break;
                     }
-
-                    if (hero_shapes[i].positionX > 39) {
-                        hero_shapes[i].positionY++;
-                        hero_shapes[i].positionX = 39;
-                        key_status = 2;
-                    }
-
-                    if (hero_shapes[i].positionX < 0) {
-                        hero_shapes[i].positionY++;
-                        hero_shapes[i].positionX = 0;
-                        key_status = 3;
-                    }
-
-                    if (hero_shapes[i].positionY > 39) {
-                        hero_shapes[i].positionX++;
-                        hero_shapes[i].positionY = 39;
-                        key_status = 0;
-                    }
-
-                    if (hero_shapes[i].positionY < 0) {
-                        hero_shapes[i].positionX++;
-                        hero_shapes[i].positionY = 0;
-                        key_status = 1;
-                    }
-                    
                 }
+
+                // 먹이로 만듬
+                for (int j = 0; j < food_shapes.size(); ++j) {
+                    if (hero_shapes[0].positionX == food_shapes[j].positionX && hero_shapes[0].positionY == food_shapes[j].positionY
+                        && !food_shapes[j].shape_status && food_shapes[j].view_status) {
+                        food_shapes[j].move_i = uid_ran_4(gen);
+                        food_shapes[j].shape_status = true;
+                        food_shapes[j].ready_status = true;
+                    }
+                }
+
+                // 위치 저장을 위한 임시 벡터
+                vector<pair<int, int>> new_positions;
+
+                // 현재 각 부분의 위치 저장
+                for (auto& hero : hero_shapes) {
+                    new_positions.push_back({ hero.positionX, hero.positionY });
+                }
+
+                // 키 상태에 따라 머리 위치 업데이트
+                switch (key_status) {
+                case 0: // 위
+                    hero_shapes[0].positionY--;
+                    break;
+                case 1: // 아래
+                    hero_shapes[0].positionY++;
+                    break;
+                case 2: // 왼쪽
+                    hero_shapes[0].positionX--;
+                    break;
+                case 3: // 오른쪽
+                    hero_shapes[0].positionX++;
+                    break;
+                }
+
+                // 경계 조건 검사 및 조정
+                if (hero_shapes[0].positionX > 39) {
+                    hero_shapes[0].positionX = 39;
+                    hero_shapes[0].positionY++;
+                    key_status = 2;
+                }
+                else if (hero_shapes[0].positionX < 0) {
+                    hero_shapes[0].positionX = 0;
+                    hero_shapes[0].positionY++;
+                    key_status = 3;
+                }
+
+                if (hero_shapes[0].positionY > 39) {
+                    hero_shapes[0].positionY = 39;
+                    hero_shapes[0].positionX++;
+                    key_status = 0;
+                }
+                else if (hero_shapes[0].positionY < 0) {
+                    hero_shapes[0].positionY = 0;
+                    hero_shapes[0].positionX++;
+                    key_status = 1;
+                }
+
+                // 몸통 위치 업데이트
+                for (size_t i = 1; i < hero_shapes.size(); i++) {
+                    hero_shapes[i].positionX = new_positions[i - 1].first;
+                    hero_shapes[i].positionY = new_positions[i - 1].second;
+                }
+                
+               
             }
             Timer1Count++;
             break;
@@ -384,6 +419,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_DESTROY:
         KillTimer(hWnd, 1);
+        KillTimer(hWnd, 2);
         PostQuitMessage(0);
         break;
     default:
