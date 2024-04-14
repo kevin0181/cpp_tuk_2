@@ -126,12 +126,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         break;
     }
-    case WM_RBUTTONDOWN:
-        break;
     case WM_KEYUP:
         break;
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
         break;
+    case WM_LBUTTONDOWN: {  // 마우스 왼쪽 버튼 클릭
+        for (auto& block : blocks) {
+            block.x -= 30;  // 모든 벽돌을 왼쪽으로 10 픽셀 이동
+            block.rect = { block.x, block.y, block.x + BLOCK_WIDTH, block.y + BLOCK_HEIGHT };
+        }
+        InvalidateRect(hWnd, NULL, TRUE);  // 윈도우를 다시 그립니다.
+        break;
+    }
+    case WM_RBUTTONDOWN: {  // 마우스 오른쪽 버튼 클릭
+        for (auto& block : blocks) {
+            block.x += 30;  // 모든 벽돌을 오른쪽으로 10 픽셀 이동
+            block.rect = { block.x, block.y, block.x + BLOCK_WIDTH, block.y + BLOCK_HEIGHT };
+        }
+        InvalidateRect(hWnd, NULL, TRUE);  // 윈도우를 다시 그립니다.
+        break;
+    }
     case WM_CHAR:
         switch (wParam)
         {
