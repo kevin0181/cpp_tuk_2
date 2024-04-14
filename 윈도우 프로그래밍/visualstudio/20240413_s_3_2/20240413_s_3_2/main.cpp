@@ -78,6 +78,8 @@ random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
 uniform_int_distribution<int> uid_ran_3(0, 2);
+uniform_int_distribution<int> uid_ran_4(0, 4);
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     PAINTSTRUCT ps;
@@ -96,7 +98,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static Circle ball;
 
     static Velocity ballVelocity = { 5, -5 }; // 초기 속도 (예시 값)
-
+    static bool puzz = false;
     switch (uMsg)
     {
     case WM_CREATE:
@@ -133,6 +135,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_CHAR:
         switch (wParam)
         {
+        case 'p':
+            puzz = !puzz;
+            break;
         case 's':
             speedY = uid_ran_3(gen);
             SetTimer(hWnd, 2, 10, NULL);
@@ -180,103 +185,126 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_TIMER:
-        switch (wParam) {
-        case 1:
+        if (!puzz) {
+            switch (wParam) {
+            case 1:
 
-            // 왼쪽이나 오른쪽 끝에 도달했는지 확인
-            if (blocks.front().x <= 0 || blocks.back().x + BLOCK_WIDTH >= WIDTH) {
-                blockDirection *= -1; // 방향 반전
-            }
-
-            // 모든 벽돌의 위치 업데이트
-            for (auto& block : blocks) {
-                block.x += blockSpeed * blockDirection;
-                block.rect = { block.x, block.y, block.x + BLOCK_WIDTH, block.y + BLOCK_HEIGHT };
-            }
-
-            break;
-        case 2:
-            if (speedY != -1) {
-                switch (speedY)
-                {
-                case 0:
-                    ball.y = ball.y + 2;
-                    break;
-                case 1:
-                    ball.y = ball.y + 3;
-                    break;
-                case 2:
-                    ball.y = ball.y + 5;
-                    break;
-                default:
-                    break;
+                // 왼쪽이나 오른쪽 끝에 도달했는지 확인
+                if (blocks.front().x <= 0 || blocks.back().x + BLOCK_WIDTH >= WIDTH) {
+                    blockDirection *= -1; // 방향 반전
                 }
-            }
 
-            if (speedYr != -1) {
-                switch (speedYr)
-                {
-                case 0: //직선으로 올라가기
-                    ball.y = ball.y - 2;
-                    break;
-                case 1: // 45도로 왼쪽~ 가기
-                    ball.x = ball.x - 3;
-                    ball.y = ball.y - 3;
-                    break;
-                case 2: //45도로 오른쪽~가기
-                    ball.x = ball.x + 3;
-                    ball.y = ball.y - 3;
-                    break;
-                default:
-                    break;
+                // 모든 벽돌의 위치 업데이트
+                for (auto& block : blocks) {
+                    block.x += blockSpeed * blockDirection;
+                    block.rect = { block.x, block.y, block.x + BLOCK_WIDTH, block.y + BLOCK_HEIGHT };
                 }
-            }
 
-            if ((ball.x - ball.radius) <= 0) {
-                ball.x = ball.radius;
-                speedYr = 2;
-            }
-
-            // 공이 오른쪽 벽에 닿았을 때
-            if ((ball.x + ball.radius) >= WIDTH) {
-                ball.x = WIDTH - ball.radius;  // 공이 화면 밖으로 나가지 않도록 위치 조정
-                speedYr = 1;  // 왼쪽으로 45도 방향으로 이동하도록 설정
-            }
-
-            if ((ball.y - ball.radius) <= 0) {
-                ball.y = ball.radius; // 볼이 화면 밖으로 나가지 않도록 설정
-                speedYr = -1;
-                speedY = uid_ran_3(gen);
-            }
-            
-            for (auto& block : blocks) {
-                if (CheckCollision(ball, block.rect) && block.visible) { //충돌!
-                    speedY = -1;
-                    speedYr = uid_ran_3(gen);
-                    block.stack += 1;
-                    block.color = RGB(0, 0, 0);
-                    if (block.stack == 2) { // 두번 부딪히면
-                        block.visible = false;
+                break;
+            case 2:
+                if (speedY != -1) {
+                    switch (speedY)
+                    {
+                    case 0:
+                        ball.y = ball.y + 2;
+                        break;
+                    case 1:
+                        ball.y = ball.y + 3;
+                        break;
+                    case 2:
+                        ball.y = ball.y + 5;
+                        break;
+                    default:
+                        break;
                     }
-                    break; // 다른 블록과의 충돌 검사를 중단
                 }
-            }
 
-            if (ball.y >= HEIGHT) {
-                KillTimer(hWnd, 1); // 타이머 종료
-                MessageBox(
-                    NULL,
-                    (LPCWSTR)L"실패!",
-                    (LPCWSTR)L"실패!!!",
-                    MB_ICONWARNING | MB_CANCELTRYCONTINUE | MB_DEFBUTTON2
-                );
+                if (speedYr != -1) {
+                    switch (speedYr)
+                    {
+                    case 0: //직선으로 올라가기
+                        ball.y = ball.y - 2;
+                        break;
+                    case 1: // 45도로 왼쪽~ 가기
+                        ball.x = ball.x - 3;
+                        ball.y = ball.y - 3;
+                        break;
+                    case 2: //45도로 오른쪽~가기
+                        ball.x = ball.x + 3;
+                        ball.y = ball.y - 3;
+                        break;
+                    case 3: // ->
+                        ball.x = ball.x + 6;
+                        ball.y = ball.y - 2;
+                        break;
+                    case 4: // <-
+                        ball.x = ball.x - 6;
+                        ball.y = ball.y - 2;
+                        break;
+                    default:
+                        break;
+                    }
+                }
+
+                // left wall
+                if ((ball.x - ball.radius) <= 0) {
+                    ball.x = ball.radius;
+                    if (speedYr == 1) {
+                        speedYr = 2;
+                    }
+                    else if (speedYr == 4) {
+                        speedYr = 3;
+                    }
+                }
+
+                // 공이 오른쪽 벽에 닿았을 때
+                if ((ball.x + ball.radius) >= WIDTH) {
+                    ball.x = WIDTH - ball.radius;  // 공이 화면 밖으로 나가지 않도록 위치 조정
+                    if (speedYr == 2) {
+                        speedYr = 1;
+                    }
+                    else if (speedYr == 3) {
+                        speedYr = 4;
+                    }
+                }
+
+                //공이 천장에 닿았을때
+                if ((ball.y - ball.radius) <= 0) {
+                    ball.y = ball.radius; // 볼이 화면 밖으로 나가지 않도록 설정
+                    speedYr = -1;
+                    speedY = uid_ran_3(gen);
+                }
+
+                for (auto& block : blocks) {
+                    if (CheckCollision(ball, block.rect) && block.visible) { //충돌!
+                        speedY = -1;
+                        speedYr = uid_ran_4(gen);
+                        block.stack += 1;
+                        block.color = RGB(0, 0, 0);
+                        if (block.stack == 2) { // 두번 부딪히면
+                            block.visible = false;
+                        }
+                        break; // 다른 블록과의 충돌 검사를 중단
+                    }
+                }
+
+                if (ball.y >= HEIGHT) {
+                    KillTimer(hWnd, 1); // 타이머 종료
+                    MessageBox(
+                        NULL,
+                        (LPCWSTR)L"실패!",
+                        (LPCWSTR)L"실패!!!",
+                        MB_ICONWARNING | MB_CANCELTRYCONTINUE | MB_DEFBUTTON2
+                    );
+                    break;
+                }
+
+                break;
+            default:
                 break;
             }
-
-            break;
-        default:
-            break;
         }
+       
         InvalidateRect(hWnd, NULL, false);
         break;
     case WM_DESTROY:
