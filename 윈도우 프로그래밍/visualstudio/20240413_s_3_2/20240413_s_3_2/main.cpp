@@ -135,6 +135,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_CHAR:
         switch (wParam)
         {
+        case 'n':
+        {
+            blocks.clear();
+            int startX = (WIDTH - (BLOCK_WIDTH * BLOCK_COUNT)) / 2; // 중앙 정렬을 위한 시작 X 좌표
+            int startY = HEIGHT - (BLOCK_HEIGHT * ROW_COUNT) - 50;   // 하단 정렬을 위한 시작 Y 좌표 (50은 바닥 여백)
+
+            blocks.reserve(ROW_COUNT * BLOCK_COUNT);
+            for (int i = 0; i < ROW_COUNT; ++i) {
+                for (int j = 0; j < BLOCK_COUNT; ++j) {
+                    Block b;
+                    b.x = startX + (j * BLOCK_WIDTH);
+                    b.y = startY + (i * BLOCK_HEIGHT);
+                    b.rect = { b.x, b.y, b.x + BLOCK_WIDTH, b.y + BLOCK_HEIGHT };
+                    blocks.push_back(b);
+                }
+            }
+
+            // 공의 초기 위치를 윈도우의 상단 중앙에 설정합니다.
+            ball.x = WIDTH / 2;
+            ball.y = 30; // 상단에서 30픽셀 아래에 위치
+            ball.radius = 20; // 반지름은 20픽셀로 설정
+            break;
+        }
         case 'p':
             puzz = !puzz;
             break;
@@ -180,6 +203,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         DeleteObject(mBrush); // 브러시 객체 삭제
 
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
+        DeleteObject(hBitmap); // 생성한 비트맵 삭제
         DeleteDC(mDC);
         EndPaint(hWnd, &ps);
         break;
@@ -289,13 +313,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 }
 
                 if (ball.y >= HEIGHT) {
-                    KillTimer(hWnd, 1); // 타이머 종료
-                    MessageBox(
-                        NULL,
-                        (LPCWSTR)L"실패!",
-                        (LPCWSTR)L"실패!!!",
-                        MB_ICONWARNING | MB_CANCELTRYCONTINUE | MB_DEFBUTTON2
-                    );
+                    blocks.clear();
+
+                    int startX = (WIDTH - (BLOCK_WIDTH * BLOCK_COUNT)) / 2; // 중앙 정렬을 위한 시작 X 좌표
+                    int startY = HEIGHT - (BLOCK_HEIGHT * ROW_COUNT) - 50;   // 하단 정렬을 위한 시작 Y 좌표 (50은 바닥 여백)
+
+                    blocks.reserve(ROW_COUNT * BLOCK_COUNT);
+                    for (int i = 0; i < ROW_COUNT; ++i) {
+                        for (int j = 0; j < BLOCK_COUNT; ++j) {
+                            Block b;
+                            b.x = startX + (j * BLOCK_WIDTH);
+                            b.y = startY + (i * BLOCK_HEIGHT);
+                            b.rect = { b.x, b.y, b.x + BLOCK_WIDTH, b.y + BLOCK_HEIGHT };
+                            blocks.push_back(b);
+                        }
+                    }
+
+                    // 공의 초기 위치를 윈도우의 상단 중앙에 설정합니다.
+                    ball.x = WIDTH / 2;
+                    ball.y = 30; // 상단에서 30픽셀 아래에 위치
+                    ball.radius = 20; // 반지름은 20픽셀로 설정
                     break;
                 }
 
