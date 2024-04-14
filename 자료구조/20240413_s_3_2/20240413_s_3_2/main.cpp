@@ -54,11 +54,20 @@ struct Block {
     int x;
     int y;
     RECT rect;
+    COLORREF color = RGB(255, 0, 0);
+    bool visible = true;  // 추가: 벽돌이 보이는지 여부
 };
 
 struct Circle {
     int x, y, radius;
 };
+
+struct Velocity {
+    int dx;
+    int dy;
+};
+
+bool CheckCollision(const Circle& ball, const RECT& block);
 
 #define BLOCK_WIDTH 50  // 블록의 가로 크기
 #define BLOCK_HEIGHT 30 // 블록의 세로 크기
@@ -68,6 +77,7 @@ struct Circle {
 random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
+uniform_int_distribution<int> uid_ran_3(0, 2);
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     PAINTSTRUCT ps;
@@ -81,8 +91,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static vector<Block> blocks;
     static int blockSpeed = 5;   // 벽돌의 움직임 속도
     static int blockDirection = 1; // 벽돌의 움직임 방향 (1: 오른쪽, -1: 왼쪽)
-
+    static int speedY = -1;
+    static int speedYr = -1;
     static Circle ball;
+
+    static Velocity ballVelocity = { 5, -5 }; // 초기 속도 (예시 값)
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -120,6 +134,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         switch (wParam)
         {
         case 's':
+            speedY = uid_ran_3(gen);
             SetTimer(hWnd, 2, 10, NULL);
             break;
         case 'q':
@@ -139,14 +154,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         SelectObject(mDC, (HBITMAP)hBitmap);
         Rectangle(mDC, 0, 0, rect.right, rect.bottom);
 
-        // Draw blocks
-        mBrush = CreateSolidBrush(RGB(255, 0, 0)); // 빨간색 브러시 생성
-        oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
+        
         for (const auto& block : blocks) {
-            Rectangle(mDC, block.rect.left, block.rect.top, block.rect.right, block.rect.bottom);
+            // Draw blocks
+            if (block.visible) {
+                mBrush = CreateSolidBrush(block.color); // 빨간색 브러시 생성
+                oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
+                Rectangle(mDC, block.rect.left, block.rect.top, block.rect.right, block.rect.bottom);
+                SelectObject(mDC, oldBrush); // 이전 브러시로 복원
+                DeleteObject(mBrush); // 브러시 객체 삭제
+            }
         }
-        SelectObject(mDC, oldBrush); // 이전 브러시로 복원
-        DeleteObject(mBrush); // 브러시 객체 삭제
+        
 
         // 공 그리기
         mBrush = CreateSolidBrush(RGB(0, 0, 255)); // 파란색 브러시 생성
@@ -177,7 +196,83 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
             break;
         case 2:
-            ball.y = ball.y + 3;
+            if (speedY != -1) {
+                switch (speedY)
+                {
+                case 0:
+                    ball.y = ball.y + 2;
+                    break;
+                case 1:
+                    ball.y = ball.y + 3;
+                    break;
+                case 2:
+                    ball.y = ball.y + 5;
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            if (speedYr != -1) {
+                switch (speedYr)
+                {
+                case 0: //직선으로 올라가기
+                    ball.y = ball.y - 2;
+                    break;
+                case 1: // 45도로 왼쪽~ 가기
+                    ball.x = ball.x - 3;
+                    ball.y = ball.y - 3;
+                    break;
+                case 2: //45도로 오른쪽~가기
+                    ball.x = ball.x + 3;
+                    ball.y = ball.y - 3;
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            if ((ball.x - ball.radius) <= 0) {
+                ball.x = ball.radius;
+                speedYr = 2;
+            }
+
+            // 공이 오른쪽 벽에 닿았을 때
+            if ((ball.x + ball.radius) >= WIDTH) {
+                ball.x = WIDTH - ball.radius;  // 공이 화면 밖으로 나가지 않도록 위치 조정
+                speedYr = 1;  // 왼쪽으로 45도 방향으로 이동하도록 설정
+            }
+
+            if ((ball.y - ball.radius) <= 0) {
+                ball.y = ball.radius; // 볼이 화면 밖으로 나가지 않도록 설정
+                speedYr = -1;
+                speedY = uid_ran_3(gen);
+            }
+            
+            for (auto& block : blocks) {
+                if (CheckCollision(ball, block.rect) && block.visible) { //충돌!
+                    speedY = -1;
+                    speedYr = uid_ran_3(gen);
+                    block.stack += 1;
+                    block.color = RGB(0, 0, 0);
+                    if (block.stack == 2) { // 두번 부딪히면
+                        block.visible = false;
+                    }
+                    break; // 다른 블록과의 충돌 검사를 중단
+                }
+            }
+
+            if (ball.y >= HEIGHT) {
+                KillTimer(hWnd, 1); // 타이머 종료
+                MessageBox(
+                    NULL,
+                    (LPCWSTR)L"실패!",
+                    (LPCWSTR)L"실패!!!",
+                    MB_ICONWARNING | MB_CANCELTRYCONTINUE | MB_DEFBUTTON2
+                );
+                break;
+            }
+
             break;
         default:
             break;
@@ -193,4 +288,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+bool CheckCollision(const Circle& ball, const RECT& block) {
+    int nearestX = max(block.left, min(ball.x, block.right));
+    int nearestY = max(block.top, min(ball.y, block.bottom));
+
+    int deltaX = ball.x - nearestX;
+    int deltaY = ball.y - nearestY;
+
+    return (deltaX * deltaX + deltaY * deltaY) < (ball.radius * ball.radius);
 }
