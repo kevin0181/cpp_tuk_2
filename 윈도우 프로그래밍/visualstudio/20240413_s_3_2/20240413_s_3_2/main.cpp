@@ -170,8 +170,34 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
         }
         case 'p':
-            puzz = !puzz;
+        {
+            // 게임을 일시 정지합니다.
+            puzz = true;
+
+            int cnt{};
+
+            for (int i = 0; i < blocks.size(); ++i) {
+                if (blocks[i].stack == 1) {
+                    cnt++;
+                }
+            }
+
+            // 메시지 문자열 생성
+            wstring message = L"게임이 일시 정지되었습니다. 변경된 벽돌의 수: " + to_wstring(cnt) + L". 계속하려면 확인을 누르세요.";
+
+
+            MessageBox(
+                hWnd,  // 메시지 박스의 부모 윈도우를 지정합니다.
+                message.c_str(),  // 메시지 박스에 표시할 텍스트입니다.
+                L"게임 일시 정지",  // 메시지 박스의 제목입니다.
+                MB_ICONINFORMATION | MB_OK  // '확인' 버튼만 있는 정보 아이콘 메시지 박스입니다.
+            );
+
+            // 메시지 박스에서 "확인"을 누른 후, 게임을 다시 시작합니다.
+            puzz = false;
+
             break;
+        }
         case 's':
             speedY = uid_ran_3(gen);
             SetTimer(hWnd, 2, 10, NULL);
