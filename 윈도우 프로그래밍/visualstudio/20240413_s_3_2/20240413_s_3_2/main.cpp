@@ -96,7 +96,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int speedY = -1;
     static int speedYr = -1;
     static Circle ball;
-
+    static int speed1 = 0;
     static Velocity ballVelocity = { 5, -5 }; // 초기 속도 (예시 값)
     static bool puzz = false;
     switch (uMsg)
@@ -135,6 +135,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_CHAR:
         switch (wParam)
         {
+        case '-':
+            if (speed1 < 0) {
+                break;
+            }
+            else {
+                speed1--;
+            }
+            break;
+        case '=':
+            speed1++;
+            break;
         case 'n':
         {
             blocks.clear();
@@ -230,13 +241,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     switch (speedY)
                     {
                     case 0:
-                        ball.y = ball.y + 2;
+                        ball.y = ball.y + 2 + speed1;
                         break;
                     case 1:
-                        ball.y = ball.y + 3;
+                        ball.y = ball.y + 3 + speed1;
                         break;
                     case 2:
-                        ball.y = ball.y + 5;
+                        ball.y = ball.y + 5 + speed1;
                         break;
                     default:
                         break;
@@ -247,23 +258,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     switch (speedYr)
                     {
                     case 0: //직선으로 올라가기
-                        ball.y = ball.y - 2;
+                        ball.y = ball.y - 2 - speed1;
                         break;
                     case 1: // 45도로 왼쪽~ 가기
-                        ball.x = ball.x - 3;
-                        ball.y = ball.y - 3;
+                        ball.x = ball.x - 3 - speed1;
+                        ball.y = ball.y - 3 - speed1;
                         break;
                     case 2: //45도로 오른쪽~가기
-                        ball.x = ball.x + 3;
-                        ball.y = ball.y - 3;
+                        ball.x = ball.x + 3 + speed1;
+                        ball.y = ball.y - 3 - speed1;
                         break;
                     case 3: // ->
-                        ball.x = ball.x + 6;
-                        ball.y = ball.y - 2;
+                        ball.x = ball.x + 6 + speed1;
+                        ball.y = ball.y - 2 - speed1;
                         break;
                     case 4: // <-
-                        ball.x = ball.x - 6;
-                        ball.y = ball.y - 2;
+                        ball.x = ball.x - 6 - speed1;
+                        ball.y = ball.y - 2 - speed1;
                         break;
                     default:
                         break;
