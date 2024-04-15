@@ -57,6 +57,12 @@ struct carS {
     int speed;
 };
 
+struct Person {
+    RECT rect;
+    COLORREF color;
+    int speed;
+};
+
 struct TrafficLight {
     RECT rect;
     COLORREF color;
@@ -89,16 +95,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int Timer1Count = 0;
     static vector<carS> cars;
     static vector<carS> over_cars;
+    static Person person;
     static vector<TrafficLight> trafficLight1; // 위아래
     static vector<TrafficLight> trafficLight2; // 좌우
     static bool status = true;
     static int ran_blue_time = 0;
     static int traffic_status = 0; // 0 => 좌우, 1 => 위아래
-
+    
     static bool a_status = false;
-
     int mx, my;
-
+    static int person_status = 1;
     switch (uMsg)
     {
     case WM_CREATE:
@@ -106,6 +112,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         ran_blue_time = uid_time(gen);
         SetTimer(hWnd, 1, 1, NULL);
         SetTimer(hWnd, 2, ran_blue_time, NULL); // Blue
+        SetTimer(hWnd, 4, 1, NULL); //사람
 
         for (int i = 0; i < 4; ++i) {
             carS car;
@@ -150,6 +157,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             }
             trafficLight2.push_back(tr);
         }
+
+       
+        person.color = RGB(200, 200, 200);
+        person.rect.left = 0;
+        person.rect.top = 0;
+        person.rect.right = 30;
+        person.rect.bottom = 30;
 
         break;
     }
@@ -273,18 +287,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         SelectObject(mDC, (HBITMAP)hBitmap);
         Rectangle(mDC, 0, 0, rect.right, rect.bottom); //바탕 흰색
 
-        print_line(mDC, rect); //도로 그리기
-        print_crosswalk1(mDC, rect); //횡단보도 그리기
-        print_crosswalk2(mDC, rect); //횡단보도2 그리기
-        print_traffic_light1(mDC, rect, trafficLight1); //신호등1 그리기
-        print_traffic_light3(mDC, rect, trafficLight2); //신호등3 그리기
 
-        if (status) {
-            for (int i = 0; i < cars.size(); ++i) {
-                line_set(mDC, rect, cars[i]);
-            }
-            status = false;
-        }
+
 
         for (int i = 0; i < cars.size(); ++i) {
             HBRUSH hBrush = CreateSolidBrush(cars[i].color);
@@ -298,6 +302,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             FillRect(mDC, &over_cars[i].rect, hBrush);
             DeleteObject(hBrush);
         }
+
+
+        print_line(mDC, rect); //도로 그리기
+
+        print_crosswalk1(mDC, rect); //횡단보도 그리기
+        print_crosswalk2(mDC, rect); //횡단보도2 그리기
+
+        HBRUSH hBrush = CreateSolidBrush(person.color);
+        oldBrush = (HBRUSH)SelectObject(mDC, hBrush); // 새로운 브러시 선택하기
+        Ellipse(mDC, person.rect.left + rect.right / 2 - 140, person.rect.top + rect.bottom / 2 - 170,
+            person.rect.right + rect.right / 2 - 140, person.rect.bottom + rect.bottom / 2 - 170);;
+        SelectObject(mDC, oldBrush);
+        DeleteObject(hBrush);
+
+        print_traffic_light1(mDC, rect, trafficLight1); //신호등1 그리기
+        print_traffic_light3(mDC, rect, trafficLight2); //신호등3 그리기
+
+        if (status) {
+            for (int i = 0; i < cars.size(); ++i) {
+                line_set(mDC, rect, cars[i]);
+            }
+            status = false;
+        }
+
 
 
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
@@ -346,6 +374,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             }
             KillTimer(hWnd, 3); // 타이머 종료
             SetTimer(hWnd, 2, ran_blue_time, NULL); // Blue
+            break;
+        case 4: //사람
+            switch (person_status)
+            {
+            case 1:
+                person.rect.top += 4;
+                person.rect.bottom += 4;
+                break;
+            case 2:
+                break;
+            case 3:
+                break;
+            case 4:
+                break;
+            default:
+                break;
+            }
             break;
         default:
             break;
