@@ -93,6 +93,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static vector<TrafficLight> trafficLight2; // 좌우
     static bool status = true;
     static int ran_blue_time = 0;
+    static int traffic_status = 0; // 0 => 좌우, 1 => 위아래
 
     switch (uMsg)
     {
@@ -101,7 +102,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         ran_blue_time = uid_time(gen);
         SetTimer(hWnd, 1, 1, NULL);
         SetTimer(hWnd, 2, ran_blue_time, NULL); // Blue
-        SetTimer(hWnd, 3, 1000, NULL); // Yello
+
         for (int i = 0; i < 4; ++i) {
             carS car;
             carS ov_car;
@@ -217,7 +218,40 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             for (int i = 0; i < 4; ++i) {
                 car_move(mDC, rect, cars[i], over_cars[i]);
             }
+            break;
+        case 2: // blue
 
+            if (traffic_status == 0) {
+                trafficLight2[2].status = false; // blue = false;
+                trafficLight2[1].status = true; // yellow = true;
+            }
+
+            if (traffic_status == 1) {
+                trafficLight1[2].status = false; // blue = false;
+                trafficLight1[1].status = true; // yellow = true;
+            }
+
+            SetTimer(hWnd, 3, 1000, NULL); // Yello time
+            KillTimer(hWnd, 2); // 타이머 종료
+            break;
+        case 3: //yello
+            if (traffic_status == 0 && trafficLight2[1].status) {
+                trafficLight2[1].status = false; // yellow = false;
+                trafficLight2[0].status = true; // red = true;
+                trafficLight1[0].status = false;
+                trafficLight1[2].status = true;
+                traffic_status = 1;
+            }
+
+            if (traffic_status == 1 && trafficLight1[1].status) {
+                trafficLight1[1].status = false; // yellow = false;
+                trafficLight1[0].status = true; // red = true;
+                trafficLight2[0].status = false;
+                trafficLight2[2].status = true;
+                traffic_status = 0;
+            }
+            KillTimer(hWnd, 3); // 타이머 종료
+            SetTimer(hWnd, 2, ran_blue_time, NULL); // Blue
             break;
         default:
             break;
@@ -226,8 +260,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_DESTROY:
         KillTimer(hWnd, 1); // 타이머 종료
-        KillTimer(hWnd, 2); // 타이머 종료
-        KillTimer(hWnd, 3); // 타이머 종료
         PostQuitMessage(0);
         break;
     default:
