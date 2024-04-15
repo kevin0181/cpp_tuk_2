@@ -170,25 +170,57 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             for (int i = 0; i < trafficLight1.size(); ++i) {
 
                 if (PtInRect(&trafficLight1[i].rect, p)) {
-                    if (i == 1) {
+                    switch (i)
+                    {
+
+                    case 0:
+                        trafficLight1[0].status = true;
+                        trafficLight1[2].status = false;
+                        trafficLight2[2].status = true;
+                        trafficLight2[0].status = false;
+                        break;
+                    case 1:
+                        break;
+                    case 2:
+                        trafficLight1[2].status = true;
+                        trafficLight1[0].status = false;
+                        trafficLight2[0].status = true;
+                        trafficLight2[2].status = false;
+                        break;
+                    default:
                         break;
                     }
-                    trafficLight1[i].status = true;
                     break;
                 }
 
             }
 
+            for (int i = 0; i < trafficLight2.size(); ++i) {
 
-            if (trafficLight1[2].status) {
-                trafficLight2[0].status = true;
-                trafficLight2[2].status = false;
-                trafficLight1[0].status = false;
-            }
-            else if(!trafficLight1[0].status) {
-                trafficLight2[0].status = false;
-                trafficLight2[2].status = true;
-                trafficLight1[2].status = false;
+                if (PtInRect(&trafficLight2[i].rect, p)) {
+                    switch (i)
+                    {
+
+                    case 0:
+                        trafficLight2[0].status = true;
+                        trafficLight2[2].status = false;
+                        trafficLight1[2].status = true;
+                        trafficLight1[0].status = false;
+                        break;
+                    case 1:
+                        break;
+                    case 2:
+                        trafficLight2[2].status = true;
+                        trafficLight2[0].status = false;
+                        trafficLight1[0].status = true;
+                        trafficLight1[2].status = false;
+                        break;
+                    default:
+                        break;
+                    }
+                    break;
+                }
+
             }
 
         }
@@ -691,7 +723,7 @@ void print_traffic_light1(HDC& mDC, RECT& rect, vector<TrafficLight>& trafficLig
                 tr.color = RGB(255, 0, 0);
             }
             else {
-                tr.color = RGB(125, 0, 0);
+                tr.color = RGB(100, 0, 0);
             }
             tr.rect = { lightCenterX,(lightCenterY - radius) + 25 ,lightCenterX + 2 * radius ,(lightCenterY + radius) + 25 };
             break;
@@ -700,7 +732,7 @@ void print_traffic_light1(HDC& mDC, RECT& rect, vector<TrafficLight>& trafficLig
                 tr.color = RGB(255, 255, 0);
             }
             else {
-                tr.color = RGB(125, 125, 0);
+                tr.color = RGB(100, 100, 0);
             }
             tr.rect = { lightCenterX + 30, (lightCenterY - radius) + 25, lightCenterX + 2 * radius + 30, (lightCenterY + radius) + 25 };
             break;
@@ -710,7 +742,7 @@ void print_traffic_light1(HDC& mDC, RECT& rect, vector<TrafficLight>& trafficLig
             }
             else {
 
-                tr.color = RGB(0, 125, 0);
+                tr.color = RGB(0, 100, 0);
             }
             tr.rect = { lightCenterX + 60, (lightCenterY - radius) + 25, lightCenterX + 2 * radius + 60, (lightCenterY + radius) + 25 };
             break;
@@ -780,7 +812,7 @@ void print_traffic_light3(HDC& mDC, RECT& rect, vector<TrafficLight>& trafficLig
                 tr.color = RGB(255, 0, 0);
             }
             else {
-                tr.color = RGB(125, 0, 0);
+                tr.color = RGB(100, 0, 0);
             }
             tr.rect = { lightCenterX - radius, lightCenterY, lightCenterX + radius, lightCenterY + 2 * radius };
             break;
@@ -789,7 +821,7 @@ void print_traffic_light3(HDC& mDC, RECT& rect, vector<TrafficLight>& trafficLig
                 tr.color = RGB(255, 255, 0);
             }
             else {
-                tr.color = RGB(125, 125, 0);
+                tr.color = RGB(100, 100, 0);
             }
             tr.rect = { lightCenterX - radius, lightCenterY + 30, lightCenterX + radius, lightCenterY + 2 * radius + 30 };
             break;
@@ -799,7 +831,7 @@ void print_traffic_light3(HDC& mDC, RECT& rect, vector<TrafficLight>& trafficLig
             }
             else {
 
-                tr.color = RGB(0, 125, 0);
+                tr.color = RGB(0, 100, 0);
             }
             tr.rect = { lightCenterX - radius, lightCenterY + 60, lightCenterX + radius, lightCenterY + 2 * radius + 60 };
             break;
