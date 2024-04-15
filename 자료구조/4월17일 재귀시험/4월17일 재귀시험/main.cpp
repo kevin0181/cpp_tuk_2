@@ -164,10 +164,18 @@ int main() {
 		cout << "명령어를 입력하세요 : ";
 		cin >> order_s;
 
+		if (cin.fail()) {
+			cout << "잘못된 입력값 입니다." << endl;
+			cin.clear();
+			break;
+		}
+
 		switch (order_v(order_s))
 		{
 		case SEARCH_E:
+
 			cin >> ch_1.name;
+
 			if (cin.peek() != '\n') { 
 				getchar();
 				cin >> s1;
@@ -175,10 +183,17 @@ int main() {
 				ch_1.name += s1;
 			}
 
+			if (cin.fail()) {
+				cout << "잘못된 입력값 입니다." << endl;
+				cin.clear();
+				break;
+			}
+
 			recursive_search(champion_list, ch_1.name, 0);
 
 			break;
 		case INSERT_E:
+
 			cout << "name : ";
 			cin >> ch_1.name;
 			if (cin.peek() != '\n') {
@@ -198,6 +213,12 @@ int main() {
 			cout << "position : ";
 			cin >> ch_1.position;
 
+			if (cin.fail()) {
+				cout << "잘못된 입력값 입니다." << endl;
+				cin.clear();
+				break;
+			}
+
 			champion_list.push_back(ch_1);
 
 			cout << ch_1.name << " 챔피언이 생성되었습니다." << endl;
@@ -213,11 +234,23 @@ int main() {
 				ch_1.name += s1;
 			}
 
+			if (cin.fail()) {
+				cout << "잘못된 입력값 입니다." << endl;
+				cin.clear();
+				break;
+			}
+
 			delete_champion(champion_list, ch_1.name, 0);
 
 			break;
 		case DELETE_ALL_E:
 			cin >> ch_1.position;
+
+			if (cin.fail()) {
+				cout << "잘못된 입력값 입니다." << endl;
+				cin.clear();
+				break;
+			}
 
 			deleteAll_position(champion_list, ch_1.position, 0);
 			
