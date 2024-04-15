@@ -213,11 +213,6 @@ void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars) {
             if (car.rect.left > rect.right) {
                 car.rect.left = 0;
                 car.rect.right = 150;
-                //-----
-                over_cars.rect.left = 0;
-                over_cars.rect.top = 0;
-                over_cars.rect.right = 0;
-                over_cars.rect.bottom = 0;
             }
             over_cars.rect.left = 0;
             over_cars.rect.top = car.rect.top;
@@ -237,11 +232,6 @@ void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars) {
             if (car.rect.right < 0) {
                 car.rect.left = rect.right - 150;
                 car.rect.right = rect.right;
-                ////-----
-                over_cars.rect.left = 0;
-                over_cars.rect.top = 0;
-                over_cars.rect.right = 0;
-                over_cars.rect.bottom = 0;
             }
             over_cars.rect.left = rect.right + car.rect.left;
             over_cars.rect.top = car.rect.top;
@@ -252,6 +242,40 @@ void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars) {
         }
         break;
     }
+    case 2:
+        car.rect.top += car.speed;
+        car.rect.bottom += car.speed;
+        if (car.rect.bottom >= rect.bottom) {
+            if (car.rect.top > rect.bottom) {
+                car.rect.top = 0;
+                car.rect.bottom = 150;
+            }
+            over_cars.rect.left = car.rect.left;
+            over_cars.rect.top = 0;
+            over_cars.rect.right = car.rect.right;
+            over_cars.rect.bottom = car.rect.bottom - rect.bottom;
+            over_cars.color = car.color;
+            over_cars.line_status = car.line_status;
+        }
+        break;
+    case 3:
+    {
+        car.rect.top -= car.speed;
+        car.rect.bottom -= car.speed;
+        if (car.rect.top <= 0) {
+            if (car.rect.bottom < 0) {
+                car.rect.top = rect.bottom - 150;
+                car.rect.bottom = rect.bottom;
+            }
+            over_cars.rect.left = car.rect.left;
+            over_cars.rect.top = rect.bottom + car.rect.top;
+            over_cars.rect.right = car.rect.right;
+            over_cars.rect.bottom = rect.bottom;
+            over_cars.color = car.color;
+            over_cars.line_status = car.line_status;
+        }
+    }
+        break;
     default:
         break;
     }
@@ -280,7 +304,7 @@ void line_set(HDC& mDC, RECT& rect, carS& car) {
         break;
     case 3: // 아래에서 위로
         car.rect.top += rect.bottom - 150;
-        car.rect.bottom += rect.bottom;
+        car.rect.bottom += rect.bottom - 150;
         car.rect.left += rect.right / 2 + 23;
         car.rect.right += rect.right / 2 + 23;
         break;
