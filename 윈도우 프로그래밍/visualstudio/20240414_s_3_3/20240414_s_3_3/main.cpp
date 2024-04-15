@@ -377,6 +377,7 @@ void line_set(HDC& mDC, RECT& rect, carS& car) {
     default:
         break;
     }
+    DeleteObject(hBrush);
 }
 
 void print_line(HDC &mDC, RECT& rect) {
@@ -396,6 +397,7 @@ void print_line(HDC &mDC, RECT& rect) {
     centerRect.right = rect.right / 2 + 100;
     centerRect.bottom = rect.bottom;
     FillRect(mDC, &centerRect, hBrush);
+    DeleteObject(hBrush);
 
     // 두꺼운 점선 펜 생성
     LOGBRUSH lb;
@@ -419,6 +421,8 @@ void print_line(HDC &mDC, RECT& rect) {
     MoveToEx(mDC, 0, rect.bottom / 2 + 100, NULL);
     LineTo(mDC, rect.right, rect.bottom / 2 + 100);
 
+    DeleteObject(mPen);
+    DeleteObject(oldPen);
     // ------------------------------------
 
     mPen = ExtCreatePen(penStyle, 3, &lb, 0, NULL);  // 두께 10의 점선
@@ -446,6 +450,7 @@ void print_line(HDC &mDC, RECT& rect) {
     SelectObject(mDC, oldPen);
     DeleteObject(mPen);
     DeleteObject(oldPen);
+    DeleteObject(hBrush);
 }
 
 void print_crosswalk1(HDC& mDC, RECT& rect) {
@@ -473,6 +478,7 @@ void print_crosswalk1(HDC& mDC, RECT& rect) {
     // 브러시 반환 및 삭제
     SelectObject(mDC, oldBrush);
     DeleteObject(hWhiteBrush);
+    DeleteObject(oldBrush);
 }
 
 void print_crosswalk2(HDC& mDC, RECT& rect) {
@@ -499,6 +505,7 @@ void print_crosswalk2(HDC& mDC, RECT& rect) {
     // 브러시 반환 및 삭제
     SelectObject(mDC, oldBrush);
     DeleteObject(hWhiteBrush);
+    DeleteObject(oldBrush);
 }
 
 void print_traffic_light1(HDC& mDC, RECT& rect, vector<TrafficLight> trafficLight1) {
