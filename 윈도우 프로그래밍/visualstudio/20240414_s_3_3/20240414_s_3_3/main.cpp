@@ -281,26 +281,27 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-bool status = false;
+bool status1 = false;
+bool status2 = false;
 void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars, vector<TrafficLight> trafficLight2, vector<TrafficLight> trafficLight1) {
     switch (car.line_status)
     {
     case 0: {
  
-        if (car.rect.right <= rect.right / 2 - 100 && trafficLight2[0].status && status == false) {
-            status = true;
+        if (car.rect.right <= rect.right / 2 - 100 - 75 && trafficLight2[0].status && status1 == false) {
+            status1 = true;
                 break;
         }
-        if (status) { // 건너기전에 빨간불이면 횡단보도까지 가게함.
-            if (car.rect.right <= rect.right / 2 - 100) {
+        if (status1) { // 건너기전에 빨간불이면 횡단보도까지 가게함.
+            if (car.rect.right <= rect.right / 2 - 100 - 75) {
                 car.rect.left += car.speed;
                 car.rect.right += car.speed;
             }
             else {
                 if (trafficLight2[0].status)
-                    status = true;
+                    status1 = true;
                 if (!trafficLight2[0].status)
-                    status = false;
+                    status1 = false;
             }
         }
         else {
@@ -327,25 +328,42 @@ void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars, vector<TrafficLi
     case 1:
     {
 
-        if (car.rect.left <= rect.right / 2 + 100 && trafficLight2[0].status) {
+        if (car.rect.left >= rect.right / 2 + 100 + 80 && trafficLight2[0].status && status2 == false) {
+            status2 = true;
             break;
         }
 
-        car.rect.left -= car.speed;   // 차량의 속도에 해당하는 값을 좌표에 더함
-        car.rect.right -= car.speed;  // 차량의 속도에 해당하는 값을 좌표에 더함
-
-        if (car.rect.left <= 0) {
-            if (car.rect.right < 0) {
-                car.rect.left = rect.right - 150;
-                car.rect.right = rect.right;
+        if (status2) {
+            if (car.rect.left >= rect.right / 2 + 100 + 80) {
+                car.rect.left -= car.speed;
+                car.rect.right -= car.speed;
             }
-            over_cars.rect.left = rect.right + car.rect.left;
-            over_cars.rect.top = car.rect.top;
-            over_cars.rect.right = rect.right;
-            over_cars.rect.bottom = car.rect.bottom;
-            over_cars.color = car.color;
-            over_cars.line_status = car.line_status;
+            else {
+                if (trafficLight2[0].status)
+                    status2 = true;
+                if (!trafficLight2[0].status)
+                    status2 = false;
+            }
         }
+        else {
+
+            car.rect.left -= car.speed;   // 차량의 속도에 해당하는 값을 좌표에 더함
+            car.rect.right -= car.speed;  // 차량의 속도에 해당하는 값을 좌표에 더함
+
+            if (car.rect.left <= 0) {
+                if (car.rect.right < 0) {
+                    car.rect.left = rect.right - 150;
+                    car.rect.right = rect.right;
+                }
+                over_cars.rect.left = rect.right + car.rect.left;
+                over_cars.rect.top = car.rect.top;
+                over_cars.rect.right = rect.right;
+                over_cars.rect.bottom = car.rect.bottom;
+                over_cars.color = car.color;
+                over_cars.line_status = car.line_status;
+            }
+        }
+
         break;
     }
     case 2:
