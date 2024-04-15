@@ -37,7 +37,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
     WndClass.hIconSm = LoadIcon(NULL, IDI_QUESTION);
     RegisterClassEx(&WndClass);
 
-    hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW | WS_VSCROLL, 0, 0, WIDTH, HEIGHT, NULL, (HMENU)NULL, hInstance, NULL);
+    hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW | WS_VSCROLL,1800, 0, WIDTH, HEIGHT, NULL, (HMENU)NULL, hInstance, NULL);
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
@@ -387,8 +387,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             {
             case 1:
                 if (trafficLight2[0].status) {
-                    person.rect.top += 4;
-                    person.rect.bottom += 4;
+                    bool stop = false;
+                    RECT intersection;
+                    for (int i = 0; i < cars.size(); ++i) {
+                        if (IntersectRect(&intersection, &person.rect, &cars[i].rect)) {
+                            stop = true;
+                        }
+                    }
+                    if (!stop) {
+                        person.rect.top += 4;
+                        person.rect.bottom += 4;
+                    }
                 }
                 if (person.rect.top >= rect.bottom / 2 + 110) {
                     person_status = 2;
@@ -396,8 +405,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 break;
             case 2:
                 if (trafficLight1[0].status) {
-                    person.rect.left += 4;
-                    person.rect.right += 4;
+                    bool stop = false;
+                    RECT intersection;
+                    for (int i = 0; i < cars.size(); ++i) {
+                        if (IntersectRect(&intersection, &person.rect, &cars[i].rect)) {
+                            stop = true;
+                        }
+                    }
+                    if (!stop) {
+                        person.rect.left += 4;
+                        person.rect.right += 4;
+                    }
                 }
 
                 if (person.rect.left >= rect.right / 2 + 110) {
@@ -407,8 +425,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 break;
             case 3:
                 if (trafficLight2[0].status) {
-                    person.rect.top -= 4;
-                    person.rect.bottom -= 4;
+                    bool stop = false;
+                    RECT intersection;
+                    for (int i = 0; i < cars.size(); ++i) {
+                        if (IntersectRect(&intersection, &person.rect, &cars[i].rect)) {
+                            stop = true;
+                        }
+                    }
+                    if (!stop) {
+                        person.rect.top -= 4;
+                        person.rect.bottom -= 4;
+                    }
                 }
 
                 if (person.rect.top <= rect.bottom / 2 - 135) {
@@ -417,8 +444,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 break;
             case 4:
                 if (trafficLight1[0].status) {
-                    person.rect.left -= 4;
-                    person.rect.right -= 4;
+                    bool stop = false;
+                    RECT intersection;
+                    for (int i = 0; i < cars.size(); ++i) {
+                        if (IntersectRect(&intersection, &person.rect, &cars[i].rect)) {
+                            stop = true;
+                        }
+                    }
+                    if (!stop) {
+                        person.rect.left -= 4;
+                        person.rect.right -= 4;
+                    }
                 }
 
                 if (person.rect.left <= rect.right / 2 - 135) {
@@ -454,7 +490,7 @@ void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars, vector<TrafficLi
     {
     case 0: {
  
-        if (car.rect.right <= rect.right / 2 - 100 && trafficLight2[0].status && status1 == false) {
+        if (car.rect.right <= rect.right / 2 - 100 - 80 && trafficLight2[0].status && status1 == false) {
             status1 = true;
             break;
         }
@@ -495,7 +531,7 @@ void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars, vector<TrafficLi
     case 1:
     {
 
-        if (car.rect.left >= rect.right / 2 + 100 && trafficLight2[0].status && status2 == false) {
+        if (car.rect.left >= rect.right / 2 + 100 + 80 && trafficLight2[0].status && status2 == false) {
             status2 = true;
             break;
         }
@@ -535,7 +571,7 @@ void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars, vector<TrafficLi
     }
     case 2:
 
-        if (car.rect.bottom <= rect.bottom / 2 - 100 && trafficLight1[0].status && status3 == false) {
+        if (car.rect.bottom <= rect.bottom / 2 - 100 - 78 && trafficLight1[0].status && status3 == false) {
             status3 = true;
             break;
         }
@@ -571,7 +607,7 @@ void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars, vector<TrafficLi
         break;
     case 3:
     {
-        if (car.rect.top >= rect.bottom / 2 + 100 && trafficLight1[0].status && status4 == false) {
+        if (car.rect.top >= rect.bottom / 2 + 100 + 78 && trafficLight1[0].status && status4 == false) {
             status4 = true;
             break;
         }
