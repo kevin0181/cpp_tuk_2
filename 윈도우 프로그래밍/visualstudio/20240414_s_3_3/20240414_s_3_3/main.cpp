@@ -57,13 +57,17 @@ struct carS {
     int speed;
 };
 
+struct TrafficLight {
+    RECT rect;
+    COLORREF color;
+    bool status;
+};
+
 void print_line(HDC& mDC, RECT& rect);
 void print_crosswalk1(HDC& mDC, RECT& rect);
 void print_crosswalk2(HDC& mDC, RECT& rect);
-void print_traffic_light1(HDC& mDC, RECT& rect);
-void print_traffic_light2(HDC& mDC, RECT& rect);
-void print_traffic_light3(HDC& mDC, RECT& rect);
-void print_traffic_light4(HDC& mDC, RECT& rect);
+void print_traffic_light1(HDC& mDC, RECT& rect, vector<TrafficLight> trafficLight1);
+void print_traffic_light3(HDC& mDC, RECT& rect, vector<TrafficLight> trafficLight2);
 void line_set(HDC& mDC, RECT& rect, carS& car);
 void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars);
 
@@ -71,6 +75,7 @@ random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
 uniform_int_distribution<int> uid_speed(1, 20);
+uniform_int_distribution<int> uid_time(3000, 10000);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
@@ -84,13 +89,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int Timer1Count = 0;
     static vector<carS> cars;
     static vector<carS> over_cars;
+    static vector<TrafficLight> trafficLight1; // 위아래
+    static vector<TrafficLight> trafficLight2; // 좌우
     static bool status = true;
+    static int ran_blue_time = 0;
+
     switch (uMsg)
     {
     case WM_CREATE:
     {
+        ran_blue_time = uid_time(gen);
         SetTimer(hWnd, 1, 1, NULL);
-
+        SetTimer(hWnd, 2, ran_blue_time, NULL); // Blue
+        SetTimer(hWnd, 3, 1000, NULL); // Yello
         for (int i = 0; i < 4; ++i) {
             carS car;
             carS ov_car;
@@ -112,6 +123,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             car.speed = uid_speed(gen);
             cars.push_back(car);
         }
+
+        // create traffic
+        TrafficLight tr;
+        for (int i = 0; i < 3; ++i) {
+            if (i == 0) {
+                tr.status = true;
+            }
+            else {
+                tr.status = false;
+            }
+            trafficLight1.push_back(tr);
+        }
+
+        for (int i = 0; i < 3; ++i) {
+            if (i == 2) {
+                tr.status = true;
+            }
+            else {
+                tr.status = false;
+            }
+            trafficLight2.push_back(tr);
+        }
+
         break;
     }
     case WM_KEYUP:
@@ -147,10 +181,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         print_line(mDC, rect); //도로 그리기
         print_crosswalk1(mDC, rect); //횡단보도 그리기
         print_crosswalk2(mDC, rect); //횡단보도2 그리기
-        print_traffic_light1(mDC, rect); //신호등1 그리기
-        print_traffic_light2(mDC, rect); //신호등2 그리기
-        print_traffic_light3(mDC, rect); //신호등3 그리기
-        print_traffic_light4(mDC, rect); //신호등4 그리기
+        print_traffic_light1(mDC, rect, trafficLight1); //신호등1 그리기
+        print_traffic_light3(mDC, rect, trafficLight2); //신호등3 그리기
 
         if (status) {
             for (int i = 0; i < cars.size(); ++i) {
@@ -194,6 +226,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_DESTROY:
         KillTimer(hWnd, 1); // 타이머 종료
+        KillTimer(hWnd, 2); // 타이머 종료
+        KillTimer(hWnd, 3); // 타이머 종료
         PostQuitMessage(0);
         break;
     default:
@@ -435,36 +469,85 @@ void print_crosswalk2(HDC& mDC, RECT& rect) {
     DeleteObject(hWhiteBrush);
 }
 
-void print_traffic_light1(HDC& mDC, RECT& rect) {
+void print_traffic_light1(HDC& mDC, RECT& rect, vector<TrafficLight> trafficLight1) {
+
+    if (trafficLight1.size() <= 0) {
+        return;
+    }
+
     // 신호등 위치 결정
     int lightCenterX = rect.right / 2 - 200; // 신호등 중심 x 좌표
     int lightCenterY = rect.bottom / 2 - 150; // 신호등 중심 y 좌표
 
+
     int lightLength = 80; // 신호등 전체 길이
     int lightWidth = 30; // 신호등 너비
 
     // 신호등 기둥 그리기
     HBRUSH hGreyBrush = CreateSolidBrush(RGB(50, 50, 50));
     RECT poleRect = { lightCenterX, lightCenterY + 15, lightCenterX + lightLength, lightCenterY + 35 };
+    RECT poleRect2 = { lightCenterX + 320, lightCenterY + 265, lightCenterX + 320 + lightLength, lightCenterY + 285 };
     FillRect(mDC, &poleRect, hGreyBrush);
+    FillRect(mDC, &poleRect2, hGreyBrush);
 
     // 신호등 불빛 그리기
     int radius = 10; // 불빛의 반지름
-    HBRUSH hRedLightBrush = CreateSolidBrush(RGB(255, 0, 0));
-    HBRUSH hYellowLightBrush = CreateSolidBrush(RGB(255, 255, 0));
-    HBRUSH hGreenLightBrush = CreateSolidBrush(RGB(0, 255, 0));
+
+    for (int i = 0; i < trafficLight1.size(); ++i) {
+        TrafficLight& tr = trafficLight1[i];
+        switch (i)
+        {
+        case 0: //red
+            if (tr.status) {
+                tr.color = RGB(255, 0, 0);
+            }
+            else {
+                tr.color = RGB(125, 0, 0);
+            }
+            tr.rect = { lightCenterX,(lightCenterY - radius) + 25 ,lightCenterX + 2 * radius ,(lightCenterY + radius) + 25 };
+            break;
+        case 1: //yellow
+            if (tr.status) {
+                tr.color = RGB(255, 255, 0);
+            }
+            else {
+                tr.color = RGB(125, 125, 0);
+            }
+            tr.rect = { lightCenterX + 30, (lightCenterY - radius) + 25, lightCenterX + 2 * radius + 30, (lightCenterY + radius) + 25 };
+            break;
+        case 2: //green
+            if (tr.status) {
+                tr.color = RGB(0, 255, 0);
+            }
+            else {
+
+                tr.color = RGB(0, 125, 0);
+            }
+            tr.rect = { lightCenterX + 60, (lightCenterY - radius) + 25, lightCenterX + 2 * radius + 60, (lightCenterY + radius) + 25 };
+            break;
+        default:
+            break;
+        }
+    }
+
+    HBRUSH hRedLightBrush = CreateSolidBrush(trafficLight1[0].color);
+    HBRUSH hYellowLightBrush = CreateSolidBrush(trafficLight1[1].color);
+    HBRUSH hGreenLightBrush = CreateSolidBrush(trafficLight1[2].color);
 
     // 빨간불
     HBRUSH oldBrush = (HBRUSH)SelectObject(mDC, hRedLightBrush);
-    Ellipse(mDC, lightCenterX, (lightCenterY - radius) + 25, lightCenterX + 2 * radius, (lightCenterY + radius) + 25);
+    Ellipse(mDC, trafficLight1[0].rect.left, trafficLight1[0].rect.top, trafficLight1[0].rect.right, trafficLight1[0].rect.bottom);
+    Ellipse(mDC, trafficLight1[2].rect.left + 320, trafficLight1[2].rect.top + 250, trafficLight1[2].rect.right + 320, trafficLight1[2].rect.bottom + 250);
 
     // 노란불
     SelectObject(mDC, hYellowLightBrush);
-    Ellipse(mDC, lightCenterX + 30, (lightCenterY - radius) + 25, lightCenterX + 2 * radius + 30, (lightCenterY + radius) + 25);
+    Ellipse(mDC, trafficLight1[1].rect.left, trafficLight1[1].rect.top, trafficLight1[1].rect.right, trafficLight1[1].rect.bottom);
+    Ellipse(mDC, trafficLight1[1].rect.left + 320, trafficLight1[1].rect.top + 250, trafficLight1[1].rect.right + 320, trafficLight1[1].rect.bottom + 250);
 
     // 초록불
     SelectObject(mDC, hGreenLightBrush);
-    Ellipse(mDC, lightCenterX + 60, (lightCenterY - radius) + 25, lightCenterX + 2 * radius + 60, (lightCenterY + radius) + 25);
+    Ellipse(mDC, trafficLight1[2].rect.left, trafficLight1[2].rect.top, trafficLight1[2].rect.right, trafficLight1[2].rect.bottom);
+    Ellipse(mDC, trafficLight1[0].rect.left + 320, trafficLight1[0].rect.top + 250, trafficLight1[0].rect.right + 320, trafficLight1[0].rect.bottom + 250);
 
     // 브러시 반환 및 삭제
     SelectObject(mDC, oldBrush);
@@ -475,116 +558,85 @@ void print_traffic_light1(HDC& mDC, RECT& rect) {
     DeleteObject(oldBrush);
 }
 
-void print_traffic_light2(HDC& mDC, RECT& rect) {
+
+void print_traffic_light3(HDC& mDC, RECT& rect, vector<TrafficLight> trafficLight2) {
+
+    if (trafficLight2.size() <= 0) {
+        return;
+    }
     // 신호등 위치 결정
-    int lightCenterX = rect.right / 2 + 120; // 신호등 중심 x 좌표
-    int lightCenterY = rect.bottom / 2 + 100; // 신호등 중심 y 좌표
-
-    int lightLength = 80; // 신호등 전체 길이
-    int lightWidth = 30; // 신호등 너비
-
-    // 신호등 기둥 그리기
-    HBRUSH hGreyBrush = CreateSolidBrush(RGB(50, 50, 50));
-    RECT poleRect = { lightCenterX, lightCenterY + 15, lightCenterX + lightLength, lightCenterY + 35 };
-    FillRect(mDC, &poleRect, hGreyBrush);
-
-    // 신호등 불빛 그리기
-    int radius = 10; // 불빛의 반지름
-    HBRUSH hRedLightBrush = CreateSolidBrush(RGB(255, 0, 0));
-    HBRUSH hYellowLightBrush = CreateSolidBrush(RGB(255, 255, 0));
-    HBRUSH hGreenLightBrush = CreateSolidBrush(RGB(0, 255, 0));
-
-    // 빨간불
-    HBRUSH oldBrush = (HBRUSH)SelectObject(mDC, hRedLightBrush);
-    Ellipse(mDC, lightCenterX, (lightCenterY - radius) + 25, lightCenterX + 2 * radius, (lightCenterY + radius) + 25);
-
-    // 노란불
-    SelectObject(mDC, hYellowLightBrush);
-    Ellipse(mDC, lightCenterX + 30, (lightCenterY - radius) + 25, lightCenterX + 2 * radius + 30, (lightCenterY + radius) + 25);
-
-    // 초록불
-    SelectObject(mDC, hGreenLightBrush);
-    Ellipse(mDC, lightCenterX + 60, (lightCenterY - radius) + 25, lightCenterX + 2 * radius + 60, (lightCenterY + radius) + 25);
-
-    // 브러시 반환 및 삭제
-    SelectObject(mDC, oldBrush);
-    DeleteObject(hGreyBrush);
-    DeleteObject(hRedLightBrush);
-    DeleteObject(hYellowLightBrush);
-    DeleteObject(hGreenLightBrush);
-    DeleteObject(oldBrush);
-}
-
-
-void print_traffic_light3(HDC& mDC, RECT& rect) {
-    // 신호등 위치 결정
-    int lightX = rect.right / 2 + 130; // 신호등 중심 x 좌표
-    int lightY = rect.bottom / 2 - 200; // 신호등 중심 y 좌표
+    int lightCenterX = rect.right / 2 + 130; // 신호등 중심 x 좌표
+    int lightCenterY = rect.bottom / 2 - 200; // 신호등 중심 y 좌표
 
     int lightWidth = 30; // 신호등 너비
     int lightHeight = 80; // 신호등 높이
 
     // 신호등 기둥 그리기
     HBRUSH hGreyBrush = CreateSolidBrush(RGB(50, 50, 50));
-    RECT poleRect = { lightX - 10, lightY, lightX + 10, lightY + lightHeight };
+    RECT poleRect = { lightCenterX - 10, lightCenterY, lightCenterX + 10, lightCenterY + lightHeight };
+    RECT poleRect2 = { lightCenterX - 10 - 260, lightCenterY + 120 + 200, lightCenterX + 10 - 260, lightCenterY + lightHeight + 120 + 200 };
+
     FillRect(mDC, &poleRect, hGreyBrush);
+    FillRect(mDC, &poleRect2, hGreyBrush);
 
     // 신호등 불빛 그리기
     int radius = 10; // 불빛의 반지름
-    HBRUSH hRedLightBrush = CreateSolidBrush(RGB(255, 0, 0));
-    HBRUSH hYellowLightBrush = CreateSolidBrush(RGB(255, 255, 0));
-    HBRUSH hGreenLightBrush = CreateSolidBrush(RGB(0, 255, 0));
+
+    for (int i = 0; i < trafficLight2.size(); ++i) {
+        TrafficLight& tr = trafficLight2[i];
+        switch (i)
+        {
+        case 0: //red
+            if (tr.status) {
+                tr.color = RGB(255, 0, 0);
+            }
+            else {
+                tr.color = RGB(125, 0, 0);
+            }
+            tr.rect = { lightCenterX - radius, lightCenterY, lightCenterX + radius, lightCenterY + 2 * radius };
+            break;
+        case 1: //yellow
+            if (tr.status) {
+                tr.color = RGB(255, 255, 0);
+            }
+            else {
+                tr.color = RGB(125, 125, 0);
+            }
+            tr.rect = { lightCenterX - radius, lightCenterY + 30, lightCenterX + radius, lightCenterY + 2 * radius + 30 };
+            break;
+        case 2: //green
+            if (tr.status) {
+                tr.color = RGB(0, 255, 0);
+            }
+            else {
+
+                tr.color = RGB(0, 125, 0);
+            }
+            tr.rect = { lightCenterX - radius, lightCenterY + 60, lightCenterX + radius, lightCenterY + 2 * radius + 60 };
+            break;
+        default:
+            break;
+        }
+    }
+
+    HBRUSH hRedLightBrush = CreateSolidBrush(trafficLight2[0].color);
+    HBRUSH hYellowLightBrush = CreateSolidBrush(trafficLight2[1].color);
+    HBRUSH hGreenLightBrush = CreateSolidBrush(trafficLight2[2].color);
 
     // 빨간불
     HBRUSH oldBrush = (HBRUSH)SelectObject(mDC, hRedLightBrush);
-    Ellipse(mDC, lightX - radius, lightY, lightX + radius, lightY + 2 * radius);
+    Ellipse(mDC, trafficLight2[0].rect.left, trafficLight2[0].rect.top, trafficLight2[0].rect.right, trafficLight2[0].rect.bottom);
+    Ellipse(mDC, trafficLight2[2].rect.left - 260, trafficLight2[2].rect.top + 320, trafficLight2[2].rect.right - 260, trafficLight2[2].rect.bottom + 320);
 
     // 노란불
     SelectObject(mDC, hYellowLightBrush);
-    Ellipse(mDC, lightX - radius, lightY + 30, lightX + radius, lightY + 2 * radius + 30);
+    Ellipse(mDC, trafficLight2[1].rect.left, trafficLight2[1].rect.top, trafficLight2[1].rect.right, trafficLight2[1].rect.bottom);
+    Ellipse(mDC, trafficLight2[1].rect.left - 260, trafficLight2[1].rect.top + 320, trafficLight2[1].rect.right - 260, trafficLight2[1].rect.bottom + 320);
 
     // 초록불
     SelectObject(mDC, hGreenLightBrush);
-    Ellipse(mDC, lightX - radius, lightY + 60, lightX + radius, lightY + 2 * radius + 60);
-
-    // 브러시 반환 및 삭제
-    SelectObject(mDC, oldBrush);
-    DeleteObject(hGreyBrush);
-    DeleteObject(hRedLightBrush);
-    DeleteObject(hYellowLightBrush);
-    DeleteObject(hGreenLightBrush);
-}
-
-void print_traffic_light4(HDC& mDC, RECT& rect) {
-    // 신호등 위치 결정
-    int lightX = rect.right / 2 - 130; // 신호등 중심 x 좌표
-    int lightY = rect.bottom / 2 + 120; // 신호등 중심 y 좌표
-
-    int lightWidth = 30; // 신호등 너비
-    int lightHeight = 80; // 신호등 높이
-
-    // 신호등 기둥 그리기
-    HBRUSH hGreyBrush = CreateSolidBrush(RGB(50, 50, 50));
-    RECT poleRect = { lightX - 10, lightY, lightX + 10, lightY + lightHeight };
-    FillRect(mDC, &poleRect, hGreyBrush);
-
-    // 신호등 불빛 그리기
-    int radius = 10; // 불빛의 반지름
-    HBRUSH hRedLightBrush = CreateSolidBrush(RGB(255, 0, 0));
-    HBRUSH hYellowLightBrush = CreateSolidBrush(RGB(255, 255, 0));
-    HBRUSH hGreenLightBrush = CreateSolidBrush(RGB(0, 255, 0));
-
-    // 빨간불
-    HBRUSH oldBrush = (HBRUSH)SelectObject(mDC, hRedLightBrush);
-    Ellipse(mDC, lightX - radius, lightY, lightX + radius, lightY + 2 * radius);
-
-    // 노란불
-    SelectObject(mDC, hYellowLightBrush);
-    Ellipse(mDC, lightX - radius, lightY + 30, lightX + radius, lightY + 2 * radius + 30);
-
-    // 초록불
-    SelectObject(mDC, hGreenLightBrush);
-    Ellipse(mDC, lightX - radius, lightY + 60, lightX + radius, lightY + 2 * radius + 60);
+    Ellipse(mDC, trafficLight2[2].rect.left, trafficLight2[2].rect.top, trafficLight2[2].rect.right, trafficLight2[2].rect.bottom);
+    Ellipse(mDC, trafficLight2[0].rect.left - 260, trafficLight2[0].rect.top + 320, trafficLight2[0].rect.right - 260, trafficLight2[0].rect.bottom + 320);
 
     // 브러시 반환 및 삭제
     SelectObject(mDC, oldBrush);
