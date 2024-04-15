@@ -54,6 +54,7 @@ struct carS {
     RECT rect;
     COLORREF color;
     int line_status;
+    int speed;
 };
 
 void print_line(HDC& mDC, RECT& rect);
@@ -64,11 +65,12 @@ void print_traffic_light2(HDC& mDC, RECT& rect);
 void print_traffic_light3(HDC& mDC, RECT& rect);
 void print_traffic_light4(HDC& mDC, RECT& rect);
 void line_set(HDC& mDC, RECT& rect, carS& car);
-void car_move(HDC& mDC, RECT& rect, carS& car);
+void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars);
 
 random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
+uniform_int_distribution<int> uid_speed(1, 20);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
@@ -81,15 +83,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static SIZE size;
     static int Timer1Count = 0;
     static vector<carS> cars;
+    static vector<carS> over_cars;
     static bool status = true;
     switch (uMsg)
     {
     case WM_CREATE:
     {
-        SetTimer(hWnd, 1, 50, NULL); // 50ms 마다 WM_TIMER 메시지 발생
+        SetTimer(hWnd, 1, 1, NULL);
 
         for (int i = 0; i < 4; ++i) {
             carS car;
+            carS ov_car;
+            over_cars.push_back(ov_car);
             car.color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen));
             car.line_status = i;
             if (i == 0 || i == 1) {
@@ -104,6 +109,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 car.rect.right = 60;
                 car.rect.bottom = 150;
             }
+            car.speed = uid_speed(gen);
             cars.push_back(car);
         }
         break;
@@ -159,6 +165,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             DeleteObject(hBrush);
         }
 
+        //넘어간 부분 표현하는 곳
+        for (int i = 0; i < over_cars.size(); ++i) {
+            HBRUSH hBrush = CreateSolidBrush(over_cars[i].color);
+            FillRect(mDC, &over_cars[i].rect, hBrush);
+            DeleteObject(hBrush);
+        }
+
+
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
         DeleteObject(hBitmap); // 생성한 비트맵 삭제
         DeleteDC(mDC);
@@ -169,8 +183,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         switch (wParam) {
         case 1:
             for (int i = 0; i < 4; ++i) {
-               car_move(mDC, rect, cars[i]);
+                car_move(mDC, rect, cars[i], over_cars[i]);
             }
+
             break;
         default:
             break;
@@ -187,15 +202,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-void car_move(HDC& mDC, RECT& rect, carS& car) {
+void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars) {
     switch (car.line_status)
     {
     case 0: {
-        car.rect.left += 5;   // 차량의 속도에 해당하는 값을 좌표에 더함
-        car.rect.right += 5;  // 차량의 속도에 해당하는 값을 좌표에 더함
-        if (car.rect.left > rect.right) { // 화면을 벗어났는지 확인
-            car.rect.left = -150; // 차량의 초기 위치를 화면 왼쪽 바깥으로 재설정
-            car.rect.right = 0;   // 차량의 초기 위치를 화면 왼쪽 바깥으로 재설정
+        car.rect.left += car.speed;   // 차량의 속도에 해당하는 값을 좌표에 더함
+        car.rect.right += car.speed;  // 차량의 속도에 해당하는 값을 좌표에 더함
+
+        if (car.rect.right >= rect.right) {
+            if (car.rect.left > rect.right) {
+                car.rect.left = 0;
+                car.rect.right = 150;
+                //-----
+                over_cars.rect.left = 0;
+                over_cars.rect.top = 0;
+                over_cars.rect.right = 0;
+                over_cars.rect.bottom = 0;
+            }
+            over_cars.rect.left = 0;
+            over_cars.rect.top = car.rect.top;
+            over_cars.rect.right = car.rect.right - rect.right;
+            over_cars.rect.bottom = car.rect.bottom;
+            over_cars.color = car.color;
+            over_cars.line_status = car.line_status;
         }
         break;
     }
