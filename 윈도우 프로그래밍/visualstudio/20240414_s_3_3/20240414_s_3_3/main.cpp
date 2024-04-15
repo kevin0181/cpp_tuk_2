@@ -283,17 +283,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 bool status1 = false;
 bool status2 = false;
+bool status3 = false;
+bool status4 = false;
+
 void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars, vector<TrafficLight> trafficLight2, vector<TrafficLight> trafficLight1) {
     switch (car.line_status)
     {
     case 0: {
  
-        if (car.rect.right <= rect.right / 2 - 100 - 75 && trafficLight2[0].status && status1 == false) {
+        if (car.rect.right <= rect.right / 2 - 100 && trafficLight2[0].status && status1 == false) {
             status1 = true;
-                break;
+            break;
         }
+
         if (status1) { // 건너기전에 빨간불이면 횡단보도까지 가게함.
-            if (car.rect.right <= rect.right / 2 - 100 - 75) {
+            if (car.rect.right <= rect.right / 2 - 100 - 80) {
                 car.rect.left += car.speed;
                 car.rect.right += car.speed;
             }
@@ -328,7 +332,7 @@ void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars, vector<TrafficLi
     case 1:
     {
 
-        if (car.rect.left >= rect.right / 2 + 100 + 80 && trafficLight2[0].status && status2 == false) {
+        if (car.rect.left >= rect.right / 2 + 100 && trafficLight2[0].status && status2 == false) {
             status2 = true;
             break;
         }
@@ -367,37 +371,76 @@ void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars, vector<TrafficLi
         break;
     }
     case 2:
-        car.rect.top += car.speed;
-        car.rect.bottom += car.speed;
-        if (car.rect.bottom >= rect.bottom) {
-            if (car.rect.top > rect.bottom) {
-                car.rect.top = 0;
-                car.rect.bottom = 150;
-            }
-            over_cars.rect.left = car.rect.left;
-            over_cars.rect.top = 0;
-            over_cars.rect.right = car.rect.right;
-            over_cars.rect.bottom = car.rect.bottom - rect.bottom;
-            over_cars.color = car.color;
-            over_cars.line_status = car.line_status;
+
+        if (car.rect.bottom <= rect.bottom / 2 - 100 && trafficLight1[0].status && status3 == false) {
+            status3 = true;
+            break;
         }
+        if (status3) {
+            if (car.rect.bottom <= rect.bottom / 2 - 100 - 78) {
+                car.rect.top += car.speed;
+                car.rect.bottom += car.speed;
+            }
+            else {
+                if (trafficLight1[0].status)
+                    status3 = true;
+                if (!trafficLight1[0].status)
+                    status3 = false;
+            }
+        }
+        else {
+            car.rect.top += car.speed;
+            car.rect.bottom += car.speed;
+            if (car.rect.bottom >= rect.bottom) {
+                if (car.rect.top > rect.bottom) {
+                    car.rect.top = 0;
+                    car.rect.bottom = 150;
+                }
+                over_cars.rect.left = car.rect.left;
+                over_cars.rect.top = 0;
+                over_cars.rect.right = car.rect.right;
+                over_cars.rect.bottom = car.rect.bottom - rect.bottom;
+                over_cars.color = car.color;
+                over_cars.line_status = car.line_status;
+            }
+        }
+
         break;
     case 3:
     {
-        car.rect.top -= car.speed;
-        car.rect.bottom -= car.speed;
-        if (car.rect.top <= 0) {
-            if (car.rect.bottom < 0) {
-                car.rect.top = rect.bottom - 150;
-                car.rect.bottom = rect.bottom;
-            }
-            over_cars.rect.left = car.rect.left;
-            over_cars.rect.top = rect.bottom + car.rect.top;
-            over_cars.rect.right = car.rect.right;
-            over_cars.rect.bottom = rect.bottom;
-            over_cars.color = car.color;
-            over_cars.line_status = car.line_status;
+        if (car.rect.top >= rect.bottom / 2 + 100 && trafficLight1[0].status && status4 == false) {
+            status4 = true;
+            break;
         }
+        if (status4) {
+            if (car.rect.top >= rect.bottom / 2 + 100 + 78) {
+                car.rect.top -= car.speed;
+                car.rect.bottom -= car.speed;
+            }
+            else {
+                if (trafficLight1[0].status)
+                    status4 = true;
+                if (!trafficLight1[0].status)
+                    status4 = false;
+            }
+        }
+        else {
+            car.rect.top -= car.speed;
+            car.rect.bottom -= car.speed;
+            if (car.rect.top <= 0) {
+                if (car.rect.bottom < 0) {
+                    car.rect.top = rect.bottom - 150;
+                    car.rect.bottom = rect.bottom;
+                }
+                over_cars.rect.left = car.rect.left;
+                over_cars.rect.top = rect.bottom + car.rect.top;
+                over_cars.rect.right = car.rect.right;
+                over_cars.rect.bottom = rect.bottom;
+                over_cars.color = car.color;
+                over_cars.line_status = car.line_status;
+            }
+        }
+        
     }
         break;
     default:
