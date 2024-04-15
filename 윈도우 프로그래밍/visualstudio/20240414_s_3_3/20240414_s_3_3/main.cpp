@@ -69,7 +69,7 @@ void print_crosswalk2(HDC& mDC, RECT& rect);
 void print_traffic_light1(HDC& mDC, RECT& rect, vector<TrafficLight> trafficLight1);
 void print_traffic_light3(HDC& mDC, RECT& rect, vector<TrafficLight> trafficLight2);
 void line_set(HDC& mDC, RECT& rect, carS& car);
-void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars);
+void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars, vector<TrafficLight> trafficLight2, vector<TrafficLight> trafficLight1);
 
 random_device rd;
 mt19937 gen(rd());
@@ -162,6 +162,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_CHAR:
         switch (wParam)
         {
+        case '-':
+            for (int i = 0; i < cars.size(); ++i) {
+                if (cars[i].speed  < 2) {
+                    break;
+                }
+                cars[i].speed--;
+            }
+            break;
+        case '=':
+            for (int i = 0; i < cars.size(); ++i) {
+                cars[i].speed++;
+            }
+            break;
         case 'q':
             PostQuitMessage(0);
             break;
@@ -216,7 +229,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         switch (wParam) {
         case 1:
             for (int i = 0; i < 4; ++i) {
-                car_move(mDC, rect, cars[i], over_cars[i]);
+                car_move(mDC, rect, cars[i], over_cars[i], trafficLight2, trafficLight1);
             }
             break;
         case 2: // blue
@@ -268,29 +281,56 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars) {
+bool status = false;
+void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars, vector<TrafficLight> trafficLight2, vector<TrafficLight> trafficLight1) {
     switch (car.line_status)
     {
     case 0: {
-        car.rect.left += car.speed;   // 차량의 속도에 해당하는 값을 좌표에 더함
-        car.rect.right += car.speed;  // 차량의 속도에 해당하는 값을 좌표에 더함
-
-        if (car.rect.right >= rect.right) {
-            if (car.rect.left > rect.right) {
-                car.rect.left = 0;
-                car.rect.right = 150;
-            }
-            over_cars.rect.left = 0;
-            over_cars.rect.top = car.rect.top;
-            over_cars.rect.right = car.rect.right - rect.right;
-            over_cars.rect.bottom = car.rect.bottom;
-            over_cars.color = car.color;
-            over_cars.line_status = car.line_status;
+ 
+        if (car.rect.right <= rect.right / 2 - 100 && trafficLight2[0].status && status == false) {
+            status = true;
+                break;
         }
+        if (status) { // 건너기전에 빨간불이면 횡단보도까지 가게함.
+            if (car.rect.right <= rect.right / 2 - 100) {
+                car.rect.left += car.speed;
+                car.rect.right += car.speed;
+            }
+            else {
+                if (trafficLight2[0].status)
+                    status = true;
+                if (!trafficLight2[0].status)
+                    status = false;
+            }
+        }
+        else {
+            car.rect.left += car.speed;   // 차량의 속도에 해당하는 값을 좌표에 더함
+            car.rect.right += car.speed;  // 차량의 속도에 해당하는 값을 좌표에 더함
+
+            if (car.rect.right >= rect.right) {
+                if (car.rect.left > rect.right) {
+                    car.rect.left = 0;
+                    car.rect.right = 150;
+                }
+                over_cars.rect.left = 0;
+                over_cars.rect.top = car.rect.top;
+                over_cars.rect.right = car.rect.right - rect.right;
+                over_cars.rect.bottom = car.rect.bottom;
+                over_cars.color = car.color;
+                over_cars.line_status = car.line_status;
+            }
+        }
+       
+
         break;
     }
     case 1:
     {
+
+        if (car.rect.left <= rect.right / 2 + 100 && trafficLight2[0].status) {
+            break;
+        }
+
         car.rect.left -= car.speed;   // 차량의 속도에 해당하는 값을 좌표에 더함
         car.rect.right -= car.speed;  // 차량의 속도에 해당하는 값을 좌표에 더함
 
