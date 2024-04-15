@@ -66,8 +66,8 @@ struct TrafficLight {
 void print_line(HDC& mDC, RECT& rect);
 void print_crosswalk1(HDC& mDC, RECT& rect);
 void print_crosswalk2(HDC& mDC, RECT& rect);
-void print_traffic_light1(HDC& mDC, RECT& rect, vector<TrafficLight> trafficLight1);
-void print_traffic_light3(HDC& mDC, RECT& rect, vector<TrafficLight> trafficLight2);
+void print_traffic_light1(HDC& mDC, RECT& rect, vector<TrafficLight>& trafficLight1);
+void print_traffic_light3(HDC& mDC, RECT& rect, vector<TrafficLight>& trafficLight2);
 void line_set(HDC& mDC, RECT& rect, carS& car);
 void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars, vector<TrafficLight> trafficLight2, vector<TrafficLight> trafficLight1);
 
@@ -94,6 +94,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static bool status = true;
     static int ran_blue_time = 0;
     static int traffic_status = 0; // 0 => 좌우, 1 => 위아래
+
+    static bool a_status = false;
+
+    int mx, my;
 
     switch (uMsg)
     {
@@ -154,6 +158,41 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
         break;
     case WM_LBUTTONDOWN: {  // 마우스 왼쪽 버튼 클릭
+
+        if (a_status) {
+            mx = LOWORD(lParam);
+            my = HIWORD(lParam);
+
+            POINT p;
+            p.x = mx;
+            p.y = my;
+
+            for (int i = 0; i < trafficLight1.size(); ++i) {
+
+                if (PtInRect(&trafficLight1[i].rect, p)) {
+                    if (i == 1) {
+                        break;
+                    }
+                    trafficLight1[i].status = true;
+                    break;
+                }
+
+            }
+
+
+            if (trafficLight1[2].status) {
+                trafficLight2[0].status = true;
+                trafficLight2[2].status = false;
+                trafficLight1[0].status = false;
+            }
+            else if(!trafficLight1[0].status) {
+                trafficLight2[0].status = false;
+                trafficLight2[2].status = true;
+                trafficLight1[2].status = false;
+            }
+
+        }
+
         break;
     }
     case WM_RBUTTONDOWN: {  // 마우스 오른쪽 버튼 클릭
@@ -162,6 +201,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_CHAR:
         switch (wParam)
         {
+        case 'a':
+            a_status = !a_status;
+            if (a_status) {
+                KillTimer(hWnd, 2); // 타이머 종료
+                KillTimer(hWnd, 3); // 타이머 종료
+            }
+            else {
+                SetTimer(hWnd, 2, ran_blue_time, NULL); // Blue
+            }
+            break;
         case '-':
             for (int i = 0; i < cars.size(); ++i) {
                 if (cars[i].speed  < 2) {
@@ -609,7 +658,7 @@ void print_crosswalk2(HDC& mDC, RECT& rect) {
     DeleteObject(oldBrush);
 }
 
-void print_traffic_light1(HDC& mDC, RECT& rect, vector<TrafficLight> trafficLight1) {
+void print_traffic_light1(HDC& mDC, RECT& rect, vector<TrafficLight>& trafficLight1) {
 
     if (trafficLight1.size() <= 0) {
         return;
@@ -699,7 +748,7 @@ void print_traffic_light1(HDC& mDC, RECT& rect, vector<TrafficLight> trafficLigh
 }
 
 
-void print_traffic_light3(HDC& mDC, RECT& rect, vector<TrafficLight> trafficLight2) {
+void print_traffic_light3(HDC& mDC, RECT& rect, vector<TrafficLight>& trafficLight2) {
 
     if (trafficLight2.size() <= 0) {
         return;
