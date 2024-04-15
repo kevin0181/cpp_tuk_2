@@ -37,7 +37,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
     WndClass.hIconSm = LoadIcon(NULL, IDI_QUESTION);
     RegisterClassEx(&WndClass);
 
-    hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW | WS_VSCROLL, 0, 0, WIDTH, HEIGHT, NULL, (HMENU)NULL, hInstance, NULL);
+    hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW | WS_VSCROLL, 1800, 0, WIDTH, HEIGHT, NULL, (HMENU)NULL, hInstance, NULL);
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
@@ -104,7 +104,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     
     static bool a_status = false;
     int mx, my;
-    static int person_status = 1;
+    static int person_status = 0;
     switch (uMsg)
     {
     case WM_CREATE:
@@ -289,21 +289,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 
 
-
-        for (int i = 0; i < cars.size(); ++i) {
-            HBRUSH hBrush = CreateSolidBrush(cars[i].color);
-            FillRect(mDC, &cars[i].rect, hBrush);
-            DeleteObject(hBrush);
-        }
-
-        //넘어간 부분 표현하는 곳
-        for (int i = 0; i < over_cars.size(); ++i) {
-            HBRUSH hBrush = CreateSolidBrush(over_cars[i].color);
-            FillRect(mDC, &over_cars[i].rect, hBrush);
-            DeleteObject(hBrush);
-        }
-
-
         print_line(mDC, rect); //도로 그리기
 
         print_crosswalk1(mDC, rect); //횡단보도 그리기
@@ -311,8 +296,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         HBRUSH hBrush = CreateSolidBrush(person.color);
         oldBrush = (HBRUSH)SelectObject(mDC, hBrush); // 새로운 브러시 선택하기
-        Ellipse(mDC, person.rect.left + rect.right / 2 - 140, person.rect.top + rect.bottom / 2 - 170,
-            person.rect.right + rect.right / 2 - 140, person.rect.bottom + rect.bottom / 2 - 170);;
+
+        if (person_status == 0) {
+            person.rect.left += rect.right / 2 - 140;
+            person.rect.top += rect.bottom / 2 - 170;
+            person.rect.right += rect.right / 2 - 140;
+            person.rect.bottom += rect.bottom / 2 - 170;
+            person_status = 1;
+        }
+       
+        Ellipse(mDC, person.rect.left, person.rect.top,
+            person.rect.right, person.rect.bottom);
         SelectObject(mDC, oldBrush);
         DeleteObject(hBrush);
 
@@ -326,6 +320,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             status = false;
         }
 
+        for (int i = 0; i < cars.size(); ++i) {
+            HBRUSH hBrush = CreateSolidBrush(cars[i].color);
+            FillRect(mDC, &cars[i].rect, hBrush);
+            DeleteObject(hBrush);
+        }
+
+        //넘어간 부분 표현하는 곳
+        for (int i = 0; i < over_cars.size(); ++i) {
+            HBRUSH hBrush = CreateSolidBrush(over_cars[i].color);
+            FillRect(mDC, &over_cars[i].rect, hBrush);
+            DeleteObject(hBrush);
+        }
 
 
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
@@ -376,17 +382,48 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             SetTimer(hWnd, 2, ran_blue_time, NULL); // Blue
             break;
         case 4: //사람
+           // GetClientRect(hWnd, &rect);
             switch (person_status)
             {
             case 1:
-                person.rect.top += 4;
-                person.rect.bottom += 4;
+                if (trafficLight2[0].status) {
+                    person.rect.top += 4;
+                    person.rect.bottom += 4;
+                }
+                if (person.rect.top >= rect.bottom / 2 + 110) {
+                    person_status = 2;
+                }
                 break;
             case 2:
+                if (trafficLight1[0].status) {
+                    person.rect.left += 4;
+                    person.rect.right += 4;
+                }
+
+                if (person.rect.left >= rect.right / 2 + 110) {
+                    person_status = 3;
+                }
+
                 break;
             case 3:
+                if (trafficLight2[0].status) {
+                    person.rect.top -= 4;
+                    person.rect.bottom -= 4;
+                }
+
+                if (person.rect.top <= rect.bottom / 2 - 135) {
+                    person_status = 4;
+                }
                 break;
             case 4:
+                if (trafficLight1[0].status) {
+                    person.rect.left -= 4;
+                    person.rect.right -= 4;
+                }
+
+                if (person.rect.left <= rect.right / 2 - 135) {
+                    person_status = 1;
+                }
                 break;
             default:
                 break;
