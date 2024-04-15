@@ -228,6 +228,30 @@ void car_move(HDC& mDC, RECT& rect, carS& car, carS& over_cars) {
         }
         break;
     }
+    case 1:
+    {
+        car.rect.left -= car.speed;   // 차량의 속도에 해당하는 값을 좌표에 더함
+        car.rect.right -= car.speed;  // 차량의 속도에 해당하는 값을 좌표에 더함
+
+        if (car.rect.left <= 0) {
+            if (car.rect.right < 0) {
+                car.rect.left = rect.right - 150;
+                car.rect.right = rect.right;
+                ////-----
+                over_cars.rect.left = 0;
+                over_cars.rect.top = 0;
+                over_cars.rect.right = 0;
+                over_cars.rect.bottom = 0;
+            }
+            over_cars.rect.left = rect.right + car.rect.left;
+            over_cars.rect.top = car.rect.top;
+            over_cars.rect.right = rect.right;
+            over_cars.rect.bottom = car.rect.bottom;
+            over_cars.color = car.color;
+            over_cars.line_status = car.line_status;
+        }
+        break;
+    }
     default:
         break;
     }
@@ -245,7 +269,7 @@ void line_set(HDC& mDC, RECT& rect, carS& car) {
         break;
     }
     case 1: // 오른쪽에서 왼쪽
-        car.rect.left += rect.right - 150;
+        car.rect.left += rect.right;
         car.rect.right += rect.right;
         car.rect.top += rect.bottom / 2 - 60 - 23;
         car.rect.bottom += rect.bottom / 2 - 60 - 23;
