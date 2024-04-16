@@ -287,7 +287,7 @@ void findMaxHp_R(List<Champion>& champion_list, int& maxHp, size_t index) {
 		return;
 	}
 
-	if (champion_list[index].hp == maxHp_v(champion_list, maxHp, 0) && champion_list[index].status) {
+	if (champion_list[index].hp == maxHp && champion_list[index].status) {
 		print_champion(champion_list[index]);
 	}
 
