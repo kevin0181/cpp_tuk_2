@@ -50,6 +50,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 
 }
 
+#define MAP_WIDTH 600
+#define MAP_HEIGHT 600
+
+struct P {
+    RECT rect;
+    COLORREF color;
+    int positionX;
+    int positionY;
+};
+struct Map {
+    RECT rect;
+    COLORREF color;
+    bool status; // 현재 칸에 말이 존재하는지.
+    int positionX;
+    int positionY;
+    int roundX;
+    int roundY;
+    void paint_map(HDC &mDC) {
+        HBRUSH hBrush = CreateSolidBrush(color);
+        HBRUSH oldBrush = (HBRUSH)SelectObject(mDC, hBrush);
+        RoundRect(mDC, rect.left, rect.top, rect.right, rect.bottom, roundX, roundY);
+        SelectObject(mDC, oldBrush);
+        DeleteObject(hBrush);
+    }
+};
+
 random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
@@ -63,12 +89,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static RECT rect;
     static SIZE size;
     static int Timer1Count = 0;
-   
+    static P p1;
+    static P p2;
+    static vector<Map> maps;
+
     switch (uMsg)
     {
     case WM_CREATE:
     {
        // SetTimer(hWnd, 1, 50, NULL); // 50ms 마다 WM_TIMER 메시지 발생
+       
+        Map map;
+        RECT rect;
+        for (int i = 0; i < 30; ++i) {
+            switch (i)
+            {
+            case 0:
+                rect = { 0, 0,70,70 };
+                map.rect = rect;
+                map.color = RGB(255, 255, 0);
+                map.roundX = 4;
+                map.roundY = 4;
+                break;
+            default:
+                rect = { 0,0,50,50 };
+                map.rect = rect;
+                map.roundX = 4;
+                map.roundY = 4;
+                break;
+            }
+
+            maps.push_back(map);
+        }
+
         break;
     }
     case WM_KEYUP:
@@ -99,6 +152,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         hBitmap = CreateCompatibleBitmap(hDC, rect.right, rect.bottom);
         SelectObject(mDC, (HBITMAP)hBitmap);
         Rectangle(mDC, 0, 0, rect.right, rect.bottom);
+
+        if (maps.size() != 0) {
+            maps[0].paint_map(mDC);
+        }
 
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
         DeleteObject(hBitmap); // 생성한 비트맵 삭제
