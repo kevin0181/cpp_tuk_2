@@ -101,6 +101,8 @@ void delete_R(List<Champion>& champion_list, string& name, size_t index);
 void deleteAll_R(List<Champion>& champion_list, string& position, size_t index);
 void findMaxHp_R(List<Champion>& champion_list, int& maxHp, size_t index);
 int maxHp_v(List<Champion>& champion_list, int& maxHp, size_t index);
+void sortByHp_R(List<Champion>& champion_list, size_t last_index);
+void sortByHp_step(List<Champion>& champion_list, size_t start, size_t last_index);
 
 int main() {
 	Champion c_l[] = {
@@ -242,6 +244,8 @@ int main() {
 			break;
 		}
 		case SORTBYHP_E:
+			sortByHp_R(champion_list, champion_list.size());
+			cout << "정렬을 완료했습니다." << endl;
 			break;
 		default:
 			cout << "잘못된 명령어 입니다." << endl;
@@ -251,6 +255,27 @@ int main() {
 	}
 }
 
+void sortByHp_R(List<Champion>& champion_list, size_t last_index) {
+	if (last_index == 1)
+		return;
+	sortByHp_step(champion_list, 0, last_index);
+	sortByHp_R(champion_list, last_index - 1);
+}
+
+void sortByHp_step(List<Champion>& champion_list, size_t start, size_t last_index) {
+	if (start >= last_index - 1)
+		return;
+
+	if (champion_list[start].hp < champion_list[start + 1].hp) {
+		Champion p;
+		p = champion_list[start];
+		champion_list[start] = champion_list[start + 1];
+		champion_list[start + 1] = p;
+	}
+
+	sortByHp_step(champion_list, start + 1, last_index);
+
+}
 void findMaxHp_R(List<Champion>& champion_list, int& maxHp, size_t index) {
 
 	if (index == 0) {
