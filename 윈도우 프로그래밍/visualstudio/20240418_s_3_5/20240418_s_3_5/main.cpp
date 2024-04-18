@@ -88,6 +88,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static bool status = false;
     static bool m_s1 = false;
     static bool m_s2 = false;
+
+    static bool Drag = false;
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -106,6 +109,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             circles.push_back(c); // 하나의 원 도형을 만들어 줬으니깐 배열에 추가
         }
 
+        Drag = false;
+
         break;
     }
     case WM_COMMAND:
@@ -114,11 +119,68 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
         break;
-    case WM_LBUTTONDOWN:
-        break;
-    case WM_RBUTTONDOWN: {
-        break;
+    case WM_RBUTTONDOWN:
+    {
+        Circle c;
+        c.color = RGB(uid_RGB(gen), uid_RGB(gen), uid_RGB(gen)); // random color
+        c.radius = uid_radius(gen); // random radius
+        c.positionX = uid_positionX(gen);
+        c.positionY = uid_positionY(gen);
+        c.rect = { c.positionX - c.radius,c.positionY - c.radius, c.positionX + c.radius, c.positionY + c.radius };
+
+        for (int i = 0; i < circles.size() - 1; ++i) {
+            circles[i] = circles[i + 1];
+        }
+
+        circles.push_back(c);
     }
+        break;
+    case WM_LBUTTONDOWN:
+    {
+        Drag = true;
+
+        POINT p;
+        p.x = LOWORD(lParam);
+        p.y = HIWORD(lParam);
+
+        for (int i = 0; i < circles.size(); ++i) {
+            if (PtInRect(&circles[i].rect, p)) {
+                circles[i].positionX = p.x;
+                circles[i].positionY = p.y;
+                circles[i].rect = { circles[i].positionX - circles[i].radius, circles[i].positionY - circles[i].radius,
+                    circles[i].positionX + circles[i].radius, circles[i].positionY + circles[i].radius };
+                break;
+            }
+        }
+        SetCapture(hWnd);
+    }
+        break;
+    case WM_MOUSEMOVE:
+    {
+        if (Drag && (wParam & MK_LBUTTON)) {
+            POINT p;
+            p.x = LOWORD(lParam);
+            p.y = HIWORD(lParam);
+
+            for (int i = 0; i < circles.size(); ++i) {
+                if (PtInRect(&circles[i].rect, p)) {
+                    circles[i].positionX = p.x;
+                    circles[i].positionY = p.y;
+                    circles[i].rect = { circles[i].positionX - circles[i].radius, circles[i].positionY - circles[i].radius,
+                        circles[i].positionX + circles[i].radius, circles[i].positionY + circles[i].radius };
+                    break;
+                }
+            }
+        }
+    }
+
+        break;
+    case WM_LBUTTONUP:
+        if (Drag) {
+            Drag = false;
+            ReleaseCapture();
+        }
+        break;
     case WM_CHAR:
         switch (wParam)
         {
