@@ -106,6 +106,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int move[4];
     static int move_stack = 0;
     int c_m = 108;
+
+    static bool game_status = false;
+        
     static MAP maps[30]= {
             {648,648},
             {650,500},
@@ -160,39 +163,143 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_COMMAND:
-        if (LOWORD(wParam) == 1) {  // 버튼 클릭 이벤트 확인
-            buttonText = (wcscmp(buttonText, L"1번 유저 던지기!") == 0) ? L"2번 유저 던지기!" : L"1번 유저 던지기!";
-            SetWindowText(hwndButton, buttonText);  // 버튼 텍스트 변경
+        if (!game_status) {
+            if (LOWORD(wParam) == 1) {  // 버튼 클릭 이벤트 확인
+                buttonText = (wcscmp(buttonText, L"1번 유저 던지기!") == 0) ? L"2번 유저 던지기!" : L"1번 유저 던지기!";
+                SetWindowText(hwndButton, buttonText);  // 버튼 텍스트 변경
 
-            user_status = user_status == 1 ? 2 : 1;
+                user_status = user_status == 1 ? 2 : 1;
 
-            for (int& m : move) {
-                m = uid_u(gen);
-            }
-
-            for (int i = 0; i < 4; ++i) {
-                if (move[i]) {
-                    move_stack++;
+                for (int& m : move) {
+                    m = uid_u(gen);
                 }
-            }
 
-            if (move_stack == 0) { //mo
-                move_stack = 5;
-            }
+                for (int i = 0; i < 4; ++i) {
+                    if (move[i]) {
+                        move_stack++;
+                    }
+                }
+
+                if (move_stack == 0) { //mo
+                    move_stack = 5;
+                }
 
                 if (user_status == 1)
                 {
-                    red.move_cnt += move_stack;
+
+                    switch (red.move_cnt)
+                    {
+                    case 5:
+                        move_stack--;
+                        red.move_cnt = 20;
+                        break;
+                    case 10:
+                        move_stack--;
+                        red.move_cnt = 25;
+                        break;
+                    case 22:
+                        move_stack--;
+                        red.move_cnt = 28;
+                        break;
+                    case 27:
+                        move_stack--;
+                        red.move_cnt = 28;
+                        break;
+                    default:
+                        break;
+                    }
+
+                    for (int i = 0; i < move_stack; ++i) {
+                        red.move_cnt += 1;
+                        if (red.move_cnt == 24) {
+                            ++i;
+                            red.move_cnt = 15;
+                        }
+                        if (red.move_cnt > 30) {
+                            game_status = true;
+                            MessageBox(hWnd, L"red Win!", L"red win!", MB_OK | MB_ICONINFORMATION);
+                            break;
+                        }
+                        if (red.move_cnt == 19 || red.move_cnt == 0) {
+                            red.move_cnt = 0;
+                            if (move_stack > 0) {
+                                game_status = true;
+                                MessageBox(hWnd, L"red Win!", L"red win!", MB_OK | MB_ICONINFORMATION);
+                                break;
+                            }
+                        }
+                    }
+
+
+
                     red.positionX = maps[red.move_cnt].x - 12.5;
                     red.positionY = maps[red.move_cnt].y - 12.5;
                 }
                 else if (user_status == 2) {
-                    blue.move_cnt += move_stack;
+                    switch (blue.move_cnt)
+                    {
+                    case 5:
+                        move_stack--;
+                        blue.move_cnt = 20;
+                        break;
+                    case 10:
+                        move_stack--;
+                        blue.move_cnt = 25;
+                        break;
+                    case 22:
+                        move_stack--;
+                        blue.move_cnt = 28;
+                        break;
+                    case 27:
+                        move_stack--;
+                        blue.move_cnt = 28;
+                        break;
+                    default:
+                        break;
+                    }
+
+                    for (int i = 0; i < move_stack; ++i) {
+                        blue.move_cnt += 1;
+                        if (blue.move_cnt == 24) {
+                            ++i;
+                            blue.move_cnt = 15;
+                        }
+                        if (blue.move_cnt > 30) {
+                            game_status = true;
+                            MessageBox(hWnd, L"blue Win!", L"blue win!", MB_OK | MB_ICONINFORMATION);
+                            break;
+                        }
+                        if (blue.move_cnt == 19 || blue.move_cnt == 0) {
+                            blue.move_cnt = 0;
+                            if (move_stack > 0) {
+                                game_status = true;
+                                MessageBox(hWnd, L"blue Win!", L"blue win!", MB_OK | MB_ICONINFORMATION);
+                                break;
+                            }
+                        }
+                    }
+
+
+
                     blue.positionX = maps[blue.move_cnt].x - 12.5;
                     blue.positionY = maps[blue.move_cnt].y - 12.5;
                 }
                 move_stack = 0;
+            }
         }
+
+        if (user_status == 1 && blue.move_cnt == red.move_cnt) {
+            blue.move_cnt = 0;
+            blue.positionX = maps[blue.move_cnt].x - 12.5;
+            blue.positionY = maps[blue.move_cnt].y - 12.5;
+        }
+        else if (user_status == 2 && red.move_cnt == blue.move_cnt) {
+            red.move_cnt = 0;
+            red.positionX = maps[red.move_cnt].x - 12.5;
+            red.positionY = maps[red.move_cnt].y - 12.5;
+        }
+
+        SetFocus(hWnd);
         InvalidateRect(hWnd, NULL, false);
         break;
     case WM_KEYUP:
@@ -200,24 +307,42 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
         break;
     case WM_LBUTTONDOWN: 
-    {
-        int xPos = LOWORD(lParam); // 현재 마우스의 X 좌표
-        int yPos = HIWORD(lParam); // 현재 마우스의 Y 좌표
-        wchar_t szPos[100];        // 좌표를 저장할 문자 배열
+    //{
+    //    int xPos = LOWORD(lParam); // 현재 마우스의 X 좌표
+    //    int yPos = HIWORD(lParam); // 현재 마우스의 Y 좌표
+    //    wchar_t szPos[100];        // 좌표를 저장할 문자 배열
 
-        // 좌표 정보를 문자열로 포맷팅
-        wsprintf(szPos, L"X: %d, Y: %d", xPos, yPos);
+    //    // 좌표 정보를 문자열로 포맷팅
+    //    wsprintf(szPos, L"X: %d, Y: %d", xPos, yPos);
 
-        // 메시지 박스로 좌표 표시
-        MessageBox(hWnd, szPos, L"Current Position", MB_OK | MB_ICONINFORMATION);
-        break;
-    }
+    //    // 메시지 박스로 좌표 표시
+    //    MessageBox(hWnd, szPos, L"Current Position", MB_OK | MB_ICONINFORMATION);
+    //    break;
+    //}
     case WM_RBUTTONDOWN: {
         break;
     }
     case WM_CHAR:
         switch (wParam)
         {
+        case 's':
+        {
+            red.rect = { 0, 0, 25, 25 };
+            blue.rect = { 0, 0, 25, 25 };
+            red.move_cnt = 0;
+            blue.move_cnt = 0;
+            red.positionX = 800;
+            red.positionY = 400;
+            blue.positionX = 830;
+            blue.positionY = 400;
+            game_status = false;
+            move_stack = 0;
+            user_status = -1;
+            buttonText = L"1번 유저 던지기!";
+            SetWindowText(hwndButton, buttonText);  // 버튼 텍스트 변경
+
+            break;
+        }
         case 'q':
             PostQuitMessage(0);
             break;
