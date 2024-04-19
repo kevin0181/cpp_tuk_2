@@ -1,63 +1,148 @@
-#include <iostream>
+ï»¿#include <iostream>
 
-// ´ÜÀÏ ¿¬°á ¸®½ºÆ®ÀÇ ³ëµå ±¸Á¶Ã¼
-struct Node {
-    int data;       // ³ëµå°¡ ÀúÀåÇÒ µ¥ÀÌÅÍ
-    Node* next;     // ´ÙÀ½ ³ëµå¸¦ °¡¸®Å°´Â Æ÷ÀÎÅÍ
+using namespace std;
 
-    // Node »ý¼ºÀÚ
-    Node(int val) : data(val), next(nullptr) {}
+#define COL 19
+#define LOW 19
+
+struct Point{
+	int* x;
+	int* y;
+	string shape;
+
+	// â–¡
+	Point() :x(nullptr), y(nullptr), shape("+") {};
 };
 
-// ´ÜÀÏ ¿¬°á ¸®½ºÆ® Å¬·¡½º
-class SinglyLinkedList {
-public:
-    Node* head;  // ¸®½ºÆ®ÀÇ Ã¹ ³ëµå¸¦ °¡¸®Å°´Â Æ÷ÀÎÅÍ
-
-    // »ý¼ºÀÚ
-    SinglyLinkedList() : head(nullptr) {}
-
-    // ¸®½ºÆ®ÀÇ ¸Ç ¾Õ¿¡ ³ëµå Ãß°¡
-    void insertAtFront(int data) {
-        Node* newNode = new Node(data);
-        newNode->next = head;
-        head = newNode;
-    }
-
-    // ¸®½ºÆ® Ãâ·Â
-    void printList() {
-        Node* temp = head;
-        while (temp != nullptr) {
-            std::cout << temp->data << " -> ";
-            temp = temp->next;
-        }
-        std::cout << "NULL\n";
-    }
-
-    // ¿¬°á ¸®½ºÆ® ¸Þ¸ð¸® ÇØÁ¦
-    ~SinglyLinkedList() {
-        Node* current = head;
-        while (current != nullptr) {
-            Node* next = current->next;
-            delete current;
-            current = next;
-        }
-        head = nullptr;
-        std::cout << "List destroyed.\n";
-    }
+struct Cnt_P {
+	int cnt = 0;
+	string shape;
+	Cnt_P() :cnt(0), shape(" ") {};
 };
+
+void cnt_point(Point p[COL][LOW]) { // ê°€ë¡œ ì„¸ë¡œ ëŒ ê°œìˆ˜ ìƒˆê¸°
+	for (size_t i = 0; i < COL; ++i) {
+
+		int size_w{};
+		int size_b{};
+
+		Cnt_P result_p;
+		Cnt_P compare_p;
+
+		for (size_t j = 0; j < LOW; ++j) {
+
+			if (p[i][j].shape != "+") {
+				compare_p.cnt++;
+				compare_p.shape = p[i][j].shape;
+			}
+
+			if (p[i][j].shape == "â—‹") {
+				size_w++;
+
+				if (compare_p.shape == "â—") {
+					if (result_p.cnt < compare_p.cnt) {
+						result_p = compare_p;
+						compare_p.cnt = 1;
+					}
+				}
+
+			}
+			else if (p[i][j].shape == "â—") {
+				size_b++;
+
+				if (compare_p.shape == "â—‹") {
+					if (result_p.cnt < compare_p.cnt) {
+						result_p = compare_p;
+						compare_p.cnt = 1;
+					}
+				}
+			}
+
+			cout << p[i][j].shape << " ";
+		}
+
+		cout << " | w cnt: " << result_p.cnt << " shape: " << result_p.shape;
+
+		cout << " | w" << i << " (â—‹:" << size_w << ") (â—:" << size_b << ")";
+
+		size_w = 0;
+		size_b = 0;
+
+		for (size_t j = 0; j < LOW; ++j) {
+			if (p[j][i].shape == "â—‹")
+				size_w++;
+			else if (p[j][i].shape == "â—")
+				size_b++;
+		}
+
+		cout << " | h" << i << " (â—‹:" << size_w << ") (â—: " << size_b << ")" << endl;
+
+
+
+	}
+
+
+	for (size_t i = 0; i < COL; ++i) { // ì•„ëž˜ ì¤„ ê¸‹ê¸°
+		cout << "ã…¡";
+	}
+	cout << endl;
+}
+
+
+bool print(int x, int y, string shape[2], int user_status, Point p[COL][LOW]) {
+
+	if (x > 18 || y > 18 || x < 0 || y < 0) {
+		cout << "0~18 ê¹Œì§€ì˜ ì¢Œí‘œë¥¼ ìž…ë ¥í•´ì£¼ì„¸ìš”." << endl;
+		return false;
+	}
+
+	if (p[y][x].x != nullptr && p[y][x].y != nullptr) {
+		cout << "ì´ë¯¸ ëŒì´ ë†“ì—¬ ìžˆìŠµë‹ˆë‹¤" << endl;
+		return false;
+	}
+	else {
+		p[y][x].x = &x;
+		p[y][x].y = &y;
+		p[y][x].shape = shape[user_status];
+
+		cnt_point(p);
+
+		return true;
+	}
+}
 
 int main() {
-    SinglyLinkedList list;
+	int x;
+	int y;
+	string shape[2]{
+		"â—‹",
+		"â—"
+	};
+	int user_status{};
 
-    // ¸î °³ÀÇ ³ëµå¸¦ ¸®½ºÆ®¿¡ Ãß°¡
-    list.insertAtFront(10);
-    list.insertAtFront(20);
-    list.insertAtFront(30);
+	Point p[COL][LOW];
 
-    // ¸®½ºÆ® Ãâ·Â
-    list.printList();
+	while (true) {
+		cout << "ì¢Œí‘œ ê°’ ë‘ ê³³ì„ ìž…ë ¥í•˜ì„¸ìš” : ";
 
-    // ¸®½ºÆ® ¼Ò¸êÀÚ°¡ È£ÃâµÇ¸é¼­ ¸Þ¸ð¸®°¡ ÀÚµ¿À¸·Î ÇØÁ¦µË´Ï´Ù.
-    return 0;
+		cin >> x >> y;
+
+		if (cin.fail()){
+			cout << "ìž˜ëª»ëœ ìž…ë ¥ê°’ ìž…ë‹ˆë‹¤." << endl;
+			cin.clear();
+			break; // ìž˜ëª»ëœ ìž…ë ¥ê°’ì´ ë“¤ì–´ì˜¤ë©´ ì¢…ë£Œ.
+		}
+		else {
+
+			if (print(x, y, shape, user_status, p)) {
+
+				if (user_status)
+					user_status = 0;
+				else
+					user_status = 1;
+
+			}
+		}
+
+	}
 }
