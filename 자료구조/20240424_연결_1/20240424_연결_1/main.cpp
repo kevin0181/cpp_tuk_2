@@ -107,21 +107,21 @@ void cnt_point(Point p[COL][LOW]) { // 가로 세로 돌 개수 새기
     }
     cout << endl;
 
-    for (int s = 0; s < COL * 2; ++s) {
+    for (int i = 0; i < COL * 2; ++i) {
         Cnt_P result_p_slash; // / 방향 대각선 결과
         Cnt_P compare_p_slash; // / 방향 대각선 비교
         Cnt_P result_p_backslash; // \ 방향 대각선 결과
         Cnt_P compare_p_backslash; // \ 방향 대각선 비교
-        for (int i = 0; i <= s; ++i) {
-            int j = s - i;
-            int i_backslash = COL - 1 - i;
-            if (i < COL && j < LOW) {
-                print_continue(i, j, result_p_slash, compare_p_slash, p);
-                print_continue(i_backslash, j, result_p_backslash, compare_p_backslash, p);
+        for (int j = 0; j <= i; ++j) {
+            int k = i - j;
+            int i_backslash = COL - 1 - j;
+            if (j < COL && k < LOW) {
+                print_continue(j, k, result_p_slash, compare_p_slash, p);
+                print_continue(i_backslash, k, result_p_backslash, compare_p_backslash, p);
             }
         }
-        cout << s << "／ cnt: " << result_p_slash.cnt << " shape: " << result_p_slash.shape; // /
-        cout << "    | " << s << "＼ cnt: " << result_p_backslash.cnt << " shape: " << result_p_backslash.shape << endl; // ＼
+        cout << i << "／ cnt: " << result_p_slash.cnt << " shape: " << result_p_slash.shape; // /
+        cout << "    | " << i << "＼ cnt: " << result_p_backslash.cnt << " shape: " << result_p_backslash.shape << endl; // ＼
     }
 
 }
