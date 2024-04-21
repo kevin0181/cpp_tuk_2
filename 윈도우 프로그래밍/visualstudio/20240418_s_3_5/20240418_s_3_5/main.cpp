@@ -235,7 +235,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         mDC = CreateCompatibleDC(hDC);
         hBitmap = CreateCompatibleBitmap(hDC, rect.right, rect.bottom);
         SelectObject(mDC, (HBITMAP)hBitmap);
+        mPen = CreatePen(PS_SOLID, 1, RGB(255, 255, 255));
+        oldPen = (HPEN)SelectObject(mDC, mPen); // 새 펜을 선택하고 이전 펜을 oldPen에 저장
         Rectangle(mDC, 0, 0, rect.right, rect.bottom);
+        SelectObject(mDC, oldPen);
+        DeleteObject(mPen); // 새로 생성한 펜 삭제
 
         int setaDegrees[] = { 0, 45, 90, 135, 180 }; // 각도 배열
 
