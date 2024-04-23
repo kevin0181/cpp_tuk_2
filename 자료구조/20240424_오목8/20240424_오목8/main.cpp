@@ -84,7 +84,7 @@ void print_v(Point p[COL][LOW]) {
             else if (p[j][i].shape == "¡Ü")
                 size_h_b++;
 
-            cout << p[i][j].shape;
+            cout << p[i][j].shape << " ";
 
             count_continue(i, j, result_p1, compare_p1, p, size1);
             count_continue(j, i, result_p2, compare_p2, p, size2);
