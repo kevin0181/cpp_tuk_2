@@ -107,7 +107,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         player.color = RGB(255, 0, 0);
 
         SetTimer(hWnd, 1, 1000, NULL); // block
-        SetTimer(hWnd, 2, 800, NULL); // bullet
+        SetTimer(hWnd, 2, 100, NULL); // bullet
 
         break;
     case WM_RBUTTONDOWN:
@@ -330,24 +330,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 {
                 case 1:
                     bullets[i].x--;
-                    bullet_block(bullets[i], blocks);
                     break;
                 case 2:
                     bullets[i].y--;
-                    bullet_block(bullets[i], blocks);
                     break;
                 case 3:
                     bullets[i].x++;
-                    bullet_block(bullets[i], blocks);
                     break;
                 case 4:
                     bullets[i].y++;
-                    bullet_block(bullets[i], blocks);
                     break;
                 default:
                     break;
                 }
+                bullet_block(bullets[i], blocks);
             }
+            InvalidateRect(hWnd, NULL, false);
             break;
         default:
             break;
