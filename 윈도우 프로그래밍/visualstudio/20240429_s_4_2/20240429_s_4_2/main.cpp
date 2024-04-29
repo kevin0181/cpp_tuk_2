@@ -8,8 +8,8 @@
 using namespace std;
 
 HINSTANCE g_hInst;
-LPCTSTR lpszClass = L"실습 3-2";
-LPCTSTR lpszWindowName = L"실습 3-2";
+LPCTSTR lpszClass = L"실습 4-2";
+LPCTSTR lpszWindowName = L"실습 4-2";
 
 #define WIDTH 1200
 #define HEIGHT 800
