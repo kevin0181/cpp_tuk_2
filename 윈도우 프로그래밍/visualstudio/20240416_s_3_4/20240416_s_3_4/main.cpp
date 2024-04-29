@@ -215,7 +215,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                             ++i;
                             red.move_cnt = 15;
                         }
-                        if (red.move_cnt > 30) {
+                        if (red.move_cnt >= 30) {
                             game_status = true;
                             MessageBox(hWnd, L"red Win!", L"red win!", MB_OK | MB_ICONINFORMATION);
                             break;
