@@ -1,0 +1,537 @@
+#include <Windows.h>
+#include <tchar.h>
+#include <random>
+#include <vector>
+#include <string>
+#include <cmath>
+#include"resource.h"
+
+using namespace std;
+
+HINSTANCE g_hInst;
+LPCTSTR lpszClass = L"실습 3-2";
+LPCTSTR lpszWindowName = L"실습 3-2";
+
+#define WIDTH 1200
+#define HEIGHT 800
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdParam, int nCmdShow) {
+
+    HWND hWnd;
+    MSG Message;
+    WNDCLASSEX WndClass;
+    g_hInst = hInstance;
+
+    WndClass.cbSize = sizeof(WndClass);
+    WndClass.style = CS_HREDRAW | CS_VREDRAW;
+    WndClass.lpfnWndProc = (WNDPROC)WndProc;
+    WndClass.cbClsExtra = 0;
+    WndClass.cbWndExtra = 0;
+    WndClass.hInstance = hInstance;
+    WndClass.hIcon = LoadIcon(NULL, IDI_QUESTION);
+    WndClass.hCursor = LoadCursor(NULL, IDC_HAND);
+    WndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    WndClass.lpszMenuName = MAKEINTRESOURCE(IDR_MENU1);
+    WndClass.lpszClassName = lpszClass;
+    WndClass.hIconSm = LoadIcon(NULL, IDI_QUESTION);
+    RegisterClassEx(&WndClass);
+
+    hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW | WS_VSCROLL, 0, 0, WIDTH, HEIGHT, NULL, (HMENU)NULL, hInstance, NULL);
+    ShowWindow(hWnd, nCmdShow);
+    UpdateWindow(hWnd);
+
+    while (GetMessage(&Message, 0, 0, 0)) {
+        TranslateMessage(&Message);
+        DispatchMessage(&Message);
+    }
+
+    return Message.wParam;
+
+}
+struct Block {
+    int stack{};
+    int x;
+    int y;
+    RECT rect;
+    COLORREF color = RGB(255, 0, 0);
+    bool visible = true;  // 추가: 벽돌이 보이는지 여부
+};
+
+struct Circle {
+    int x, y, radius;
+    COLORREF color = RGB(0, 0, 255);
+};
+
+struct Velocity {
+    int dx;
+    int dy;
+};
+
+bool CheckCollision(const Circle& ball, const RECT& block);
+
+#define BLOCK_WIDTH 50  // 블록의 가로 크기
+#define BLOCK_HEIGHT 30 // 블록의 세로 크기
+#define BLOCK_COUNT 20  // 한 줄에 들어가는 블록 수
+#define ROW_COUNT 3     // 줄 수
+
+random_device rd;
+mt19937 gen(rd());
+uniform_int_distribution<int> uid_RGB(0, 255);
+uniform_int_distribution<int> uid_ran_3(0, 2);
+uniform_int_distribution<int> uid_ran_4(0, 4);
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+
+    PAINTSTRUCT ps;
+    HDC hDC, mDC;
+    HBITMAP hBitmap;
+    HPEN mPen, oldPen;
+    HBRUSH mBrush, oldBrush;
+    static RECT rect;
+    static SIZE size;
+    static int Timer1Count = 0;
+    static vector<Block> blocks;
+    static int blockSpeed = 5;   // 벽돌의 움직임 속도
+    static int blockDirection = 1; // 벽돌의 움직임 방향 (1: 오른쪽, -1: 왼쪽)
+    static int speedY = -1;
+    static int speedYr = -1;
+    static Circle ball;
+    static int speed1 = 0;
+    static Velocity ballVelocity = { 5, -5 }; // 초기 속도 (예시 값)
+    static bool puzz = true;
+    switch (uMsg)
+    {
+    case WM_COMMAND:
+        switch (LOWORD(wParam)) {
+        case ID_GAME_START:
+            puzz = false;
+            break;
+        case ID_GAME_RESET:
+        {
+            blocks.clear();
+            puzz = true;
+            int startX = (WIDTH - (BLOCK_WIDTH * BLOCK_COUNT)) / 2; // 중앙 정렬을 위한 시작 X 좌표
+            int startY = HEIGHT - (BLOCK_HEIGHT * ROW_COUNT) - 50;   // 하단 정렬을 위한 시작 Y 좌표 (50은 바닥 여백)
+
+            blocks.reserve(ROW_COUNT * BLOCK_COUNT);
+            for (int i = 0; i < ROW_COUNT; ++i) {
+                for (int j = 0; j < BLOCK_COUNT; ++j) {
+                    Block b;
+                    b.x = startX + (j * BLOCK_WIDTH);
+                    b.y = startY + (i * BLOCK_HEIGHT);
+                    b.rect = { b.x, b.y, b.x + BLOCK_WIDTH, b.y + BLOCK_HEIGHT };
+                    blocks.push_back(b);
+                }
+            }
+
+            // 공의 초기 위치를 윈도우의 상단 중앙에 설정합니다.
+            ball.x = WIDTH / 2;
+            ball.y = 30; // 상단에서 30픽셀 아래에 위치
+            ball.radius = 20; // 반지름은 20픽셀로 설정
+        }
+            break;
+        case ID_GAME_END:
+            PostQuitMessage(0);
+            break;
+        case ID_SPEED_FAST:
+            speed1++;
+            break;
+        case ID_SPEED_MEDIUM:
+            speed1 = -1;
+            break;
+        case ID_SPEED_SLOW:
+            if (speed1 < 0) {
+                break;
+            }
+            else {
+                speed1--;
+            }
+            break;
+        case ID_COLOR_CYAN:
+            ball.color = RGB(0, 0, 0);
+            break;
+        case ID_COLOR_GREEN:
+            ball.color = RGB(0, 255, 0);
+            break;
+        case ID_COLOR_YELLOW:
+            ball.color = RGB(255, 255, 0);
+            break;
+        case ID_SIZE_SMALL:
+            ball.radius = 10;
+            break;
+        case ID_SIZE_BIG:
+            ball.radius = 30;
+        case ID_NUMBER_3:
+        {
+            blocks.clear();
+            int startX = (WIDTH - (BLOCK_WIDTH * BLOCK_COUNT)) / 2; // 중앙 정렬을 위한 시작 X 좌표
+            int startY = HEIGHT - (BLOCK_HEIGHT * ROW_COUNT) - 50;   // 하단 정렬을 위한 시작 Y 좌표 (50은 바닥 여백)
+
+            blocks.reserve(ROW_COUNT * BLOCK_COUNT);
+            for (int i = 0; i < ROW_COUNT; ++i) {
+                for (int j = 0; j < BLOCK_COUNT; ++j) {
+                    Block b;
+                    b.x = startX + (j * BLOCK_WIDTH);
+                    b.y = startY + (i * BLOCK_HEIGHT);
+                    b.rect = { b.x, b.y, b.x + BLOCK_WIDTH, b.y + BLOCK_HEIGHT };
+                    blocks.push_back(b);
+                }
+            }
+        }
+            break;
+        case ID_NUMBER_4:
+        {
+            blocks.clear();
+            int startX = (WIDTH - (BLOCK_WIDTH * BLOCK_COUNT)) / 2; // 중앙 정렬을 위한 시작 X 좌표
+            int startY = HEIGHT - (BLOCK_HEIGHT * 4) - 50;   // 하단 정렬을 위한 시작 Y 좌표 (50은 바닥 여백)
+
+            blocks.reserve(4 * BLOCK_COUNT);
+            for (int i = 0; i < 4; ++i) {
+                for (int j = 0; j < BLOCK_COUNT; ++j) {
+                    Block b;
+                    b.x = startX + (j * BLOCK_WIDTH);
+                    b.y = startY + (i * BLOCK_HEIGHT);
+                    b.rect = { b.x, b.y, b.x + BLOCK_WIDTH, b.y + BLOCK_HEIGHT };
+                    blocks.push_back(b);
+                }
+            }
+        }
+            break;
+        case ID_NUMBER_5:
+        {
+            blocks.clear();
+            int startX = (WIDTH - (BLOCK_WIDTH * BLOCK_COUNT)) / 2; // 중앙 정렬을 위한 시작 X 좌표
+            int startY = HEIGHT - (BLOCK_HEIGHT * 5) - 50;   // 하단 정렬을 위한 시작 Y 좌표 (50은 바닥 여백)
+
+            blocks.reserve(5 * BLOCK_COUNT);
+            for (int i = 0; i < 5; ++i) {
+                for (int j = 0; j < BLOCK_COUNT; ++j) {
+                    Block b;
+                    b.x = startX + (j * BLOCK_WIDTH);
+                    b.y = startY + (i * BLOCK_HEIGHT);
+                    b.rect = { b.x, b.y, b.x + BLOCK_WIDTH, b.y + BLOCK_HEIGHT };
+                    blocks.push_back(b);
+                }
+            }
+        }
+            break;
+        default:
+            break;
+        }
+        break;
+    case WM_CREATE:
+    {
+        SetTimer(hWnd, 1, 50, NULL); // 50ms 마다 WM_TIMER 메시지 발생
+
+        int startX = (WIDTH - (BLOCK_WIDTH * BLOCK_COUNT)) / 2; // 중앙 정렬을 위한 시작 X 좌표
+        int startY = HEIGHT - (BLOCK_HEIGHT * ROW_COUNT) - 50;   // 하단 정렬을 위한 시작 Y 좌표 (50은 바닥 여백)
+
+        blocks.reserve(ROW_COUNT * BLOCK_COUNT);
+        for (int i = 0; i < ROW_COUNT; ++i) {
+            for (int j = 0; j < BLOCK_COUNT; ++j) {
+                Block b;
+                b.x = startX + (j * BLOCK_WIDTH);
+                b.y = startY + (i * BLOCK_HEIGHT);
+                b.rect = { b.x, b.y, b.x + BLOCK_WIDTH, b.y + BLOCK_HEIGHT };
+                blocks.push_back(b);
+            }
+        }
+
+        // 공의 초기 위치를 윈도우의 상단 중앙에 설정합니다.
+        ball.x = WIDTH / 2;
+        ball.y = 30; // 상단에서 30픽셀 아래에 위치
+        ball.radius = 20; // 반지름은 20픽셀로 설정
+
+        break;
+    }
+    case WM_KEYUP:
+        break;
+    case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
+        break;
+    case WM_LBUTTONDOWN: {  // 마우스 왼쪽 버튼 클릭
+        for (auto& block : blocks) {
+            block.x -= 30;  // 모든 벽돌을 왼쪽으로 10 픽셀 이동
+            block.rect = { block.x, block.y, block.x + BLOCK_WIDTH, block.y + BLOCK_HEIGHT };
+        }
+        InvalidateRect(hWnd, NULL, TRUE);  // 윈도우를 다시 그립니다.
+        break;
+    }
+    case WM_RBUTTONDOWN: {  // 마우스 오른쪽 버튼 클릭
+        for (auto& block : blocks) {
+            block.x += 30;  // 모든 벽돌을 오른쪽으로 10 픽셀 이동
+            block.rect = { block.x, block.y, block.x + BLOCK_WIDTH, block.y + BLOCK_HEIGHT };
+        }
+        InvalidateRect(hWnd, NULL, TRUE);  // 윈도우를 다시 그립니다.
+        break;
+    }
+    case WM_CHAR:
+        switch (wParam)
+        {
+        case '-':
+            if (speed1 < 0) {
+                break;
+            }
+            else {
+                speed1--;
+            }
+            break;
+        case '=':
+            speed1++;
+            break;
+        case 'n':
+        {
+            blocks.clear();
+            int startX = (WIDTH - (BLOCK_WIDTH * BLOCK_COUNT)) / 2; // 중앙 정렬을 위한 시작 X 좌표
+            int startY = HEIGHT - (BLOCK_HEIGHT * ROW_COUNT) - 50;   // 하단 정렬을 위한 시작 Y 좌표 (50은 바닥 여백)
+
+            blocks.reserve(ROW_COUNT * BLOCK_COUNT);
+            for (int i = 0; i < ROW_COUNT; ++i) {
+                for (int j = 0; j < BLOCK_COUNT; ++j) {
+                    Block b;
+                    b.x = startX + (j * BLOCK_WIDTH);
+                    b.y = startY + (i * BLOCK_HEIGHT);
+                    b.rect = { b.x, b.y, b.x + BLOCK_WIDTH, b.y + BLOCK_HEIGHT };
+                    blocks.push_back(b);
+                }
+            }
+
+            // 공의 초기 위치를 윈도우의 상단 중앙에 설정합니다.
+            ball.x = WIDTH / 2;
+            ball.y = 30; // 상단에서 30픽셀 아래에 위치
+            ball.radius = 20; // 반지름은 20픽셀로 설정
+            break;
+        }
+        case 'p':
+        {
+            // 게임을 일시 정지합니다.
+            puzz = true;
+
+            int cnt{};
+
+            for (int i = 0; i < blocks.size(); ++i) {
+                if (blocks[i].stack == 1) {
+                    cnt++;
+                }
+            }
+
+            // 메시지 문자열 생성
+            wstring message = L"게임이 일시 정지되었습니다. 변경된 벽돌의 수: " + to_wstring(cnt) + L". 계속하려면 확인을 누르세요.";
+
+
+            MessageBox(
+                hWnd,  // 메시지 박스의 부모 윈도우를 지정합니다.
+                message.c_str(),  // 메시지 박스에 표시할 텍스트입니다.
+                L"게임 일시 정지",  // 메시지 박스의 제목입니다.
+                MB_ICONINFORMATION | MB_OK  // '확인' 버튼만 있는 정보 아이콘 메시지 박스입니다.
+            );
+
+            // 메시지 박스에서 "확인"을 누른 후, 게임을 다시 시작합니다.
+            puzz = false;
+
+            break;
+        }
+        case 's':
+            speedY = uid_ran_3(gen);
+            SetTimer(hWnd, 2, 10, NULL);
+            break;
+        case 'q':
+            PostQuitMessage(0);
+            break;
+        default:
+            break;
+        }
+        InvalidateRect(hWnd, NULL, false);
+        break;
+    case WM_PAINT:
+    {
+        GetClientRect(hWnd, &rect);
+        hDC = BeginPaint(hWnd, &ps);
+        mDC = CreateCompatibleDC(hDC);
+        hBitmap = CreateCompatibleBitmap(hDC, rect.right, rect.bottom);
+        SelectObject(mDC, (HBITMAP)hBitmap);
+        Rectangle(mDC, 0, 0, rect.right, rect.bottom);
+
+
+        for (const auto& block : blocks) {
+            // Draw blocks
+            if (block.visible) {
+                mBrush = CreateSolidBrush(block.color); // 빨간색 브러시 생성
+                oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
+                Rectangle(mDC, block.rect.left, block.rect.top, block.rect.right, block.rect.bottom);
+                SelectObject(mDC, oldBrush); // 이전 브러시로 복원
+                DeleteObject(mBrush); // 브러시 객체 삭제
+            }
+        }
+
+
+        // 공 그리기
+        mBrush = CreateSolidBrush(ball.color); // 파란색 브러시 생성
+        oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
+        Ellipse(mDC, ball.x - ball.radius, ball.y - ball.radius, ball.x + ball.radius, ball.y + ball.radius);
+        SelectObject(mDC, oldBrush); // 이전 브러시로 복원
+        DeleteObject(mBrush); // 브러시 객체 삭제
+
+        BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
+        DeleteObject(hBitmap); // 생성한 비트맵 삭제
+        DeleteDC(mDC);
+        EndPaint(hWnd, &ps);
+        break;
+    }
+    case WM_TIMER:
+        if (!puzz) {
+            switch (wParam) {
+            case 1:
+
+                // 왼쪽이나 오른쪽 끝에 도달했는지 확인
+                if (blocks.front().x <= 0 || blocks.back().x + BLOCK_WIDTH >= WIDTH) {
+                    blockDirection *= -1; // 방향 반전
+                }
+
+                // 모든 벽돌의 위치 업데이트
+                for (auto& block : blocks) {
+                    block.x += blockSpeed * blockDirection;
+                    block.rect = { block.x, block.y, block.x + BLOCK_WIDTH, block.y + BLOCK_HEIGHT };
+                }
+
+                break;
+            case 2:
+                if (speedY != -1) {
+                    switch (speedY)
+                    {
+                    case 0:
+                        ball.y = ball.y + 2 + speed1;
+                        break;
+                    case 1:
+                        ball.y = ball.y + 3 + speed1;
+                        break;
+                    case 2:
+                        ball.y = ball.y + 5 + speed1;
+                        break;
+                    default:
+                        break;
+                    }
+                }
+
+                if (speedYr != -1) {
+                    switch (speedYr)
+                    {
+                    case 0: //직선으로 올라가기
+                        ball.y = ball.y - 2 - speed1;
+                        break;
+                    case 1: // 45도로 왼쪽~ 가기
+                        ball.x = ball.x - 3 - speed1;
+                        ball.y = ball.y - 3 - speed1;
+                        break;
+                    case 2: //45도로 오른쪽~가기
+                        ball.x = ball.x + 3 + speed1;
+                        ball.y = ball.y - 3 - speed1;
+                        break;
+                    case 3: // ->
+                        ball.x = ball.x + 6 + speed1;
+                        ball.y = ball.y - 2 - speed1;
+                        break;
+                    case 4: // <-
+                        ball.x = ball.x - 6 - speed1;
+                        ball.y = ball.y - 2 - speed1;
+                        break;
+                    default:
+                        break;
+                    }
+                }
+
+                // left wall
+                if ((ball.x - ball.radius) <= 0) {
+                    ball.x = ball.radius;
+                    if (speedYr == 1) {
+                        speedYr = 2;
+                    }
+                    else if (speedYr == 4) {
+                        speedYr = 3;
+                    }
+                }
+
+                // 공이 오른쪽 벽에 닿았을 때
+                if ((ball.x + ball.radius) >= WIDTH) {
+                    ball.x = WIDTH - ball.radius;  // 공이 화면 밖으로 나가지 않도록 위치 조정
+                    if (speedYr == 2) {
+                        speedYr = 1;
+                    }
+                    else if (speedYr == 3) {
+                        speedYr = 4;
+                    }
+                }
+
+                //공이 천장에 닿았을때
+                if ((ball.y - ball.radius) <= 0) {
+                    ball.y = ball.radius; // 볼이 화면 밖으로 나가지 않도록 설정
+                    speedYr = -1;
+                    speedY = uid_ran_3(gen);
+                }
+
+                for (auto& block : blocks) {
+                    if (CheckCollision(ball, block.rect) && block.visible) { //충돌!
+                        speedY = -1;
+                        speedYr = uid_ran_4(gen);
+                        block.stack += 1;
+                        block.color = RGB(0, 0, 0);
+                        if (block.stack == 2) { // 두번 부딪히면
+                            block.visible = false;
+                        }
+                        break; // 다른 블록과의 충돌 검사를 중단
+                    }
+                }
+
+                if (ball.y >= HEIGHT) {
+                    blocks.clear();
+
+                    int startX = (WIDTH - (BLOCK_WIDTH * BLOCK_COUNT)) / 2; // 중앙 정렬을 위한 시작 X 좌표
+                    int startY = HEIGHT - (BLOCK_HEIGHT * ROW_COUNT) - 50;   // 하단 정렬을 위한 시작 Y 좌표 (50은 바닥 여백)
+
+                    blocks.reserve(ROW_COUNT * BLOCK_COUNT);
+                    for (int i = 0; i < ROW_COUNT; ++i) {
+                        for (int j = 0; j < BLOCK_COUNT; ++j) {
+                            Block b;
+                            b.x = startX + (j * BLOCK_WIDTH);
+                            b.y = startY + (i * BLOCK_HEIGHT);
+                            b.rect = { b.x, b.y, b.x + BLOCK_WIDTH, b.y + BLOCK_HEIGHT };
+                            blocks.push_back(b);
+                        }
+                    }
+
+                    // 공의 초기 위치를 윈도우의 상단 중앙에 설정합니다.
+                    ball.x = WIDTH / 2;
+                    ball.y = 30; // 상단에서 30픽셀 아래에 위치
+                    ball.radius = 20; // 반지름은 20픽셀로 설정
+                    break;
+                }
+
+                break;
+            default:
+                break;
+            }
+        }
+
+        InvalidateRect(hWnd, NULL, false);
+        break;
+    case WM_DESTROY:
+        KillTimer(hWnd, 1); // 타이머 종료
+        PostQuitMessage(0);
+        break;
+    default:
+        break;
+    }
+
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+bool CheckCollision(const Circle& ball, const RECT& block) {
+    int nearestX = max(block.left, min(ball.x, block.right));
+    int nearestY = max(block.top, min(ball.y, block.bottom));
+
+    int deltaX = ball.x - nearestX;
+    int deltaY = ball.y - nearestY;
+
+    return (deltaX * deltaX + deltaY * deltaY) < (ball.radius * ball.radius);
+}
