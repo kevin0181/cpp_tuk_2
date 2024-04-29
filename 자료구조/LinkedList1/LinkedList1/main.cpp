@@ -24,16 +24,16 @@ struct Node {
 class SingleCircularLinkedList {
 private:
 	Node* head; // 리스트의 시작을 가리키는 헤드 포인터
-
+	Node* tail; // 리스트의 마지막을 가리키는 테일 포인터
+	bool sort_status = false;
 public:
 	SingleCircularLinkedList() : head(nullptr) {} // 생성자
 
 	// 소멸자
 	~SingleCircularLinkedList() {
 		if (head == nullptr) return;
-
-		Node* current = head->next;
-		head->next = nullptr; // 순환 참조 끊기
+		tail->next = nullptr;
+		Node* current = head;
 		while (current != nullptr) {
 			Node* next = current->next;
 			delete current;
@@ -44,39 +44,147 @@ public:
 	void add(Champion p) {
 		Node* newNode = new Node(p);
 		if (head == nullptr) {
-			newNode->next = newNode; // 새 노드가 자신을 가리키도록 설정
-			head = newNode; // 새 노드를 헤드로 설정
+			head = tail = newNode; // 첫 노드를 헤드와 테일로 설정
+			tail->next = head; // 환형 구조를 만듦
 		}
 		else {
-			Node* current = head;
-			while (current->next != head) { // 마지막 노드 찾기
-				current = current->next;
-			}
-			current->next = newNode; // 마지막 노드가 새 노드를 가리키도록 설정
-			newNode->next = head; // 새 노드가 첫 번째 노드를 가리키도록 설정
+			tail->next = newNode; // 마지막 노드의 next를 새 노드로 설정
+			newNode->next = head; // 새 노드의 next를 헤드로 설정
+			tail = newNode; // 새 노드를 새로운 테일로 설정
 		}
+
+		if (sort_status)
+			sortByHp();
+
 	}
 
 	void printAll() {
 		if (head == nullptr) return;
 		
-		Node* current = head->next;
+		Node* current = head;
 		do {
 			printChampion(current->data);
 			current = current->next;
-		} while (current != head->next); // 시작 노드로 돌아올 때까지 반복
+		} while (current != head); // 다시 헤드로 돌아올 때까지 반복
 	}
 
 	void delete_L(string name) {
 		if (head == nullptr) return;
-
-		Node* current = head->next;
-		Node* delete_data = nullptr;
+		Node* current = head;
+		Node* prev = tail;  
 		do {
 			if (current->data.name == name) {
-				
+				if (current == head && current == tail) {
+					// 유일한 노드인 경우
+					head = tail = nullptr;
+				}
+				else if (current == head) {
+					// 삭제 노드가 헤드인 경우
+					head = head->next;
+					tail->next = head;
+				}
+				else if (current == tail) {
+					// 삭제 노드가 테일인 경우
+					tail = prev;
+					tail->next = head;
+				}
+				else {
+					// 중간 노드 삭제
+					prev->next = current->next;
+				}
+				delete current; // 메모리 해제
+				break;
 			}
-		} while (current != head->next);
+			prev = current;
+			current = current->next;
+		} while (current != head);
+	}
+
+	void deleteAll_L(string position) {
+
+		if (head == nullptr) return;
+
+		Node* current = head;
+		Node* prev = tail;
+		Node* toDelete = nullptr;
+		bool continueLoop = true;
+
+		while (continueLoop) {
+			if (current->data.position == position) {
+				if (current == head && current == tail) {
+					toDelete = current;
+					head = tail = nullptr;
+					continueLoop = false;
+				}
+				else if (current == head) {
+					head = head->next;
+					tail->next = head;
+					toDelete = current;
+					current = head;
+				}
+				else if (current == tail) {
+					tail = prev;
+					tail->next = head;
+					toDelete = current;
+					continueLoop = false;
+				}
+				else {
+					prev->next = current->next;
+					toDelete = current;
+					current = current->next;
+				}
+				delete toDelete; // 메모리 해제
+				if (head == nullptr) break;
+			}
+			else {
+				prev = current;
+				current = current->next;
+				if (current == head) break;
+			}
+		}
+	}
+
+	void findMaxHp_L() {
+		if (head == nullptr) return;
+
+		Node* current = head;
+		int maxHp = current->data.hp;
+		do {
+			if (current->data.hp > maxHp) {
+				maxHp = current->data.hp;
+			}
+			current = current->next;
+		} while (current != head);
+
+		current = head;
+		do {
+			if (current->data.hp == maxHp) {
+				printChampion(current->data);
+			}
+			current = current->next;
+		} while (current != head);
+	}
+
+	void sortByHp() {
+		if (head == nullptr)return;
+
+		sort_status = true;
+		bool swapped;
+		do {
+			swapped = false;
+			Node* current = head;
+			Node* next = head->next;
+
+			do {
+				if (current->data.hp < next->data.hp) { // 현재 노드의 hp가 다음 노드의 hp보다 작다면
+					swap(current->data, next->data); // 데이터를 스왑
+					swapped = true;
+				}
+				current = next;
+				next = current->next;
+			} while (current != tail); // 환형 리스트이므로 테일에서 멈춤
+
+		} while (swapped); // 스왑이 일어나지 않을 때까지 반복
 
 	}
 
@@ -173,6 +281,7 @@ int main() {
 			}
 			if (cin.fail()) {
 				cout << "잘못된 입력값 입니다." << endl;
+				cin.clear();
 				break;
 			}
 			break;
@@ -195,6 +304,11 @@ int main() {
 			cin >> c1.range;
 			cout << "position : ";
 			cin >> c1.position;
+			if (cin.fail()) {
+				cout << "잘못된 입력값 입니다." << endl;
+				cin.clear();
+				break;
+			}
 			list.add(c1);
 			cout << c1.name << " 챔피언을 생성 하였습니다." << endl;
 			break;
@@ -210,14 +324,18 @@ int main() {
 			break;
 		case DELETE_ALL_O:
 			cin >> c1.position;
+			list.deleteAll_L(c1.position);
 			break;
 		case PRINT_ALL_O:
 			list.printAll();
 			break;
 		case FINDMAXHP_O:
+			list.findMaxHp_L();
 			break;
 		case SORTBYHP_O:
-			cout << "champion의 hp를 내림차순 정렬 했습니다." << endl;
+			list.sortByHp();
+
+			cout << "체력(hp)을 기준으로 내림차순 정렬되었습니다." << endl;
 			break;
 		default:
 			cout << "잘못된 명령어 입니다." << endl;
