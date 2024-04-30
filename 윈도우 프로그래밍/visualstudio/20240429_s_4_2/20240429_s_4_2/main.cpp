@@ -84,7 +84,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static vector<Rec> rec;
     static int selectedRect = -1;
     static bool grid = true;
-
+    static bool recBorder = true;
+    static bool moseMove = true;
+    static RECT textRect;
+    static bool textStatus = true;
     switch (uMsg)
     {
     case WM_CREATE:
@@ -104,26 +107,57 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             grid = false;
             break;
         case ID_COLOR_RED:
+            for (auto& r : rec) {
+                if (r.status) {
+                    r.color = RGB(255, 0, 0);
+                }
+            }
             break;
         case ID_COLOR_40004: //노랑
+            for (auto& r : rec) {
+                if (r.status) {
+                    r.color = RGB(255, 255, 0);
+                }
+            }
             break;
         case ID_COLOR_40005: //파랑
+            for (auto& r : rec) {
+                if (r.status) {
+                    r.color = RGB(0, 0, 255);
+                }
+            }
             break;
         case ID_COLOR_40006: //하늘
+            for (auto& r : rec) {
+                if (r.status) {
+                    r.color = RGB(92, 209, 229);
+                }
+            }
             break;
         case ID_COLOR_40007: //민트
+            for (auto& r : rec) {
+                if (r.status) {
+                    r.color = RGB(183, 240, 177);
+                }
+            }
             break;
         case ID_BORDER_ON:
+            recBorder = true;
             break;
         case ID_BORDER_OFF:
+            recBorder = false;
             break;
         case ID_MOVE_ON:
+            moseMove = true;
             break;
         case ID_MOVE_OFF:
+            moseMove = false;
             break;
         case ID_INFORM_ON:
+            textStatus = true;
             break;
         case ID_INFORM_OFF:
+            textStatus = false;
             break;
         default:
             break;
@@ -229,13 +263,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_RBUTTONDOWN: {
-        RDrag = true;
-        int x = LOWORD(lParam);
-        int y = HIWORD(lParam);
-        for (int i = 0; i < rec.size(); ++i) {
-            if (PtInRect(&rec[i].rect, { x, y })) {
-                selectedRect = i; // 도형 선택
-                break;
+        if (moseMove) {
+            RDrag = true;
+            int x = LOWORD(lParam);
+            int y = HIWORD(lParam);
+            for (int i = 0; i < rec.size(); ++i) {
+                if (PtInRect(&rec[i].rect, { x, y })) {
+                    selectedRect = i; // 도형 선택
+                    break;
+                }
             }
         }
         InvalidateRect(hWnd, NULL, false);  // 윈도우를 다시 그립니다.
@@ -340,7 +376,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         hBitmap = CreateCompatibleBitmap(hDC, rect.right, rect.bottom);
         SelectObject(mDC, (HBITMAP)hBitmap);
         FillRect(mDC, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
-
+        rect.bottom -= 50;
         cellSizeX = rect.right / WIDTH_LINE;
         cellSizeY = rect.bottom / HEGHIT_LINE;
 
@@ -366,23 +402,43 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         DeleteObject(mPen);      // 사용한 도트 펜 삭제
 
         // 각 사각형을 그리기 전에 브러시를 설정합니다.
-        for (auto& r : rec) {
-            if (r.status) {
+        for (size_t i = 0; i < rec.size(); ++i) {
+            if (rec[i].status) {
                 mPen = CreatePen(PS_SOLID, 4, RGB(0, 0, 0));
                 oldPen = (HPEN)SelectObject(mDC, mPen);
             }
             else {
-                mPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-                oldPen = (HPEN)SelectObject(mDC, mPen);
+                if (recBorder) {
+                    mPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+                    oldPen = (HPEN)SelectObject(mDC, mPen);
+                }
+                else {
+                    mPen = CreatePen(PS_NULL, 0, RGB(255, 255, 255));
+                    oldPen = (HPEN)SelectObject(mDC, mPen);
+                }
             }
-            mBrush = CreateSolidBrush(r.color);
+            mBrush = CreateSolidBrush(rec[i].color);
             oldBrush = (HBRUSH) SelectObject(mDC, mBrush);
             
-            Rectangle(mDC, r.rect.left, r.rect.top, r.rect.right, r.rect.bottom);
+            Rectangle(mDC, rec[i].rect.left, rec[i].rect.top, rec[i].rect.right, rec[i].rect.bottom);
             SelectObject(mDC, oldBrush);
             DeleteObject(mBrush);
             SelectObject(mDC, oldPen);
             DeleteObject(mPen);
+            if (textStatus) {
+                // 정보 문자열 생성
+                wchar_t info[256];
+                int width = rec[i].rect.right - rec[i].rect.left;
+                int height = rec[i].rect.bottom - rec[i].rect.top;
+                int red = GetRValue(rec[i].color);
+                int green = GetGValue(rec[i].color);
+                int blue = GetBValue(rec[i].color);
+                swprintf(info, sizeof(info) / sizeof(wchar_t), L"ID: %d, W: %d, H: %d, Color: (%d, %d, %d)",
+                    (int)i + 1, width, height, red, green, blue);
+                // 문자열 출력
+                SetBkMode(mDC, TRANSPARENT); // 텍스트 배경을 투명하게 설정
+                DrawText(mDC, info, -1, &rec[i].rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_WORDBREAK);
+            }
         }
 
         // 겹치는 사각형의 색상을 혼합
@@ -394,9 +450,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     int newGreen = (GetGValue(rec[i].color) + GetGValue(rec[j].color)) / 2;
                     int newBlue = (GetBValue(rec[i].color) + GetBValue(rec[j].color)) / 2;
                     mBrush = CreateSolidBrush(RGB(newRed, newGreen, newBlue));
+                    if (recBorder) {
+                        mPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+                        oldPen = (HPEN)SelectObject(mDC, mPen);
+                    }
+                    else {
+                        mPen = CreatePen(PS_NULL, 0, RGB(255, 255, 255));
+                        oldPen = (HPEN)SelectObject(mDC, mPen);
+                    }
                     SelectObject(mDC, mBrush);
                     Rectangle(mDC, intersection.left, intersection.top, intersection.right, intersection.bottom);
                     DeleteObject(mBrush);
+                    SelectObject(mDC, oldPen);
+                    DeleteObject(mPen);
                 }
             }
         }
