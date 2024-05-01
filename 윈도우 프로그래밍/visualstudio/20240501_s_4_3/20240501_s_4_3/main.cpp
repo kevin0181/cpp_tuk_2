@@ -107,7 +107,7 @@ struct Shape {
     int shape_status;
     Shape(int shape_s, RECT& mapRect) :shape_status(shape_s), mapRect(mapRect), status(true) {
 
-        switch (5)
+        switch (uid_shape(gen))
         {
         case 0:
             for (int i = 0; i < 4; ++i) {
@@ -182,8 +182,8 @@ struct Shape {
             HPEN mPen = CreatePen(PS_SOLID, 0.5, RGB(0, 0, 0));
             HPEN oldPen = (HPEN)SelectObject(mDC, mPen);
 
-            OffsetRect(&recs[i].rect, (x * 50), (y * 50));
-            Rectangle(mDC, recs[i].rect.left, recs[i].rect.top, recs[i].rect.right, recs[i].rect.bottom);
+            //OffsetRect(&recs[i].rect, (x * 50), (y * 50));
+            Rectangle(mDC, recs[i].rect.left + (x * 50), recs[i].rect.top + (y * 50), recs[i].rect.right + (x * 50), recs[i].rect.bottom + (y * 50));
             
             SelectObject(mDC, oldBrush);
             SelectObject(mDC, oldPen);
@@ -213,9 +213,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     {
     case WM_CREATE:
     {
-        { //shape make
-            
-        }
+        SetTimer(hWnd, 1, 500, NULL);
         break;
     }
     case WM_COMMAND:
@@ -257,7 +255,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 rect.right / 2 - 425,
                 -1,
                 rect.right / 2 + 125,
-                rect.bottom - 100
+                800
             };
             mBrush = (HBRUSH)GetStockObject(BLACK_BRUSH); // 투명한 브러시 사용
             oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
@@ -268,10 +266,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             DeleteObject(mBrush);
         }
 
-
         if (make_status) {
             for (int i = 0; i < 2; ++i) {
                 Shape ms(uid_shape(gen), mapRect);
+                ms.x = 4;
                 makeShape.push_back(ms);
             }
             make_status = false;
@@ -297,6 +295,32 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_TIMER:
+        switch (wParam)
+        {
+        case 1:
+        {
+            bool status = true;
+            for (auto& r : makeShape[0].recs) {
+                if ((r.rect.bottom + (makeShape[0].y * 50)) == mapRect.bottom) {
+                    status = false;
+                    listShape.push_back(makeShape[0]);
+                    makeShape[0] = makeShape[1];
+                    makeShape[0].x = 3;
+                    makeShape[0].y = 0;
+                    makeShape.pop_back();
+
+                    Shape ms(uid_shape(gen), mapRect);
+                    ms.x = 4;
+                    makeShape.push_back(ms);
+                }
+            }
+            if (status)
+                makeShape[0].y++;
+            break;
+        }
+        default:
+            break;
+        }
         InvalidateRect(hWnd, NULL, false);
         break;
     case WM_DESTROY:
