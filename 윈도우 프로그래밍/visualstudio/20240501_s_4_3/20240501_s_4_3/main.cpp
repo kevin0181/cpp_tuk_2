@@ -107,7 +107,7 @@ struct Shape {
     int shape_status;
     Shape(int shape_s, RECT& mapRect) :shape_status(shape_s), mapRect(mapRect), status(true) {
 
-        switch (1)
+        switch (5)
         {
         case 0:
             for (int i = 0; i < 4; ++i) {
@@ -129,12 +129,45 @@ struct Shape {
             recs[2].rect = { mapRect.left + 100, 0, mapRect.left + 150, 50 };
             break;
         case 2:
+            for (int i = 0; i < 4; ++i) {
+                Rec r;
+                recs.push_back(r);
+            }
+            recs[0].rect = { mapRect.left, 0, mapRect.left + 50, 50 };
+            recs[1].rect = { mapRect.left + 50, 0, mapRect.left + 100, 50 };
+            recs[2].rect = { mapRect.left + 50, 50, mapRect.left + 100, 100 };
+            recs[3].rect = { mapRect.left + 100, 50, mapRect.left + 150, 100 };
             break;
         case 3:
+            for (int i = 0; i < 4; ++i) {
+                Rec r;
+                recs.push_back(r);
+            }
+            recs[0].rect = { mapRect.left, 0, mapRect.left + 50, 50 };
+            recs[1].rect = { mapRect.left + 50, 0, mapRect.left + 100, 50 };
+            recs[2].rect = { mapRect.left + 100, 0, mapRect.left + 150, 50 };
+            recs[3].rect = { mapRect.left, 50, mapRect.left + 50, 100 };
             break;
         case 4:
+            for (int i = 0; i < 5; ++i) {
+                Rec r;
+                recs.push_back(r);
+            }
+            recs[0].rect = { mapRect.left, 0, mapRect.left + 50, 50 };
+            recs[1].rect = { mapRect.left + 50, 0, mapRect.left + 100, 50 };
+            recs[2].rect = { mapRect.left + 100, 0, mapRect.left + 150, 50 };
+            recs[3].rect = { mapRect.left, 50, mapRect.left + 50, 100 };
+            recs[4].rect = { mapRect.left + 100, 50, mapRect.left + 150, 100 };
             break;
         case 5:
+            for (int i = 0; i < 4; ++i) {
+                Rec r;
+                recs.push_back(r);
+            }
+            recs[0].rect = { mapRect.left, 0, mapRect.left + 50, 50 };
+            recs[1].rect = { mapRect.left + 50, 0, mapRect.left + 100, 50 };
+            recs[2].rect = { mapRect.left + 100, 0, mapRect.left + 150, 50 };
+            recs[3].rect = { mapRect.left + 50, 50, mapRect.left + 100, 100 };
             break;
         default:
             break;
