@@ -60,10 +60,11 @@ uniform_int_distribution<int> uid_shape(0, 5);
 uniform_int_distribution<int> uid_color(0, 7);
 
 struct Rec {
+    int x;
+    int y;
     RECT rect;
     COLORREF color;
     bool status;
-
     Rec() {
         switch (uid_color(gen))
         {
@@ -99,12 +100,12 @@ struct Rec {
 };
 
 struct Shape {
-    int x = 0;
-    int y = 0;
     RECT mapRect;
     bool status;
     vector<Rec> recs;
     int shape_status;
+    int change_status = 0;
+
     Shape(int shape_s, RECT& mapRect) :shape_status(shape_s), mapRect(mapRect), status(true) {
 
         switch (uid_shape(gen))
@@ -112,79 +113,90 @@ struct Shape {
         case 0:
             for (int i = 0; i < 4; ++i) {
                 Rec r;
+                
+                r.rect = { mapRect.left, 0, mapRect.left + 50, 50 };
                 recs.push_back(r);
             }
-            recs[0].rect = { mapRect.left, 0, mapRect.left + 50, 50 };
-            recs[1].rect = { mapRect.left + 50, 0, mapRect.left + 100, 50 };
-            recs[2].rect = { mapRect.left, 50, mapRect.left + 50,100 };
-            recs[3].rect = { mapRect.left + 50, 50, mapRect.left + 100, 100 };
+            recs[0].x = 5; recs[0].y = 0;
+            recs[1].x = 6; recs[1].y = 0;
+            recs[2].x = 5; recs[2].y = 1;
+            recs[3].x = 6; recs[3].y = 1;
             break;
         case 1:
             for (int i = 0; i < 3; ++i) {
                 Rec r;
+
+                r.rect = { mapRect.left, 0, mapRect.left + 50, 50 };
                 recs.push_back(r);
             }
-            recs[0].rect = { mapRect.left, 0, mapRect.left + 50, 50 };
-            recs[1].rect = { mapRect.left + 50, 0, mapRect.left + 100, 50 };
-            recs[2].rect = { mapRect.left + 100, 0, mapRect.left + 150, 50 };
+            recs[0].x = 4; recs[0].y = 0;
+            recs[1].x = 5; recs[1].y = 0;
+            recs[2].x = 6; recs[2].y = 0;
             break;
         case 2:
             for (int i = 0; i < 4; ++i) {
                 Rec r;
+
+                r.rect = { mapRect.left, 0, mapRect.left + 50, 50 };
                 recs.push_back(r);
             }
-            recs[0].rect = { mapRect.left, 0, mapRect.left + 50, 50 };
-            recs[1].rect = { mapRect.left + 50, 0, mapRect.left + 100, 50 };
-            recs[2].rect = { mapRect.left + 50, 50, mapRect.left + 100, 100 };
-            recs[3].rect = { mapRect.left + 100, 50, mapRect.left + 150, 100 };
+            recs[0].x = 4; recs[0].y = 0;
+            recs[1].x = 5; recs[1].y = 0;
+            recs[2].x = 5; recs[2].y = 1;
+            recs[3].x = 6; recs[3].y = 1;
             break;
         case 3:
             for (int i = 0; i < 4; ++i) {
                 Rec r;
+
+                r.rect = { mapRect.left, 0, mapRect.left + 50, 50 };
                 recs.push_back(r);
             }
-            recs[0].rect = { mapRect.left, 0, mapRect.left + 50, 50 };
-            recs[1].rect = { mapRect.left + 50, 0, mapRect.left + 100, 50 };
-            recs[2].rect = { mapRect.left + 100, 0, mapRect.left + 150, 50 };
-            recs[3].rect = { mapRect.left, 50, mapRect.left + 50, 100 };
+            recs[0].x = 4; recs[0].y = 0;
+            recs[1].x = 5; recs[1].y = 0;
+            recs[2].x = 6; recs[2].y = 0;
+            recs[3].x = 4; recs[3].y = 1;
             break;
         case 4:
             for (int i = 0; i < 5; ++i) {
                 Rec r;
+
+                r.rect = { mapRect.left, 0, mapRect.left + 50, 50 };
                 recs.push_back(r);
             }
-            recs[0].rect = { mapRect.left, 0, mapRect.left + 50, 50 };
-            recs[1].rect = { mapRect.left + 50, 0, mapRect.left + 100, 50 };
-            recs[2].rect = { mapRect.left + 100, 0, mapRect.left + 150, 50 };
-            recs[3].rect = { mapRect.left, 50, mapRect.left + 50, 100 };
-            recs[4].rect = { mapRect.left + 100, 50, mapRect.left + 150, 100 };
+            recs[0].x = 4; recs[0].y = 0;
+            recs[1].x = 5; recs[1].y = 0;
+            recs[2].x = 6; recs[2].y = 0;
+            recs[3].x = 4; recs[3].y = 1;
+            recs[4].x = 6; recs[4].y = 1;
             break;
         case 5:
             for (int i = 0; i < 4; ++i) {
                 Rec r;
+
+                r.rect = { mapRect.left, 0, mapRect.left + 50, 50 };
                 recs.push_back(r);
             }
-            recs[0].rect = { mapRect.left, 0, mapRect.left + 50, 50 };
-            recs[1].rect = { mapRect.left + 50, 0, mapRect.left + 100, 50 };
-            recs[2].rect = { mapRect.left + 100, 0, mapRect.left + 150, 50 };
-            recs[3].rect = { mapRect.left + 50, 50, mapRect.left + 100, 100 };
+            recs[0].x = 4; recs[0].y = 0;
+            recs[1].x = 5; recs[1].y = 0;
+            recs[2].x = 6; recs[2].y = 0;
+            recs[3].x = 5; recs[3].y = 1;
             break;
         default:
             break;
         }
-
     };
 
     void print_r(HDC& mDC) {
-        for (int i = 0; i < recs.size(); ++i) {
-            HBRUSH mBrush = CreateSolidBrush(recs[i].color);
+        for (auto& r : recs) {
+            HBRUSH mBrush = CreateSolidBrush(r.color);
             HBRUSH oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
             HPEN mPen = CreatePen(PS_SOLID, 0.5, RGB(0, 0, 0));
             HPEN oldPen = (HPEN)SelectObject(mDC, mPen);
 
             //OffsetRect(&recs[i].rect, (x * 50), (y * 50));
-            Rectangle(mDC, recs[i].rect.left + (x * 50), recs[i].rect.top + (y * 50), recs[i].rect.right + (x * 50), recs[i].rect.bottom + (y * 50));
-            
+            Rectangle(mDC, r.rect.left + (r.x * 50), r.rect.top + (r.y * 50), r.rect.right + (r.x * 50), r.rect.bottom + (r.y * 50));
+
             SelectObject(mDC, oldBrush);
             SelectObject(mDC, oldPen);
             DeleteObject(mBrush);
@@ -192,6 +204,75 @@ struct Shape {
         }
     }
 
+    void change_v(vector<Shape>& listShape) {
+        int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN;
+        for (const auto& r : recs) {
+            if (r.x < minX) minX = r.x;
+            if (r.y < minY) minY = r.y;
+            if (r.x > maxX) maxX = r.x;
+        }
+
+        vector<Rec> newRecs = recs;  // 복사하여 새로운 위치를 계산
+        for (auto& r : newRecs) {
+            int oldX = r.x - minX;
+            int oldY = r.y - minY;
+            r.x = oldY + minX;
+            r.y = -oldX + minY + (recs[0].rect.bottom - recs[0].rect.top) / 50;  // 높이 보정
+        }
+
+        // 벽에 닿는지 검사하고 조정
+        int adjustX = 0, adjustY = 0;
+        for (const auto& r : newRecs) {
+            if (r.x < 0 && r.x < adjustX) {
+                adjustX = -r.x;
+            }
+            else if (r.x > 10 && r.x - 10 > adjustX) {
+                adjustX = 9 - r.x;
+            }
+            if (r.y > 14) {
+                int potentialAdjustY = 14 - r.y;
+                if (potentialAdjustY < adjustY) {
+                    adjustY = potentialAdjustY;
+                }
+            }
+        }
+
+        // 필요한 경우 도형의 x, y 좌표 조정
+        if (adjustX != 0 || adjustY != 0) {
+            for (auto& r : newRecs) {
+                r.x += adjustX;
+                r.y += adjustY;
+            }
+        }
+
+        // 도형을 하나 내림
+        if (change_status == 0 || change_status == 2) {
+            for (auto& r : newRecs) {
+                r.y++;
+            }
+        }
+
+        // 다른 도형과의 충돌 검사
+        bool collision = false;
+        for (const auto& shape : listShape) {  // listShape는 다른 모든 도형을 포함하는 벡터
+            for (const auto& otherRec : shape.recs) {
+                for (const auto& r : newRecs) {
+                    if (otherRec.x == r.x && otherRec.y == r.y) {
+                        collision = true;  // 충돌 발견
+                        break;
+                    }
+                }
+                if (collision) break;
+            }
+            if (collision) break;
+        }
+
+        if (!collision) {
+            recs = newRecs;  // 회전된 도형으로 업데이트
+            change_status = (change_status + 1) % 4;  // 다음 회전 상태로 업데이트
+        }
+    }
+  
 };
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -203,7 +284,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     HBRUSH mBrush, oldBrush;
     static RECT rect;
     static SIZE size;
-    static int Timer1Count = 0;
+    static int Timer1Count = 1000;
     static RECT mapRect;
     static bool game_status = false;
     static vector<Shape> listShape;
@@ -213,7 +294,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     {
     case WM_CREATE:
     {
-        SetTimer(hWnd, 1, 500, NULL);
+        SetTimer(hWnd, 1, Timer1Count, NULL);
         break;
     }
     case WM_COMMAND:
@@ -228,6 +309,92 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
     {
+        switch (wParam)
+        {
+        case VK_RETURN:
+            makeShape[0].change_v(listShape);
+            break;
+        case VK_LEFT:
+        {
+            bool status = true;
+            for (auto& r : makeShape[0].recs) {
+                if (r.x == 0) {
+                    status = false;
+                }
+            }
+
+            for (auto& r1 : listShape) {
+                for (auto& r2 : r1.recs) {
+                    for (auto& mr : makeShape[0].recs) {
+                        if (r2.x == mr.x - 1 && r2.y == mr.y) {
+                            status = false;
+                        }
+                    }
+                }
+            }
+
+            if (status) {
+                for (auto& r : makeShape[0].recs) {
+                    r.x--;
+                }
+            }
+            break;
+        }
+        case VK_UP:
+            break;
+        case VK_RIGHT:
+        {
+            bool status = true;
+            for (auto& r : makeShape[0].recs) {
+                if (r.x == 10) {
+                    status = false;
+                }
+            }
+            for (auto& r1 : listShape) {
+                for (auto& r2 : r1.recs) {
+                    for (auto& mr : makeShape[0].recs) {
+                        if (r2.x == mr.x + 1 && r2.y == mr.y) {
+                            status = false;
+                        }
+                    }
+                }
+            }
+            if (status) {
+                for (auto& r : makeShape[0].recs) {
+                    r.x++;
+                }
+            }
+            break;
+        }
+        case VK_DOWN:
+        {
+            bool status = true;
+            for (auto& r : makeShape[0].recs) {
+                if (r.y == 15) {
+                    status = false;
+                }
+            }
+
+            for (auto& r1 : listShape) {
+                for (auto& r2 : r1.recs) {
+                    for (auto& mr : makeShape[0].recs) {
+                        if (r2.y - 1 == mr.y && r2.x == mr.x) {
+                            status = false;
+                        }
+                    }
+                }
+            }
+
+            if (status) {
+                for (auto& r : makeShape[0].recs) {
+                    r.y++;
+                }
+            }
+            break;
+        }
+        default:
+            break;
+        }
         InvalidateRect(hWnd, NULL, false);  // 윈도우를 다시 그립니다.
         break;
     }
@@ -266,12 +433,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             DeleteObject(mBrush);
         }
 
+
         if (make_status) {
-            for (int i = 0; i < 2; ++i) {
+
+            while (true) {
+                if (makeShape.size() == 2)
+                    break;
                 Shape ms(uid_shape(gen), mapRect);
-                ms.x = 4;
                 makeShape.push_back(ms);
             }
+
+            for (auto& r : makeShape[1].recs) {
+                r.x += 9;
+                r.y += 2;
+            }
+
             make_status = false;
         }
 
@@ -281,8 +457,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             listShape[i].print_r(mDC);
         }
 
-        makeShape[1].x = 14;
-        makeShape[1].y = 2;
         //움직이는 도형
         for (int i = 0; i < makeShape.size(); ++i) {
             makeShape[i].print_r(mDC);
@@ -301,21 +475,45 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         {
             bool status = true;
             for (auto& r : makeShape[0].recs) {
-                if ((r.rect.bottom + (makeShape[0].y * 50)) == mapRect.bottom) {
+                if (r.y == 15) {
                     status = false;
-                    listShape.push_back(makeShape[0]);
-                    makeShape[0] = makeShape[1];
-                    makeShape[0].x = 3;
-                    makeShape[0].y = 0;
-                    makeShape.pop_back();
-
-                    Shape ms(uid_shape(gen), mapRect);
-                    ms.x = 4;
-                    makeShape.push_back(ms);
                 }
             }
-            if (status)
-                makeShape[0].y++;
+
+            for (auto& r1:listShape) {
+                for (auto& r2 : r1.recs) {
+                    for (auto& mr : makeShape[0].recs) {
+                        if (r2.y-1 == mr.y && r2.x == mr.x) {
+                            status = false;
+                        }
+                    }
+                }
+            }
+
+            if (status) {
+                for (auto& r : makeShape[0].recs) {
+                    r.y++;
+                }
+            }
+            else {
+                listShape.push_back(makeShape[0]);
+                makeShape[0] = makeShape[1];
+                for (auto& r : makeShape[0].recs) {
+                    r.x -= 9;
+                    r.y -= 2;
+                }
+                makeShape.pop_back();
+
+                Shape ms(uid_shape(gen), mapRect);
+                makeShape.push_back(ms);
+
+                for (auto& r : makeShape[1].recs) {
+                    r.x += 9;
+                    r.y += 2;
+                }
+            }
+            
+
             break;
         }
         default:
