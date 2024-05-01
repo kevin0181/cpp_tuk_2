@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <map>
 
 using namespace std;
 
@@ -275,6 +276,46 @@ struct Shape {
   
 };
 
+void removeFullLines(vector<Shape>& listShape, int mapWidth) {
+    const int MAX_HEIGHT = 15;  // 게임 필드의 최대 높이 가정
+    vector<int> lineCount(MAX_HEIGHT + 1, 0);
+    map<int, vector<Rec*>> recPositions;  // 각 y 레벨에 있는 Rec의 포인터를 저장
+
+    // 각 줄에 있는 Rec의 수 계산
+    for (auto& shape : listShape) {
+        for (auto& rec : shape.recs) {
+            lineCount[rec.y]++;
+            recPositions[rec.y].push_back(&rec);
+        }
+    }
+
+    // 완성된 줄 확인
+    for (int y = 0; y <= MAX_HEIGHT; ++y) {
+        if (lineCount[y] == mapWidth) {  // mapWidth는 한 줄을 채우는 데 필요한 Rec의 수
+            // 줄 제거
+            for (auto rec : recPositions[y]) {
+                rec->status = false;  // 해당 Rec을 비활성화
+            }
+            // 위에 있는 도형을 아래로 이동
+            for (auto& shape : listShape) {
+                for (auto& rec : shape.recs) {
+                    if (rec.y < y && rec.status) {  // 현재 줄 위에 있고 활성화된 Rec만
+                        rec.y++;
+                    }
+                }
+            }
+        }
+    }
+
+    // 비활성화된 Rec 제거
+    for (auto& shape : listShape) {
+        auto& recs = shape.recs;
+        recs.erase(remove_if(recs.begin(), recs.end(), [](const Rec& rec) {
+            return !rec.status;  // 상태가 false인 Rec 제거
+            }), recs.end());
+    }
+}
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     PAINTSTRUCT ps;
@@ -290,6 +331,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static vector<Shape> listShape;
     static vector<Shape> makeShape;
     static bool make_status = true;
+    static bool game_over = false;
+    static vector<Rec> gameOverShape;
+    static int g_int = 15;
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -415,8 +460,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         SelectObject(mDC, (HBITMAP)hBitmap);
         FillRect(mDC, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
 
-
-
         { //map
             mapRect = {
                 rect.right / 2 - 425,
@@ -433,6 +476,32 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             DeleteObject(mBrush);
         }
 
+
+        for (auto& r1 : listShape) {
+            for (auto& r2 : r1.recs) {
+                if (r2.y == 1) {
+                    game_over = true;
+                    KillTimer(hWnd, 1);
+                    SetTimer(hWnd, 2, 1, NULL);
+                }
+            }
+        }
+
+        if (game_over) {
+            for (auto& r : gameOverShape) {
+                HBRUSH mBrush = CreateSolidBrush(r.color);
+                HBRUSH oldBrush = (HBRUSH)SelectObject(mDC, mBrush);
+                HPEN mPen = CreatePen(PS_SOLID, 0.5, RGB(0, 0, 0));
+                HPEN oldPen = (HPEN)SelectObject(mDC, mPen);
+
+                Rectangle(mDC, r.rect.left + (r.x * 50), r.rect.top + (r.y * 50), r.rect.right + (r.x * 50), r.rect.bottom + (r.y * 50));
+
+                SelectObject(mDC, oldBrush);
+                SelectObject(mDC, oldPen);
+                DeleteObject(mBrush);
+                DeleteObject(mPen);
+            }
+        }
 
         if (make_status) {
 
@@ -461,7 +530,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         for (int i = 0; i < makeShape.size(); ++i) {
             makeShape[i].print_r(mDC);
         }
-        
+
+
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
         DeleteObject(hBitmap); // 생성한 비트맵 삭제
         DeleteDC(mDC);
@@ -473,6 +543,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         {
         case 1:
         {
+
             bool status = true;
             for (auto& r : makeShape[0].recs) {
                 if (r.y == 15) {
@@ -495,25 +566,46 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     r.y++;
                 }
             }
+
             else {
-                listShape.push_back(makeShape[0]);
-                makeShape[0] = makeShape[1];
-                for (auto& r : makeShape[0].recs) {
-                    r.x -= 9;
-                    r.y -= 2;
-                }
-                makeShape.pop_back();
+                if (!game_over) {
+                    listShape.push_back(makeShape[0]);
+                    makeShape[0] = makeShape[1];
+                    for (auto& r : makeShape[0].recs) {
+                        r.x -= 9;
+                        r.y -= 2;
+                    }
+                    makeShape.pop_back();
 
-                Shape ms(uid_shape(gen), mapRect);
-                makeShape.push_back(ms);
+                    Shape ms(uid_shape(gen), mapRect);
+                    makeShape.push_back(ms);
 
-                for (auto& r : makeShape[1].recs) {
-                    r.x += 9;
-                    r.y += 2;
+                    for (auto& r : makeShape[1].recs) {
+                        r.x += 9;
+                        r.y += 2;
+                    }
                 }
             }
             
+            removeFullLines(listShape, 11);
 
+            break;
+        }
+        case 2:
+        {
+            Rec r;
+            if (g_int != -1) {
+                for (int i = 0; i < 11; ++i) {
+                    r.x = i;
+                    r.y = g_int;
+                    r.rect = { mapRect.left, 0, mapRect.left + 50, 50 };
+                    gameOverShape.push_back(r);
+                }
+                g_int--;
+            }
+            if (g_int == -1) {
+                KillTimer(hWnd, 2);
+            }
             break;
         }
         default:
