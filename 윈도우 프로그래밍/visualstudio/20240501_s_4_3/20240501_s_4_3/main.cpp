@@ -7,6 +7,7 @@
 #include <map>
 #include<set>
 #include<stack>
+#include"resource.h"
 
 using namespace std;
 
@@ -35,7 +36,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
     WndClass.hIcon = LoadIcon(NULL, IDI_QUESTION);
     WndClass.hCursor = LoadCursor(NULL, IDC_HAND);
     WndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    WndClass.lpszMenuName = NULL;
+    WndClass.lpszMenuName = MAKEINTRESOURCE(IDR_MENU1);
     WndClass.lpszClassName = lpszClass;
     WndClass.hIconSm = LoadIcon(NULL, IDI_QUESTION);
     RegisterClassEx(&WndClass);
@@ -59,9 +60,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
-uniform_int_distribution<int> uid_shape(0, 5);
-uniform_int_distribution<int> uid_color(0, 7);
-
+int shape_i = 5;
+int color_i = 7;
+uniform_int_distribution<int> uid_shape(0, shape_i);
+uniform_int_distribution<int> uid_color(0, color_i);
 struct Rec {
     int x;
     int y;
@@ -408,6 +410,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static bool game_over = false;
     static vector<Rec> gameOverShape;
     static int g_int = 15;
+    static bool gameMode = false;
 
     switch (uMsg)
     {
@@ -419,6 +422,65 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_COMMAND:
         switch (wParam)
         {
+        case ID_START_BLOCK: //게임 시작
+           
+            KillTimer(hWnd, 2);
+            KillTimer(hWnd, 1);
+            SetTimer(hWnd, 1, Timer1Count, NULL);
+
+            game_over = false;
+            make_status = true;
+
+            listShape.clear();
+            makeShape.clear();
+           
+            break;
+        case ID_START_40002: //종료
+
+            game_over = true;
+            KillTimer(hWnd, 1);
+            SetTimer(hWnd, 2, 1, NULL);
+
+            break;
+        case ID_BLOCK_4:
+            shape_i = 3;
+            break;
+        case ID_BLOCK_5:
+            shape_i = 4;
+            break;
+        case ID_BLOCK_6:
+            shape_i = 5;
+            break;
+        case ID_COLOR_6:
+            color_i = 5;
+            break;
+        case ID_COLOR_7:
+            color_i = 6;
+            break;
+        case ID_COLOR_8:
+            color_i = 7;
+            break;
+        case ID_SPEED_FAST:
+            Timer1Count = 10;
+            KillTimer(hWnd, 1);
+            SetTimer(hWnd, 1, Timer1Count, NULL);
+            break;
+        case ID_SPEED_MEDIUM:
+            Timer1Count = 500;
+            KillTimer(hWnd, 1);
+            SetTimer(hWnd, 1, Timer1Count, NULL);
+            break;
+        case ID_SPEED_SLOW:
+            Timer1Count = 1000;
+            KillTimer(hWnd, 1);
+            SetTimer(hWnd, 1, Timer1Count, NULL);
+            break;
+        case ID_GAME1_TRUE:
+            gameMode = true;
+            break;
+        case ID_GAME1_FALSE:
+            gameMode = false;
+            break;
         default:
             break;
         }
@@ -639,9 +701,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 for (auto& r : makeShape[0].recs) {
                     r.y++;
                 }
-            }
-
-            else {
+            }else {
                 if (!game_over) {
                     listShape.push_back(makeShape[0]);
                     makeShape[0] = makeShape[1];
@@ -662,7 +722,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             }
             
             removeFullLines(listShape, 11);
-            removeConnectedShapes(listShape);
+            if (gameMode)
+                removeConnectedShapes(listShape);
 
             break;
         }
