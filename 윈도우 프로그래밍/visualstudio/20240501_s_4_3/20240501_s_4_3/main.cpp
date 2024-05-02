@@ -5,6 +5,8 @@
 #include <string>
 #include <cmath>
 #include <map>
+#include<set>
+#include<stack>
 
 using namespace std;
 
@@ -315,6 +317,78 @@ void removeFullLines(vector<Shape>& listShape, int mapWidth) {
             }), recs.end());
     }
 }
+vector<pair<int, int>> findGroupDFS(const pair<int, int>& start, map<pair<int, int>, vector<Rec*>>& adjacencyList, set<pair<int, int>>& visited) {
+    vector<pair<int, int>> group;
+    stack<pair<int, int>> stack;
+
+    stack.push(start);
+
+    while (!stack.empty()) {
+        auto current = stack.top();
+        stack.pop();
+
+        if (visited.find(current) != visited.end()) {
+            continue;
+        }
+
+        visited.insert(current);
+        group.push_back(current);
+
+        vector<pair<int, int>> directions = { {0, 1}, {1, 0}, {0, -1}, {-1, 0} }; // 상, 하, 좌, 우
+
+        for (const auto& dir : directions) {
+            pair<int, int> neighbor = { current.first + dir.first, current.second + dir.second };
+
+            if (adjacencyList.find(neighbor) != adjacencyList.end() && adjacencyList[neighbor][0]->color == adjacencyList[current][0]->color) {
+                if (visited.find(neighbor) == visited.end()) {
+                    stack.push(neighbor);
+                }
+            }
+        }
+    }
+
+    return group;
+}
+void removeConnectedShapes(vector<Shape>& listShape) {
+    map<pair<int, int>, vector<Rec*>> adjacencyList;
+    for (auto& shape : listShape) {
+        for (auto& rec : shape.recs) {
+            // 각 Rec을 그 위치에서 맵에 추가합니다.
+            adjacencyList[{rec.x, rec.y}].push_back(&rec);
+        }
+    }
+
+    // 색상별로 그룹화된 도형을 찾고 제거합니다.
+    vector<vector<pair<int, int>>> groups;
+    set<pair<int, int>> visited;
+
+    for (auto& entry : adjacencyList) {
+        if (visited.find(entry.first) == visited.end()) {
+            // DFS 또는 BFS를 사용하여 그룹을 찾습니다.
+            vector<pair<int, int>> group = findGroupDFS(entry.first, adjacencyList, visited);
+            if (group.size() >= 3) {
+                groups.push_back(group);
+            }
+        }
+    }
+
+    // 찾아진 그룹에 속하는 모든 도형을 제거합니다.
+    for (auto& group : groups) {
+        for (auto& pos : group) {
+            for (auto rec : adjacencyList[pos]) {
+                rec->status = false;  // 도형의 상태를 비활성화로 변경
+            }
+        }
+    }
+
+    // 모든 비활성화된 도형을 제거합니다.
+    for (auto& shape : listShape) {
+        auto& recs = shape.recs;
+        recs.erase(remove_if(recs.begin(), recs.end(), [](const Rec& rec) {
+            return !rec.status;
+            }), recs.end());
+    }
+}
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
@@ -588,6 +662,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             }
             
             removeFullLines(listShape, 11);
+            removeConnectedShapes(listShape);
 
             break;
         }
