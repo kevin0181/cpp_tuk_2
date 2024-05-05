@@ -21,65 +21,86 @@ struct Count_p {
     string shape;
 };
 
-class custom_file {
-private:
-    string name;
-    Point(*points)[COL][LOW];
-public:
-    custom_file(string name, Point(*p)[COL][LOW]) :name(name), points(p) {};
+Point moveHistory[361];  // 이동 기록을 저장할 배열
+int moveCount = 0;  // 현재까지 저장된 이동 수
 
-    void saveFile() {
-        std::ofstream file(name);
-        if (!file.is_open()) {
-            std::cerr << "Error opening file!" << std::endl;
-            return;
-        }
+Point redoHistory[361];  // 무르기 취소 기록을 저장할 배열
+int redoCount = 0;  // 무르기 취소된 이동 수
 
-        for (int i = 0; i < COL; ++i) {
-            for (int j = 0; j < LOW; ++j) {
-                file << (*points)[i][j].shape; // 포인터를 사용하여 데이터 접근
-                if (j != LOW - 1)
-                    file << ",";
-            }
-            file << std::endl;
-        }
-
-        file.close();
+bool undo(Point p[COL][LOW]) {
+    if (moveCount <= 0) {
+        cout << "무를 수 있는 돌이 없습니다." << endl;
+        return false;
     }
 
-    void loadFile() {
-        std::ifstream file(name);
-        if (!file.is_open()) {
-            std::cerr << "Error opening file for loading!" << std::endl;
-            return;
-        }
+    Point lastMove = moveHistory[--moveCount];
 
-        std::string line;
-        int row = 0;
+    redoHistory[redoCount++] = lastMove;
 
-        while (std::getline(file, line) && row < COL) {
-            std::istringstream ss(line);
-            std::string cell;
-            int col = 0;
+    p[*lastMove.y][*lastMove.x] = Point();  // 기본값으로 초기화
 
-            while (std::getline(ss, cell, ',') && col < LOW) {
-                (*points)[row][col].shape = cell;
-                if (cell != "·") {
-                    (*points)[row][col].x = new int(col);
-                    (*points)[row][col].y = new int(row);
-                }
-                else {
-                    (*points)[row][col].x = nullptr;
-                    (*points)[row][col].y = nullptr;
-                }
-                col++;
-            }
-            row++;
-        }
+    return true;
+}
 
-        file.close();
+bool redo(Point p[COL][LOW]) {
+    if (redoCount <= 0) {
+        cout << "복구할 수 있는 돌이 없습니다." << endl;
+        return false;
     }
-};
+
+    Point lastRedoMove = redoHistory[--redoCount];
+
+    p[*lastRedoMove.y][*lastRedoMove.x] = lastRedoMove;  // 이전 모양 복원
+
+    moveHistory[moveCount++] = lastRedoMove;
+
+    return true;
+}
+
+void saveFile(string name, Point p[COL][LOW]) {
+    ofstream file(name);
+    if (!file.is_open()) {
+        cerr << "Error opening file!" << endl;
+        return;
+    }
+
+    for (int i = 0; i < COL; ++i) {
+        for (int j = 0; j < LOW; ++j) {
+            if (p[i][j].shape == "·")
+                file << '.';
+            else if (p[i][j].shape == "○")
+                file << 1;
+            else if(p[i][j].shape == "●")
+            file << 2;
+        }
+        file << endl;
+    }
+
+    file.close();
+}
+
+void loadFile(string name, Point p[COL][LOW], int &user_status) {
+    ifstream file(name);
+    if (!file.is_open()) {
+        cerr << "Error opening file for loading!" << endl;
+        return;
+    }
+
+    string s;
+    for (int i = 0; i < COL; ++i) {
+        file >> s;
+        for (int j = 0; j < s.length(); ++j) {
+            if (s[j] == '.')
+                p[i][j].shape = "·";
+            else if (s[j] == '1')
+                p[i][j].shape = "○";
+            else if (s[j] == '2')
+                p[i][j].shape = "●";
+        }
+    }
+
+    file.close();
+}
 
 void count_continue(int i, int j, Count_p result[10], Count_p& compare, Point p[COL][LOW], int& size) { //연속된 돌의 개수를 반환하는 함수 (연속된 돌의 개수가 같을 경우 배열에 담아 모든 연속된 돌의 개수를 출력)
     if (p[i][j].shape != "·") {
@@ -227,6 +248,7 @@ bool insert_c(int x, int y, string shape[2], int user_status, Point p[COL][LOW])
 
         print_v(p);
 
+
         return true;
     }
 }
@@ -241,8 +263,8 @@ int main() {
     };
     int user_status{};
     Point p[COL][LOW];
-    custom_file customFile("prac.txt", &p);
-    customFile.loadFile();
+    Point save_p[361];
+    loadFile("prac.txt", p, user_status);
     print_v(p);
 
     while (true) {
@@ -251,11 +273,19 @@ int main() {
         cin >> x >> y;
 
         if (x == "u") { // 무르기
-
+            if (undo(p)) {
+                user_status = (user_status == 0) ? 1 : 0;
+                print_v(p);
+            }
+            continue;
         }
         
         if (x == "r") { // 무르기 취소
-
+            if (redo(p)) {
+                user_status = (user_status == 0) ? 1 : 0;
+                print_v(p);
+            }
+            continue;
         }
 
         if (cin.fail()) {
@@ -272,6 +302,6 @@ int main() {
 
             }
         }
-        customFile.saveFile();
+        saveFile("prac.txt", p);
     }
 }
