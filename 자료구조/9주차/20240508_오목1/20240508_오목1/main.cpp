@@ -35,9 +35,14 @@ bool undo(Point p[COL][LOW]) {
 
     Point lastMove = moveHistory[--moveCount];
 
+    int lastX = *lastMove.x;
+    int lastY = *lastMove.y;
+
     redoHistory[redoCount++] = lastMove;
 
-    p[*lastMove.y][*lastMove.x] = Point();  // 기본값으로 초기화
+    p[lastY][lastX].shape = "·";  // 기본값으로 초기화
+    p[lastY][lastX].x = nullptr;
+    p[lastY][lastX].y = nullptr;
 
     return true;
 }
@@ -246,6 +251,12 @@ bool insert_c(int x, int y, string shape[2], int user_status, Point p[COL][LOW])
         p[y][x].y = &y;
         p[y][x].shape = shape[user_status];
 
+
+        moveHistory[moveCount].x = &x;
+        moveHistory[moveCount].y = &y;
+        moveHistory[moveCount++].shape = shape[user_status];
+
+
         print_v(p);
 
 
@@ -270,7 +281,7 @@ int main() {
     while (true) {
         cout << "좌표 값 두 곳을 입력하세요 : ";
 
-        cin >> x >> y;
+        cin >> x;
 
         if (x == "u") { // 무르기
             if (undo(p)) {
@@ -287,6 +298,8 @@ int main() {
             }
             continue;
         }
+
+        cin >> y;
 
         if (cin.fail()) {
             cout << "잘못된 입력값 입니다." << endl;
