@@ -22,6 +22,9 @@ struct Count_p {
 Point moveHistory[361];  // 이동 기록을 저장할 배열
 int moveCount = 0;  // 현재까지 저장된 이동 수
 
+Point redoHistory[361];  // 무르기 취소 기록을 저장할 배열
+int redoCount = 0;  // 무르기 취소된 이동 수
+
 bool undo(Point p[COL][LOW]) {
     if (moveCount <= 0) {
         cout << "무를 수 있는 돌이 없습니다." << endl;
@@ -33,11 +36,26 @@ bool undo(Point p[COL][LOW]) {
     int lastX = lastMove.x;
     int lastY = lastMove.y;
 
-   // redoHistory[redoCount++] = lastMove;
+    redoHistory[redoCount++] = lastMove;
 
     p[lastY][lastX].shape = "·";  // 기본값으로 초기화
     p[lastY][lastX].x = -1;
     p[lastY][lastX].y = -1;
+
+    return true;
+}
+
+bool redo(Point p[COL][LOW]) {
+    if (redoCount <= 0) {
+        cout << "복구할 수 있는 돌이 없습니다." << endl;
+        return false;
+    }
+
+    Point lastRedoMove = redoHistory[--redoCount];
+
+    p[lastRedoMove.y][lastRedoMove.x] = lastRedoMove;  // 이전 모양 복원
+
+    moveHistory[moveCount++] = lastRedoMove;
 
     return true;
 }
@@ -250,6 +268,7 @@ bool insert_c(int x, int y, string shape[2], int user_status, Point p[COL][LOW])
         p[y][x].y = y;
         p[y][x].shape = shape[user_status];
 
+        redoCount = 0;
         moveHistory[moveCount++] = p[y][x];
 
         print_v(p);
@@ -291,6 +310,14 @@ int main() {
 
         if (x == "u") { // 무르기
             if (undo(p)) {
+                user_status = (user_status == 0) ? 1 : 0;
+                print_v(p);
+            }
+            continue;
+        }
+
+        if (x == "r") { // 무르기 취소
+            if (redo(p)) {
                 user_status = (user_status == 0) ? 1 : 0;
                 print_v(p);
             }
