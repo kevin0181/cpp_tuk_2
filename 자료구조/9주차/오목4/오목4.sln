@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34622.214
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "오목4", "오목4\오목4.vcxproj", "{5FEEF4BF-9D51-4AAA-9947-7C3670C601AE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5FEEF4BF-9D51-4AAA-9947-7C3670C601AE}.Debug|x64.ActiveCfg = Debug|x64
+		{5FEEF4BF-9D51-4AAA-9947-7C3670C601AE}.Debug|x64.Build.0 = Debug|x64
+		{5FEEF4BF-9D51-4AAA-9947-7C3670C601AE}.Debug|x86.ActiveCfg = Debug|Win32
+		{5FEEF4BF-9D51-4AAA-9947-7C3670C601AE}.Debug|x86.Build.0 = Debug|Win32
+		{5FEEF4BF-9D51-4AAA-9947-7C3670C601AE}.Release|x64.ActiveCfg = Release|x64
+		{5FEEF4BF-9D51-4AAA-9947-7C3670C601AE}.Release|x64.Build.0 = Release|x64
+		{5FEEF4BF-9D51-4AAA-9947-7C3670C601AE}.Release|x86.ActiveCfg = Release|Win32
+		{5FEEF4BF-9D51-4AAA-9947-7C3670C601AE}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E27C83C4-247D-4BDB-841C-1303A00D1D7F}
+	EndGlobalSection
+EndGlobal
