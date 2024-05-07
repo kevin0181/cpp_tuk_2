@@ -110,6 +110,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             imgRect.right = rect.right;
             imgRect.bottom = rect.bottom;
             break;
+        case 'r':
+            break;
         default:
             break;
         }
