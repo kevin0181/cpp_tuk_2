@@ -72,6 +72,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static RECT rect;
     static SIZE size;
     static int Timer1Count = 1000;
+    static RECT imgRect;
 
     switch (uMsg)
     {
@@ -87,6 +88,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             GetObject(hBitmap, sizeof(BITMAP), &bm);
             size.cx = bm.bmWidth;
             size.cy = bm.bmHeight;
+            imgRect.right = bm.bmWidth;
+            imgRect.bottom = bm.bmHeight;
         }
 
         break;
@@ -103,6 +106,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_CHAR:
         switch (wParam)
         {
+        case 'a':
+            imgRect.right = rect.right;
+            imgRect.bottom = rect.bottom;
+            break;
         default:
             break;
         }
@@ -118,9 +125,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         SelectObject(mDC, hBitmap);
 
         // 비트맵을 윈도우 크기에 맞게 스케일링하여 그리기
-        StretchBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, size.cx, size.cy, SRCCOPY);
+        StretchBlt(hDC, 0, 0, imgRect.right, imgRect.bottom, mDC, 0, 0, size.cx, size.cy, SRCCOPY);
 
-        
         DeleteDC(mDC);
         EndPaint(hWnd, &ps);
         break;
