@@ -57,28 +57,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 
 #define WIDTH_LINE 40
 #define HEGHIT_LINE 40
+static bool moveAll = false;     // 전체 이동 모드 활성화 여부
 
 random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     PAINTSTRUCT ps;
     HDC hDC, mDC;
     static HBITMAP hBitmap;
-    HPEN mPen, oldPen;
+    HPEN mPen, oldPen, redPen;
     HBRUSH mBrush, oldBrush;
     static RECT rect;
     static SIZE size;
     static int Timer1Count = 1000;
-    static RECT imgRect;
+    static RECT imgRect[4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
+    static DWORD dwordS = SRCCOPY;
+    static int selectedIndex = -1;  // 선택된 이미지의 인덱스
+    static bool m_status = false;
+    static float scale[4] = { 1.0f, 1.0f, 1.0f, 1.0f };  // 각 이미지의 확대/축소 비율
+    const int moveStep = 20;  // 이동하는 간격
 
     switch (uMsg)
     {
     case WM_CREATE:
     {
-        hBitmap = (HBITMAP)LoadBitmap(g_hInst, MAKEINTRESOURCE(IDB_BITMAP1));
+        hBitmap = (HBITMAP)LoadBitmap(g_hInst, MAKEINTRESOURCE(IDB_BITMAP3));
 
         if (!hBitmap) {
             MessageBox(hWnd, _T("비트맵 로드에 실패했습니다."), _T("오류"), MB_OK);
@@ -88,8 +93,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             GetObject(hBitmap, sizeof(BITMAP), &bm);
             size.cx = bm.bmWidth;
             size.cy = bm.bmHeight;
-            imgRect.right = bm.bmWidth;
-            imgRect.bottom = bm.bmHeight;
+            imgRect[0].right = bm.bmWidth;
+            imgRect[0].bottom = bm.bmHeight;
         }
 
         break;
@@ -101,21 +106,122 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_KEYUP:
         break;
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
-        InvalidateRect(hWnd, NULL, false);  // 윈도우를 다시 그립니다.
+        if (moveAll) {
+            switch (wParam)
+            {
+            case VK_LEFT:
+                    for (int i = 0; i < 4; ++i) {
+                        imgRect[i].left -= moveStep;
+                        imgRect[i].right -= moveStep;
+                    }
+                break;
+            case VK_RIGHT:
+                    for (int i = 0; i < 4; ++i) {
+                        imgRect[i].left += moveStep;
+                        imgRect[i].right += moveStep;
+                    }
+                break;
+            }
+        }
+        else if (selectedIndex >= 0 && selectedIndex < 4) {
+            switch (wParam)
+            {
+            case VK_LEFT:
+                if (imgRect[selectedIndex].left - moveStep >= 0) {
+                    imgRect[selectedIndex].left -= moveStep;
+                    imgRect[selectedIndex].right -= moveStep;
+                }
+                break;
+            case VK_RIGHT:
+                if (imgRect[selectedIndex].right + moveStep <= rect.right) {
+                    imgRect[selectedIndex].left += moveStep;
+                    imgRect[selectedIndex].right += moveStep;
+                }
+                break;
+            }
+        }
+        InvalidateRect(hWnd, NULL, true);
         break;
+    case WM_LBUTTONDOWN:
+    {
+        if (m_status == false) {
+            break;
+        }
+        int xPos = LOWORD(lParam);
+        int yPos = HIWORD(lParam);
+
+        selectedIndex = -1;
+        for (int i = 0; i < 4; ++i) {
+            if (xPos >= imgRect[i].left && xPos < imgRect[i].right &&
+                yPos >= imgRect[i].top && yPos < imgRect[i].bottom) {
+                selectedIndex = i;
+                break;
+            }
+        }
+        InvalidateRect(hWnd, NULL, false);
+        break;
+    }
+
     case WM_CHAR:
         switch (wParam)
         {
+        case 'p':
+            moveAll = !moveAll;  // 전체 이동 모드 활성화/비활성화 전환
+            break;
+        case's':
+            hBitmap = (HBITMAP)LoadBitmap(g_hInst, MAKEINTRESOURCE(IDB_BITMAP1));
+
+            if (!hBitmap) {
+                MessageBox(hWnd, _T("비트맵 로드에 실패했습니다."), _T("오류"), MB_OK);
+            }
+            else {
+                BITMAP bm;
+                GetObject(hBitmap, sizeof(BITMAP), &bm);
+                size.cx = bm.bmWidth;
+                size.cy = bm.bmHeight;
+                for (int i = 0; i < 4; ++i) {
+                    imgRect[i] = { 0,0,0,0 };
+                }
+                imgRect[0].right = bm.bmWidth;
+                imgRect[0].bottom = bm.bmHeight;
+            }
+        case '+':
+            if (selectedIndex >= 0) {
+                scale[selectedIndex] *= 1.1f;  // 확대
+                InvalidateRect(hWnd, NULL, true);
+            }
+            break;
+        case '-':
+            if (selectedIndex >= 0) {
+                scale[selectedIndex] *= 0.9f;  // 축소
+                InvalidateRect(hWnd, NULL, true);
+            }
+            break;
         case 'a':
-            imgRect.right = rect.right;
-            imgRect.bottom = rect.bottom;
+            for (int i = 0; i < 4; ++i) {
+                imgRect[i] = { 0,0,0,0 };
+            }
+
+            imgRect[0].right = rect.right;
+            imgRect[0].bottom = rect.bottom;
+            m_status = false;
             break;
         case 'r':
+            dwordS = dwordS == SRCCOPY ? NOTSRCCOPY : SRCCOPY;
+            break;
+        case 'd':
+            m_status = true;
+            // 첫 번째 사각형 (왼쪽 위)
+            imgRect[0] = { 0, 0, rect.right / 2, rect.bottom / 2 };
+            // 두 번째 사각형 (오른쪽 위)
+            imgRect[1] = { rect.right / 2, 0, rect.right, rect.bottom / 2 };
+            imgRect[2] = { 0,rect.bottom / 2,rect.right / 2,rect.bottom };
+            imgRect[3] = { rect.right / 2, rect.bottom / 2, rect.right, rect.bottom };
             break;
         default:
             break;
         }
-        InvalidateRect(hWnd, NULL, false);
+        InvalidateRect(hWnd, NULL, true);
         break;
     case WM_PAINT:
     {
@@ -127,8 +233,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         SelectObject(mDC, hBitmap);
 
         // 비트맵을 윈도우 크기에 맞게 스케일링하여 그리기
-        StretchBlt(hDC, 0, 0, imgRect.right, imgRect.bottom, mDC, 0, 0, size.cx, size.cy, SRCCOPY);
+        for (int i = 0; i < 4; ++i) {
+            int width = imgRect[i].right - imgRect[i].left;
+            int height = imgRect[i].bottom - imgRect[i].top;
 
+            int bmpWidth = static_cast<int>(size.cx * scale[i]);
+            int bmpHeight = static_cast<int>(size.cy * scale[i]);
+
+            StretchBlt(hDC, imgRect[i].left, imgRect[i].top, width, height, mDC, 0, 0, bmpWidth, bmpHeight, dwordS);
+
+            if (i == selectedIndex) {
+                HBRUSH redBrush = CreateSolidBrush(RGB(255, 0, 0));
+                FrameRect(hDC, &imgRect[i], redBrush);
+                DeleteObject(redBrush);
+            }
+        }
         DeleteDC(mDC);
         EndPaint(hWnd, &ps);
         break;
