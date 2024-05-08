@@ -118,6 +118,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static bool game_status = false;
     static bool img_set_status = true;
     static DWORD im_s = SRCCOPY;
+    static int img_select_num = -1;
+    static bool Drag = false;
 
     switch (uMsg)
     {
@@ -210,7 +212,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_LBUTTONDOWN:
     {
-        
+        POINT p;
+         p.x = LOWORD(lParam);
+         p.y = HIWORD(lParam);
+
+         if (game_status) {
+             Drag = true;
+             for (int i = 0; i < imgs.size(); ++i) {
+                 if (PtInRect(&imgs[i].rect, p)) {
+                     img_select_num = i;
+                     break;
+                 }
+             }
+
+             if (img_select_num != -1) {
+                 // Enlarge the selected tile's display rectangle by a small margin (e.g., 10 pixels)
+                 const int margin = 10;
+                 img_s& selectedImg = imgs[img_select_num];
+
+                 // Adjust the rectangle to grow by the margin on all sides
+                 selectedImg.rect.left -= margin;
+                 selectedImg.rect.top -= margin;
+                 selectedImg.rect.right += margin;
+                 selectedImg.rect.bottom += margin;
+             }
+
+         }
+
         InvalidateRect(hWnd, NULL, false);
         break;
     }
