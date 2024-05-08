@@ -117,6 +117,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static vector<img_s> imgs;
     static bool game_status = false;
     static bool img_set_status = true;
+    static DWORD im_s = SRCCOPY;
 
     switch (uMsg)
     {
@@ -124,6 +125,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     {
         img[0].Load(L"dog1.jpeg");
         img[1].Load(L"dog2.jpeg");
+        GetClientRect(hWnd, &rect);
+        imgSet(img_count, img, img_status, imgs, rect);
 
         break;
     }
@@ -132,11 +135,27 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         {
         case ID_40001:
             img_status = 0;
+            imgSet(img_count, img, img_status, imgs, rect);
             break;
         case ID_40002:
             img_status = 1;
+            imgSet(img_count, img, img_status, imgs, rect);
+            break;
+        case ID_40003:
+            img_count = 3;
+            imgSet(img_count, img, img_status, imgs, rect);
+            break;
+        case ID_40004:
+            img_count = 4;
+            imgSet(img_count, img, img_status, imgs, rect);
+            break;
+        case ID_40005:
+            img_count = 5;
+            imgSet(img_count, img, img_status, imgs, rect);
+            break;
         case ID_40006:
             game_status = true;
+            imgSet(img_count, img, img_status, imgs, rect);
             break;
         case ID_40009:
             PostQuitMessage(0);
@@ -176,6 +195,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             }
         }
             break;
+        case ID_40008:
+            im_s = im_s == SRCCOPY ? NOTSRCCOPY : SRCCOPY;
+            break;
         default:
             break;
         }
@@ -207,16 +229,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         FillRect(mDC1, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
 
         if (game_status) {
-            if (img_set_status)
-                imgSet(img_count, img, img_status, imgs, rect);
-            img_set_status = true;
-
             for (const auto& imgPart : imgs) {
                 img[img_status].StretchBlt(mDC1, imgPart.rect.left, imgPart.rect.top,
                     imgPart.rect.right - imgPart.rect.left, imgPart.rect.bottom - imgPart.rect.top,
                     imgPart.imgSize.left, imgPart.imgSize.top,
                     imgPart.imgSize.right - imgPart.imgSize.left, imgPart.imgSize.bottom - imgPart.imgSize.top,
-                    SRCCOPY);
+                    im_s);
             }
         }
         
