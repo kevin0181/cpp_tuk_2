@@ -98,6 +98,10 @@ void imgSet(int img_count, CImage img[2], int img_status, vector<img_s>& imgs, R
     }
 }
 
+void SwapTiles(img_s& first, img_s& second) {
+    std::swap(first.rect, second.rect);
+}
+
 random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
@@ -214,7 +218,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_LBUTTONDOWN:
     {
-        
+       
+        SetTimer(hWnd, 1, 1, NULL);
+       
         mP.x = LOWORD(lParam);
         mP.y = HIWORD(lParam);
 
@@ -233,23 +239,41 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
     case WM_MOUSEMOVE:
         if (Drag && img_select_num >= 0) {
+            // Retrieve the current cursor position.
+            POINT newMousePoint = { LOWORD(lParam), HIWORD(lParam) };
 
-            mP.x = LOWORD(lParam);
-            mP.y = HIWORD(lParam);
+            // Calculate the cell width and height based on the current image grid count.
+            int cellWidth = rect.right / img_count;
+            int cellHeight = rect.bottom / img_count;
 
-            // 마우스 커서에 따라 선택된 조각의 위치 업데이트
-            int width = imgs[img_select_num].rect.right - imgs[img_select_num].rect.left;
-            int height = imgs[img_select_num].rect.bottom - imgs[img_select_num].rect.top;
-            imgs[img_select_num].rect.left = mP.x - width / 2;
-            imgs[img_select_num].rect.top = mP.y - height / 2;
-            imgs[img_select_num].rect.right = imgs[img_select_num].rect.left + width;
-            imgs[img_select_num].rect.bottom = imgs[img_select_num].rect.top + height;
+            // Determine which grid cell the selected image currently occupies.
+            int currentCellX = imgs[img_select_num].rect.left / cellWidth;
+            int currentCellY = imgs[img_select_num].rect.top / cellHeight;
 
-            InvalidateRect(hWnd, NULL, false);
+            // Determine which grid cell the cursor is currently in.
+            int newCellX = newMousePoint.x / cellWidth;
+            int newCellY = newMousePoint.y / cellHeight;
+
+            // Check if we're moving exactly one cell horizontally or vertically.
+            if (abs(newCellX - currentCellX) + abs(newCellY - currentCellY) == 1) {
+                // Compute the new coordinates for the image based on its movement.
+                int newLeft = newCellX * cellWidth;
+                int newTop = newCellY * cellHeight;
+
+                imgs[img_select_num].rect.left = newLeft;
+                imgs[img_select_num].rect.top = newTop;
+                imgs[img_select_num].rect.right = newLeft + cellWidth;
+                imgs[img_select_num].rect.bottom = newTop + cellHeight;
+
+                // Repaint the window to reflect the new position.
+                InvalidateRect(hWnd, NULL, false);
+            }
         }
         break;
     case WM_LBUTTONUP:
+        KillTimer(hWnd, 1);
         Drag = false;
+
         img_select_num = -1;
         break;
     case WM_CHAR:
@@ -285,6 +309,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_TIMER:
+
+        switch (wParam)
+        {
+        case 1:
+            if (Drag && img_select_num >= 0) {
+                
+            }
+            break;
+        default:
+            break;
+        }
+
         InvalidateRect(hWnd, NULL, false);
         break;
     case WM_DESTROY:
