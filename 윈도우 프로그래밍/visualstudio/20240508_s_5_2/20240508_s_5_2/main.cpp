@@ -59,6 +59,7 @@ struct img_s {
 };
 
 void imgSet(int img_count, CImage img[2], int img_status, vector<img_s>& imgs, RECT rect) {
+    imgs.clear();
     int cell_width = rect.right / img_count;
     int cell_height = rect.bottom / img_count;
 
@@ -120,6 +121,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static DWORD im_s = SRCCOPY;
     static int img_select_num = -1;
     static bool Drag = false;
+    static POINT mP;
 
     switch (uMsg)
     {
@@ -196,7 +198,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 }
             }
         }
-            break;
+        break;
         case ID_40008:
             im_s = im_s == SRCCOPY ? NOTSRCCOPY : SRCCOPY;
             break;
@@ -212,36 +214,44 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_LBUTTONDOWN:
     {
-        POINT p;
-         p.x = LOWORD(lParam);
-         p.y = HIWORD(lParam);
+        
+        mP.x = LOWORD(lParam);
+        mP.y = HIWORD(lParam);
 
-         if (game_status) {
-             Drag = true;
-             for (int i = 0; i < imgs.size(); ++i) {
-                 if (PtInRect(&imgs[i].rect, p)) {
-                     img_select_num = i;
-                     break;
-                 }
-             }
-
-             if (img_select_num != -1) {
-                 // Enlarge the selected tile's display rectangle by a small margin (e.g., 10 pixels)
-                 const int margin = 10;
-                 img_s& selectedImg = imgs[img_select_num];
-
-                 // Adjust the rectangle to grow by the margin on all sides
-                 selectedImg.rect.left -= margin;
-                 selectedImg.rect.top -= margin;
-                 selectedImg.rect.right += margin;
-                 selectedImg.rect.bottom += margin;
-             }
-
-         }
+        if (game_status) {
+            Drag = true;
+            for (int i = 0; i < imgs.size(); ++i) {
+                if (PtInRect(&imgs[i].rect, mP)) {
+                    img_select_num = i;
+                    break;
+                }
+            }
+        }
 
         InvalidateRect(hWnd, NULL, false);
         break;
     }
+    case WM_MOUSEMOVE:
+        if (Drag && img_select_num >= 0) {
+
+            mP.x = LOWORD(lParam);
+            mP.y = HIWORD(lParam);
+
+            // 마우스 커서에 따라 선택된 조각의 위치 업데이트
+            int width = imgs[img_select_num].rect.right - imgs[img_select_num].rect.left;
+            int height = imgs[img_select_num].rect.bottom - imgs[img_select_num].rect.top;
+            imgs[img_select_num].rect.left = mP.x - width / 2;
+            imgs[img_select_num].rect.top = mP.y - height / 2;
+            imgs[img_select_num].rect.right = imgs[img_select_num].rect.left + width;
+            imgs[img_select_num].rect.bottom = imgs[img_select_num].rect.top + height;
+
+            InvalidateRect(hWnd, NULL, false);
+        }
+        break;
+    case WM_LBUTTONUP:
+        Drag = false;
+        img_select_num = -1;
+        break;
     case WM_CHAR:
         InvalidateRect(hWnd, NULL, true);
         break;
@@ -265,7 +275,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     im_s);
             }
         }
-        
+
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC1, 0, 0, SRCCOPY);
 
         // 로드된 비트맵을 선택
