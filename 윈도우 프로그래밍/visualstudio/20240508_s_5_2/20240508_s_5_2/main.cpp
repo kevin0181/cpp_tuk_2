@@ -58,6 +58,76 @@ struct img_s {
     RECT imgSize;
 };
 
+void imgSet2(int img_count, CImage img[2], int img_status, vector<img_s>& imgs, RECT rect) {
+    imgs.clear();
+
+    // 각 조각의 높이 및 화면상의 세로 크기 계산
+    int cell_height = rect.bottom / img_count;
+    int imgW = img[img_status].GetWidth();
+    int imgH = img[img_status].GetHeight();
+    int img_height = imgH / img_count;
+
+    // 조각의 인덱스를 무작위로 섞기 위한 벡터
+    vector<int> indices(img_count);
+    iota(indices.begin(), indices.end(), 0);
+    shuffle(indices.begin(), indices.end(), mt19937{ random_device{}() });
+
+    // 섞인 인덱스를 사용하여 각 조각의 화면 위치와 원본 영역을 설정
+    for (int i = 0; i < img_count; ++i) {
+        int index = indices[i];
+
+        img_s i_s;
+        // 원본 이미지에서 가져올 영역 설정
+        i_s.imgSize.left = 0;
+        i_s.imgSize.top = img_height * index;
+        i_s.imgSize.right = imgW;
+        i_s.imgSize.bottom = img_height * (index + 1);
+
+        // 화면에 조각을 배치할 위치 설정
+        i_s.rect.left = 0;
+        i_s.rect.top = cell_height * i;
+        i_s.rect.right = rect.right;
+        i_s.rect.bottom = cell_height * (i + 1);
+
+        imgs.push_back(i_s);
+    }
+}
+
+void imgSet1(int img_count, CImage img[2], int img_status, vector<img_s>& imgs, RECT rect) {
+    imgs.clear();
+
+    // 각 조각의 너비 및 화면상의 가로 크기 계산
+    int cell_width = rect.right / img_count;
+    int imgW = img[img_status].GetWidth();
+    int imgH = img[img_status].GetHeight();
+    int img_width = imgW / img_count;
+
+    // 조각의 인덱스를 무작위로 섞기 위한 벡터
+    vector<int> indices(img_count);
+    iota(indices.begin(), indices.end(), 0);
+    shuffle(indices.begin(), indices.end(), mt19937{ random_device{}() });
+
+    // 섞인 인덱스를 사용하여 각 조각의 화면 위치와 원본 영역을 설정
+    for (int i = 0; i < img_count; ++i) {
+        int index = indices[i];
+
+        img_s i_s;
+        // 원본 이미지에서 가져올 영역 설정
+        i_s.imgSize.left = img_width * index;
+        i_s.imgSize.top = 0;
+        i_s.imgSize.right = img_width * (index + 1);
+        i_s.imgSize.bottom = imgH;
+
+        // 화면에 조각을 배치할 위치 설정
+        i_s.rect.left = cell_width * i;
+        i_s.rect.top = 0;
+        i_s.rect.right = cell_width * (i + 1);
+        i_s.rect.bottom = rect.bottom;
+
+        imgs.push_back(i_s);
+    }
+}
+
 void imgSet(int img_count, CImage img[2], int img_status, vector<img_s>& imgs, RECT rect) {
     imgs.clear();
     int cell_width = rect.right / img_count;
@@ -124,6 +194,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static POINT mP;
     static int targetIndex = -1;
     static RECT targetRect = { 0,0,0,0 };
+    static bool isMoving = false;
+    static POINT startPosition, endPosition;
+    static int moveStep = 10; // 한 번에 움직일 픽셀 수
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -269,9 +343,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                         RECT intersection;
                         if (IntersectRect(&intersection, &imgs[i].rect, &imgs[img_select_num].rect)) {
                             targetIndex = i;
+                            isMoving = true;
+                            SetTimer(hWnd, 1, 16, NULL);
                             break;
                         }
                     }
+                }
+
+                // 타겟 인덱스가 유효한 경우 애니메이션 이동을 시작
+                if (img_select_num >= 0 && targetIndex >= 0) {
+                    startPosition = { imgs[img_select_num].rect.left, imgs[img_select_num].rect.top };
+                    endPosition = { targetRect.left, targetRect.top };
+                    isMoving = true;
+                    SetTimer(hWnd, 1, 16, NULL); // 약 60fps로 움직이도록 타이머 설정
                 }
 
                 // Repaint the window to reflect the new position.
@@ -282,12 +366,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_LBUTTONUP:
     {
         Drag = false;
-        imgs[targetIndex].rect = targetRect;
-        img_select_num = -1;
+       // imgs[targetIndex].rect = targetRect;
+       /* targetIndex = -1;
+        targetRect = { 0,0,0,0 };
+        img_select_num = -1;*/
         InvalidateRect(hWnd, NULL, false);
         break;
     }
     case WM_CHAR:
+        switch (wParam)
+        {
+        case 'v':
+            imgSet1(img_count, img, img_status, imgs, rect);
+            break;
+        case 'h':
+            imgSet2(img_count, img, img_status, imgs, rect);
+            break;
+        default:
+            break;
+        }
+
         InvalidateRect(hWnd, NULL, true);
         break;
     case WM_PAINT:
@@ -324,9 +422,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         switch (wParam)
         {
         case 1:
-            if (Drag && img_select_num >= 0) {
-                
+            if (isMoving) {
+                int dx = endPosition.x - startPosition.x;
+                int dy = endPosition.y - startPosition.y;
+
+                // 도달해야 하는 목표 위치와의 차이를 계산
+                int moveX = (std::abs(dx) < moveStep) ? dx : (dx > 0 ? moveStep : -moveStep);
+                int moveY = (std::abs(dy) < moveStep) ? dy : (dy > 0 ? moveStep : -moveStep);
+
+                // 조각을 이동
+                imgs[targetIndex].rect.left += moveX;
+                imgs[targetIndex].rect.top += moveY;
+                imgs[targetIndex].rect.right = imgs[targetIndex].rect.left + (targetRect.right - targetRect.left);
+                imgs[targetIndex].rect.bottom = imgs[targetIndex].rect.top + (targetRect.bottom - targetRect.top);
+
+                // 시작 지점을 업데이트
+                startPosition.x += moveX;
+                startPosition.y += moveY;
+
+                // 목표 위치에 도달하면 타이머 종료
+                if (startPosition.x == endPosition.x && startPosition.y == endPosition.y) {
+                    isMoving = false;
+                    KillTimer(hWnd, 1);
+                }
+
+                InvalidateRect(hWnd, NULL, false);
             }
+            break;
             break;
         default:
             break;
