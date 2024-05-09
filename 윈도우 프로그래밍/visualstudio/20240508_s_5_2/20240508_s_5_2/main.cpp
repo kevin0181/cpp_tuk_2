@@ -98,10 +98,6 @@ void imgSet(int img_count, CImage img[2], int img_status, vector<img_s>& imgs, R
     }
 }
 
-void SwapTiles(img_s& first, img_s& second) {
-    std::swap(first.rect, second.rect);
-}
-
 random_device rd;
 mt19937 gen(rd());
 uniform_int_distribution<int> uid_RGB(0, 255);
@@ -126,7 +122,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int img_select_num = -1;
     static bool Drag = false;
     static POINT mP;
-
+    static int targetIndex = -1;
+    static RECT targetRect = { 0,0,0,0 };
     switch (uMsg)
     {
     case WM_CREATE:
@@ -229,6 +226,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             for (int i = 0; i < imgs.size(); ++i) {
                 if (PtInRect(&imgs[i].rect, mP)) {
                     img_select_num = i;
+                    targetRect = imgs[img_select_num].rect;
                     break;
                 }
             }
@@ -265,17 +263,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 imgs[img_select_num].rect.right = newLeft + cellWidth;
                 imgs[img_select_num].rect.bottom = newTop + cellHeight;
 
+
+                for (int i = 0; i < imgs.size(); ++i) {
+                    if (img_select_num != i) {
+                        RECT intersection;
+                        if (IntersectRect(&intersection, &imgs[i].rect, &imgs[img_select_num].rect)) {
+                            targetIndex = i;
+                            break;
+                        }
+                    }
+                }
+
                 // Repaint the window to reflect the new position.
                 InvalidateRect(hWnd, NULL, false);
             }
         }
         break;
     case WM_LBUTTONUP:
-        KillTimer(hWnd, 1);
+    {
         Drag = false;
-
+        imgs[targetIndex].rect = targetRect;
         img_select_num = -1;
+        InvalidateRect(hWnd, NULL, false);
         break;
+    }
     case WM_CHAR:
         InvalidateRect(hWnd, NULL, true);
         break;
