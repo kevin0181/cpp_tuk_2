@@ -91,28 +91,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_KEYUP:
         break;
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
-        if (img2_status != -1) {
-            switch (wParam)
-            {
-            case VK_LEFT:
-                OffsetRect(&img_rect2, -5, 0);
-                img_save_rect = img_rect2;
-                break;
-            case VK_RIGHT:
-                OffsetRect(&img_rect2, 5, 0);
-                img_save_rect = img_rect2;
-                break;
-            case VK_UP:
-                OffsetRect(&img_rect2, 0, -5);
-                img_save_rect = img_rect2;
-                break;
-            case VK_DOWN:
-                OffsetRect(&img_rect2, 0, 5);
-                img_save_rect = img_rect2;
-                break;
-            default:
-                break;
-            }
+        switch (wParam)
+        {
+        case VK_LEFT:
+            OffsetRect(&img_rect2, -5, 0);
+            img_save_rect = img_rect2;
+            break;
+        case VK_RIGHT:
+            OffsetRect(&img_rect2, 5, 0);
+            img_save_rect = img_rect2;
+            break;
+        case VK_UP:
+            OffsetRect(&img_rect2, 0, -5);
+            img_save_rect = img_rect2;
+            break;
+        case VK_DOWN:
+            OffsetRect(&img_rect2, 0, 5);
+            img_save_rect = img_rect2;
+            break;
+        default:
+            break;
         }
         InvalidateRect(hWnd, NULL, false);
         break;
@@ -135,10 +133,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             img_select = 1;
             break;
         case 'e':
-            img2_status = 1;
+            img2_status += 5;
             break;
         case 's':
-            img2_status = 2;
+            img2_status -= 5;
             break;
         case 'c':
             img_save_rect = img_rect2;
@@ -160,14 +158,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         hBit1 = CreateCompatibleBitmap(hDC, rect.right, rect.bottom);
         oldBit1 = (HBITMAP)SelectObject(mDC1, hBit1);
 
-        // 배경을 흰색으로 채움
-        // FillRect(mDC1, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
-
         img[img_select].StretchBlt(mDC1, 0, 0, rect.right, rect.bottom, 0, 0, img[img_select].GetWidth(), img[img_select].GetHeight(), SRCCOPY);
         
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC1, 0, 0, SRCCOPY);
 
-        if (img1_status != -1 && img2_status != -1) {
+        if (img1_status != -1) {
             mPen = CreatePen(PS_SOLID, 4, RGB(255, 0, 0));
             oldPen = (HPEN)SelectObject(hDC, mPen);
             oldBrush = (HBRUSH)SelectObject(hDC, GetStockObject(NULL_BRUSH));
@@ -190,17 +185,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             DeleteObject(mPen);
         }
 
-        if (img2_status != -1) {
-            mPen = CreatePen(PS_SOLID, 4, RGB(255, 0, 0));
-            oldPen = (HPEN)SelectObject(hDC, mPen);
-            oldBrush = (HBRUSH)SelectObject(hDC, GetStockObject(NULL_BRUSH));
+        mPen = CreatePen(PS_SOLID, 4, RGB(255, 0, 0));
+        oldPen = (HPEN)SelectObject(hDC, mPen);
+        oldBrush = (HBRUSH)SelectObject(hDC, GetStockObject(NULL_BRUSH));
 
-            Rectangle(hDC, img_rect2.left, img_rect2.top, img_rect2.right, img_rect2.bottom);
+        Rectangle(hDC, img_rect2.left, img_rect2.top, img_rect2.right, img_rect2.bottom);
 
-            SelectObject(hDC, oldPen);
-            SelectObject(hDC, oldBrush);
-            DeleteObject(mPen);
-        }
+        SelectObject(hDC, oldPen);
+        SelectObject(hDC, oldBrush);
+        DeleteObject(mPen);
 
         // 로드된 비트맵을 선택
         SelectObject(mDC1, oldBit1);
