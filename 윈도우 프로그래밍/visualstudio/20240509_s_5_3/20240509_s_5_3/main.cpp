@@ -68,6 +68,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static RECT rect;
     static SIZE size;
     static CImage img[2];
+    static int img_select = 0;
+    static RECT img_rect1 = { 0,0,200,200 };
+    static RECT img_rect2 = { 0,0,200,200 };
+    static int img1_status = -1;
+    static int img2_status = -1;
+
+    static RECT img_save_rect = { 0,0,0,0 };
 
     switch (uMsg)
     {
@@ -75,7 +82,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     {
         img[0].Load(L"dog1.jpeg");
         img[1].Load(L"dog2.jpeg");
-        GetClientRect(hWnd, &rect);
 
         break;
     }
@@ -85,7 +91,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_KEYUP:
         break;
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
-        InvalidateRect(hWnd, NULL, true);
+        if (img2_status != -1) {
+            switch (wParam)
+            {
+            case VK_LEFT:
+                OffsetRect(&img_rect2, -5, 0);
+                img_save_rect = img_rect2;
+                break;
+            case VK_RIGHT:
+                OffsetRect(&img_rect2, 5, 0);
+                img_save_rect = img_rect2;
+                break;
+            case VK_UP:
+                OffsetRect(&img_rect2, 0, -5);
+                img_save_rect = img_rect2;
+                break;
+            case VK_DOWN:
+                OffsetRect(&img_rect2, 0, 5);
+                img_save_rect = img_rect2;
+                break;
+            default:
+                break;
+            }
+        }
+        InvalidateRect(hWnd, NULL, false);
         break;
     case WM_LBUTTONDOWN:
     {
@@ -99,11 +128,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_CHAR:
         switch (wParam)
         {
+        case '1':
+            img_select = 0;
+            break;
+        case '2':
+            img_select = 1;
+            break;
+        case 'e':
+            img2_status = 1;
+            break;
+        case 's':
+            img2_status = 2;
+            break;
+        case 'c':
+            img_save_rect = img_rect2;
+            break;
+        case 'p':
+            img1_status = 1;
+            break;
         default:
             break;
         }
 
-        InvalidateRect(hWnd, NULL, true);
+        InvalidateRect(hWnd, NULL, false);
         break;
     case WM_PAINT:
     {
@@ -114,12 +161,45 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         oldBit1 = (HBITMAP)SelectObject(mDC1, hBit1);
 
         // 배경을 흰색으로 채움
-        FillRect(mDC1, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
+      //  FillRect(mDC1, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
 
+        img[img_select].StretchBlt(mDC1, 0, 0, rect.right, rect.bottom, 0, 0, img[img_select].GetWidth(), img[img_select].GetHeight(), SRCCOPY);
+        
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC1, 0, 0, SRCCOPY);
+
+
+        if (img1_status != -1 && img2_status != -1) {
+            mPen = CreatePen(PS_SOLID, 4, RGB(255, 0, 0));
+            oldPen = (HPEN)SelectObject(hDC, mPen);
+            oldBrush = (HBRUSH)SelectObject(hDC, GetStockObject(NULL_BRUSH));
+
+            img[img_select].StretchBlt(mDC1, img_rect1.left, img_rect1.top, img_rect1.right - img_rect1.left, img_rect1.bottom, 
+                0, 0, img[img_select].GetWidth(), img[img_select].GetHeight(), SRCCOPY);
+
+            BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC1, 0, 0, SRCCOPY);
+
+            Rectangle(hDC, img_rect1.left, img_rect1.top, img_rect1.right, img_rect1.bottom);
+
+            SelectObject(hDC, oldPen);
+            SelectObject(hDC, oldBrush);
+            DeleteObject(mPen);
+        }
+
+        if (img2_status != -1) {
+            mPen = CreatePen(PS_SOLID, 4, RGB(255, 0, 0));
+            oldPen = (HPEN)SelectObject(hDC, mPen);
+            oldBrush = (HBRUSH)SelectObject(hDC, GetStockObject(NULL_BRUSH));
+
+            Rectangle(hDC, img_rect2.left, img_rect2.top, img_rect2.right, img_rect2.bottom);
+
+            SelectObject(hDC, oldPen);
+            SelectObject(hDC, oldBrush);
+            DeleteObject(mPen);
+        }
 
         // 로드된 비트맵을 선택
         SelectObject(mDC1, oldBit1);
+        DeleteObject(hBit1);  // 해제
         DeleteDC(mDC1);
         EndPaint(hWnd, &ps);
         break;
@@ -128,7 +208,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         InvalidateRect(hWnd, NULL, false);
         break;
     case WM_DESTROY:
-        DeleteObject(hBit1);
         PostQuitMessage(0);
         break;
     default:
