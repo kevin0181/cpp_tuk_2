@@ -85,6 +85,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static bool b_status = false;
     static bool b_size = true;
 
+    static DWORD i_status = SRCCOPY;
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -206,6 +208,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 KillTimer(hWnd, 2);
             }
             break;
+        case 'i':
+            i_status = i_status == SRCCOPY ? NOTSRCCOPY : SRCCOPY;
+            break;
+        case 'k':
+            img_rect1.left -= 5;
+            img_rect1.right += 5;
+            img_rect1.top -= 5;
+            img_rect1.bottom += 5;
+            break;
+        case 'K':
+            img_rect1.left += 5;
+            img_rect1.right -= 5;
+            img_rect1.top += 5;
+            img_rect1.bottom -= 5;
+            break;
         case 'q':
             PostQuitMessage(0);
             break;
@@ -251,7 +268,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 src_top,
                 src_width,
                 src_height,
-                SRCCOPY);
+                i_status);
 
             // img_rect1의 테두리 그리기
             Rectangle(hDC, img_rect1.left, img_rect1.top, img_rect1.right, img_rect1.bottom);
