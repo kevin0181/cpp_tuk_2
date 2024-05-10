@@ -72,7 +72,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static RECT img_rect1 = { 0,0,200,200 };
     static RECT img_rect2 = { 0,0,200,200 };
     static int img1_status = -1;
-    static int img2_status = -1;
+    static float scale_factor = 1.0f;
 
     static RECT img_save_rect = { 0,0,0,0 };
 
@@ -133,10 +133,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             img_select = 1;
             break;
         case 'e':
-            img2_status += 5;
+            scale_factor += 0.1;
             break;
         case 's':
-            img2_status -= 5;
+            scale_factor -= 0.1;
             break;
         case 'c':
             img_save_rect = img_rect2;
@@ -167,17 +167,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             oldPen = (HPEN)SelectObject(hDC, mPen);
             oldBrush = (HBRUSH)SelectObject(hDC, GetStockObject(NULL_BRUSH));
 
-            // img_rect2 영역을 보조 DC에서 가져와 img_rect1에 표시
-            BitBlt(hDC,
+            // 확대된 이미지 크기 계산
+            const int src_width = static_cast<int>((img_rect2.right - img_rect2.left) / scale_factor);
+            const int src_height = static_cast<int>((img_rect2.bottom - img_rect2.top) / scale_factor);
+
+            // 중심 정렬을 위해 조정된 원본 영역 설정
+            const int src_left = img_rect2.left + (img_rect2.right - img_rect2.left - src_width) / 2;
+            const int src_top = img_rect2.top + (img_rect2.bottom - img_rect2.top - src_height) / 2;
+
+            // 확대된 상태로 img_rect1에 원본 이미지 영역 표시 (StretchBlt 사용)
+            StretchBlt(hDC,
                 img_rect1.left,
                 img_rect1.top,
                 img_rect1.right - img_rect1.left,
                 img_rect1.bottom - img_rect1.top,
                 mDC1,
-                img_rect2.left,
-                img_rect2.top,
+                src_left,
+                src_top,
+                src_width,
+                src_height,
                 SRCCOPY);
 
+            // img_rect1의 테두리 그리기
             Rectangle(hDC, img_rect1.left, img_rect1.top, img_rect1.right, img_rect1.bottom);
 
             SelectObject(hDC, oldPen);
