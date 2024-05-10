@@ -74,6 +74,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int img1_status = -1;
     static float scale_factor = 1.0f;
 
+    static bool img_big_status = false;
+
     static RECT img_save_rect = { 0,0,0,0 };
 
     switch (uMsg)
@@ -126,11 +128,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_CHAR:
         switch (wParam)
         {
+        case 'r':
+            img_rect2 = { 0,0,200,200 };
+            img_rect1 = { 0,0,200,200 };
+            img1_status = -1;
+            img_select = 0;
+            break;
         case '1':
             img_select = 0;
             break;
         case '2':
             img_select = 1;
+            break;
+        case '0':
+            scale_factor = 1;
             break;
         case 'e':
             scale_factor += 0.1;
@@ -143,6 +154,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
         case 'p':
             img1_status = 1;
+            break;
+        case 'f':
+            img_big_status = !img_big_status;
+            if (img_big_status) {
+                img_rect1 = rect;
+            }
+            else {
+                img_rect1 = { 0,0,200,200 };
+            }
+            break;
+        case 'm':
+            img_rect2 = { 0,0,300,300 };
+            break;
+        case 'n':
+            img_rect2 = { 0,0,200,200 };
+            break;
+        case 'x':
+            img_rect2.right += 5;
+            break;
+        case 'X':
+            img_rect2.right -= 5;
+            break;
+        case 'y':
+            img_rect2.bottom += 5;
+            break;
+        case 'Y':
+            img_rect2.bottom -= 5;
+            break;
+        case 'a':
+            break;
+        case 'q':
+            PostQuitMessage(0);
             break;
         default:
             break;
