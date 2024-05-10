@@ -78,6 +78,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     static RECT img_save_rect = { 0,0,0,0 };
 
+    static bool a_status = false;
+    static bool a_x = 0;
+
+
+    static bool b_status = false;
+    static bool b_size = true;
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -183,6 +190,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             img_rect2.bottom -= 5;
             break;
         case 'a':
+            a_status = true;
+            img_rect2 = { 0,0,200,200 };
+            SetTimer(hWnd, 1, 16, NULL);
+            break;
+        case 'b':
+            b_status = !b_status;
+
+            if (b_status) {
+                img_rect2 = { 0,0,200,200 };
+                SetTimer(hWnd, 2, 16, NULL);
+            }
+            else {
+                img_rect2 = { 0,0,200,200 };
+                KillTimer(hWnd, 2);
+            }
             break;
         case 'q':
             PostQuitMessage(0);
@@ -257,6 +279,59 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_TIMER:
+        switch (wParam)
+        {
+        case 1:
+            
+            if (a_status && a_x == 0) {
+                OffsetRect(&img_rect2, 5, 0);
+            }
+
+            if (a_status && a_x == 1) {
+                OffsetRect(&img_rect2, -5, 0);
+            }
+
+            if (img_rect2.right >= rect.right || img_rect2.left <= 0) {
+                OffsetRect(&img_rect2, 0, 200);
+                a_x = a_x == 0 ? 1 : 0;
+            }
+
+            if (img_rect2.top >= rect.bottom) {
+                KillTimer(hWnd, 1);
+                img_rect2 = { 0,0,200,200 };
+                a_x = 0;
+                a_status = false;
+            }
+
+            break;
+        case 2:
+            if (b_status) {
+                
+                if (b_size) { //커지기
+                    img_rect2.left -= 5;
+                    img_rect2.right += 5;
+                    img_rect2.top -= 5;
+                    img_rect2.bottom += 5;
+                    if (img_rect2.right - img_rect2.left > 300) {
+                        b_size = false;
+                    }
+                }
+                else { //작아지기
+                    img_rect2.left += 5;
+                    img_rect2.right -= 5;
+                    img_rect2.top += 5;
+                    img_rect2.bottom -= 5;
+                    if (img_rect2.right - img_rect2.left < 200) {
+                        b_size = true;
+                    }
+                }
+
+            }
+            break;
+        default:
+            break;
+        }
+
         InvalidateRect(hWnd, NULL, false);
         break;
     case WM_DESTROY:
