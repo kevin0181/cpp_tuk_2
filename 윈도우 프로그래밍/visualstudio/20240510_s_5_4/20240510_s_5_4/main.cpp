@@ -6,8 +6,13 @@
 #include <cmath>
 #include <numeric>
 #include<atlimage.h>
+#include <gdiplus.h>
+
+using namespace Gdiplus;
 
 using namespace std;
+
+ULONG_PTR gdiplusToken;
 
 HINSTANCE g_hInst;
 
@@ -20,6 +25,9 @@ LPCTSTR lpszWindowName = L"실습 5-3";
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdParam, int nCmdShow) {
+
+    GdiplusStartupInput gdiplusStartupInput;
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     HWND hWnd;
     MSG Message;
@@ -48,33 +56,38 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
         TranslateMessage(&Message);
         DispatchMessage(&Message);
     }
+    GdiplusShutdown(gdiplusToken);
 
     return Message.wParam;
 
 }
 
-#define IMG_CELL_SIZE 33
+#define IMG_CELL_SIZE 165
 
 struct Move {
     bool left;
     bool right;
     bool up;
     bool down;
-    bool jump;
+    int jump = -1;
+    bool jump_status;
 };
 
 struct Character {
     int x = 0;
     int y = 0;
-    int width = IMG_CELL_SIZE;
-    int height = IMG_CELL_SIZE;
-    int move_status = -1; // 초기 이미지 인덱스
+    int width = 100;
+    int height = 100;
+    int move_status = 0; // 초기 이미지 인덱스
     Move move;
     CImage imgs[10];
+    int select_img = 0;
 
     void print_v(HDC& mDC1) {
         if (move_status != -1)
-            imgs[move_status].Draw(mDC1, x, y, width, height);
+            //imgs[move_status].Draw(mDC1, x, y, width, height, IMG_CELL_SIZE * (select_img - 1), IMG_CELL_SIZE * (select_img - 1), IMG_CELL_SIZE * select_img, IMG_CELL_SIZE * select_img);
+            imgs[move_status].Draw(mDC1, x, y, width, height, IMG_CELL_SIZE * select_img, 0, IMG_CELL_SIZE, IMG_CELL_SIZE);
+
     }
 };
 
@@ -98,6 +111,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     {
     case WM_CREATE:
     {
+        SetTimer(hWnd, 1, 160, NULL);
         character.imgs[0].Load(L"among us move right1.png"); // 우로 걷기
         character.imgs[1].Load(L"among us move left1.png"); // 좌로 걷기
         character.imgs[2].Load(L"among us move back1.png"); // 위로 걷기
@@ -127,21 +141,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         {
         case VK_LEFT:
             character.move.left = false;
-            character.move_status = 1;
+            character.select_img = 0;
             break;
         case VK_RIGHT:
             character.move.right = false;
-            character.move_status = 0;
+            character.select_img = 0;
             break;
         case VK_UP:
             character.move.up = false;
+            character.select_img = 0;
             break;
         case VK_DOWN:
             character.move.down = false;
+            character.select_img = 0;
             break;
         default:
             break;
         }
+
         InvalidateRect(hWnd, NULL, false);
         break;
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
@@ -149,15 +166,54 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         {
         case VK_LEFT:
             character.move.left = true;
+            character.move_status = 1;
             break;
         case VK_RIGHT:
             character.move.right = true;
+            character.move_status = 0;
             break;
         case VK_UP:
             character.move.up = true;
+            character.move_status = 2;
             break;
         case VK_DOWN:
             character.move.down = true;
+            character.move_status = 3;
+            break;
+        default:
+            break;
+        }
+
+        if (character.move.right && character.move.down) { //우 하단
+            character.move_status = 7;
+        }
+
+        if (character.move.right && character.move.up) { // 우 상단
+            character.move_status = 6;
+        }
+
+        if (character.move.left && character.move.down) { // 좌 하단
+            character.move_status = 9;
+        }
+        
+        if (character.move.left && character.move.up) { // 좌 상단
+            character.move_status = 8;
+        }
+
+        InvalidateRect(hWnd, NULL, false);
+        break;
+    case WM_CHAR:
+        switch (wParam) 
+        {
+        case 'j':
+            character.move.jump_status = true;
+            character.move.jump = 0;
+            if (character.move_status == 1) {
+                character.move_status = 5;
+            }
+            else if (character.move_status == 0) {
+                character.move_status = 4;
+            }
             break;
         default:
             break;
@@ -173,9 +229,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_LBUTTONUP:
         break;
-    case WM_CHAR:
-        InvalidateRect(hWnd, NULL, false);
-        break;
     case WM_PAINT:
     {
         GetClientRect(hWnd, &rect);
@@ -188,6 +241,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         character.print_v(mDC1);
 
+        BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC1, 0, 0, SRCCOPY);
+
         // 로드된 비트맵을 선택
         SelectObject(mDC1, oldBit1);
         DeleteObject(hBit1);  // 해제
@@ -196,6 +251,64 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_TIMER:
+        switch (wParam)
+        {
+        case 1:
+        {
+            Move& move = character.move;
+            if (move.down || move.left || move.up || move.right) {
+                character.select_img++;
+                if (character.select_img == 4) {
+                    character.select_img = 0;
+                }
+
+                if (move.down) {
+                    character.y += 7;
+                }
+
+                if (move.left) {
+                    character.x -= 7;
+                }
+
+                if (move.up) {
+                    character.y -= 7;
+                }
+
+                if (move.right) {
+                    character.x += 7;
+                }
+
+            }
+            if (move.jump != -1 && move.jump_status) {
+                move.jump += 10;
+                character.y -= move.jump;
+                if (move.jump >= 20) {
+                    move.jump_status = false;
+                }
+            }
+            else if (move.jump != -1 && !move.jump_status) {
+                move.jump += 10;
+                character.y += move.jump;
+                if (move.jump >= 30) {
+                    move.jump = -1;
+                    move.jump_status = false;
+
+                    if (character.move_status == 5) {
+                        character.move_status = 1;
+                        move.left = true;
+                    }
+                    else if (character.move_status == 4) {
+                        character.move_status = 0;
+                        move.right = true;
+                    }
+
+                }
+            }
+            break;
+        }
+        default:
+            break;
+        }
         InvalidateRect(hWnd, NULL, false);
         break;
     case WM_DESTROY:
