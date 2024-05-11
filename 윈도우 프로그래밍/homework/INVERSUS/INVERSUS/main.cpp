@@ -7,6 +7,7 @@
 
 #include "sound.h"
 #include "game_befor.h"
+#include "GameState.h"
 
 using namespace std;
 
@@ -20,10 +21,6 @@ LPCTSTR lpszWindowName = L"INVERSUS";
 #define HEIGHT 800
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
-
-void MonitorMediaEvent();
-void MonitorSecondMediaEvent();
-void game_setting(bool game_status, WPARAM wParam, CImage& pImage, int& player_num, bool start);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdParam, int nCmdShow) {
 
@@ -93,6 +90,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     
     static bool game_status = false;
 
+    static int game_level = -1;
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -119,8 +118,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         if (!start && game_setting_status) { // 게임 시작 전 setting
             game_setting(wParam, pImage, player_num, start, game_setting_status);
         }
-
-
 
         InvalidateRect(hWnd, NULL, false);
         break;

@@ -64,12 +64,13 @@ void game_setting(WPARAM wParam, CImage& pImage, int& player_num, bool& start, b
         case 2: // player2
             break;
         case 3: // 뒤로가기
-            pImage.Destroy();
-            pImage.Load(L"img/Inversus Intro.png");
-            PlayMP3Close();
-            PlayMP3(L"sound/main intro.mp3"); // 경로에 있는 MP3 파일 재생
-            start = true;
-            game_setting_status = false;
+            //pImage.Destroy();
+            //pImage.Load(L"img/Inversus Intro.png");
+            //PlayMP3Close();
+            //PlayMP3(L"sound/main intro.mp3"); // 경로에 있는 MP3 파일 재생
+            //start = true;
+            //game_setting_status = false;
+            PostQuitMessage(0);
             break;
         default:
             break;

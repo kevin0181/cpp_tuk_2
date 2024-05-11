@@ -128,11 +128,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GameState.h" />
+    <ClCompile Include="GameStateMachine.cpp" />
     <ClCompile Include="game_before.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="sound.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GameStateMachine.h" />
     <ClInclude Include="game_befor.h" />
     <ClInclude Include="sound.h" />
   </ItemGroup>

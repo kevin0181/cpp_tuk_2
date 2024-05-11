@@ -24,12 +24,21 @@
     <ClCompile Include="sound.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="GameStateMachine.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="GameState.h">
+      <Filter>헤더 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sound.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="game_befor.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="GameStateMachine.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
