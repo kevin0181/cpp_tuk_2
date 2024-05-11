@@ -65,12 +65,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 #define IMG_CELL_SIZE 165
 
 struct Move {
-    bool left;
-    bool right;
-    bool up;
-    bool down;
+    bool left = false;
+    bool right = false;
+    bool up = false;
+    bool down = false;
     int jump = -1;
-    bool jump_status;
+    bool jump_status = false;
 };
 
 struct Character {
@@ -80,12 +80,15 @@ struct Character {
     int height = 100;
     int move_status = 0; // 초기 이미지 인덱스
     Move move;
-    CImage imgs[10];
     int select_img = 0;
 
-    void print_v(HDC& mDC1) {
+    void print_v(HDC& mDC1, int i,CImage imgs[10]) {
         if (move_status != -1)
-            imgs[move_status].Draw(mDC1, x, y, width, height, IMG_CELL_SIZE * select_img, 0, IMG_CELL_SIZE, IMG_CELL_SIZE);
+            imgs[move_status].Draw(mDC1, x + (i * 100), y, width, height, IMG_CELL_SIZE * select_img, 0, IMG_CELL_SIZE, IMG_CELL_SIZE);
+    }
+
+    Character() {
+       
     }
 };
 
@@ -103,30 +106,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static HBITMAP hBit1, hBit2;
     static RECT rect;
     static SIZE size;
-    static Character character[6];
+    static vector<Character> character;
     static bool e_status = true;
     static bool s_status = true;
     static CImage backgroundImage;
+    static CImage imgs[10];
+
     static int selectCharacter = 0;
 
     switch (uMsg)
     {
     case WM_CREATE:
     {
+        
         SetTimer(hWnd, 1, 160, NULL);
-        character[0].imgs[0].Load(L"among us move right1.png"); // 우로 걷기
-        character[0].imgs[1].Load(L"among us move left1.png"); // 좌로 걷기
-        character[0].imgs[2].Load(L"among us move back1.png"); // 위로 걷기
-        character[0].imgs[3].Load(L"among us move front1.png"); // 아래로 걷기
-        character[0].imgs[4].Load(L"among us jump right1.png"); // 우 점프
-        character[0].imgs[5].Load(L"among us jump left1.png"); // 좌 점프
-        character[0].imgs[6].Load(L"among us move right up1.png"); // 우 상단
-        character[0].imgs[7].Load(L"among us move right down1.png"); // 우 하단
-        character[0].imgs[8].Load(L"among us move left up1.png"); // 좌 상단
-        character[0].imgs[9].Load(L"among us move left down1.png"); // 좌 하단
+        Character cha;
+        character.push_back(cha);
+
+        imgs[0].Load(L"among us move right1.png"); // 우로 걷기
+        imgs[1].Load(L"among us move left1.png"); // 좌로 걷기
+        imgs[2].Load(L"among us move back1.png"); // 위로 걷기
+        imgs[3].Load(L"among us move front1.png"); // 아래로 걷기
+        imgs[4].Load(L"among us jump right1.png"); // 우 점프
+        imgs[5].Load(L"among us jump left1.png"); // 좌 점프
+        imgs[6].Load(L"among us move right up1.png"); // 우 상단
+        imgs[7].Load(L"among us move right down1.png"); // 우 하단
+        imgs[8].Load(L"among us move left up1.png"); // 좌 상단
+        imgs[9].Load(L"among us move left down1.png"); // 좌 하단
 
         for (int i = 0; i < 10; ++i) {
-            if (character[0].imgs[i].IsNull()) {
+            if (imgs[i].IsNull()) {
                 wchar_t errorMsg[256];
                 swprintf_s(errorMsg, L"이미지 로드에 실패했습니다: %d번째 이미지", i);
                 MessageBox(hWnd, errorMsg, L"이미지 로드 실패", MB_OK | MB_ICONERROR);
@@ -209,6 +218,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_CHAR:
         switch (wParam) 
         {
+        case '0':
+            selectCharacter = 0;
+            break;
+        case '1':
+            selectCharacter = 1;
+            break;
+        case '2':
+            selectCharacter = 2;
+            break;
+        case '3':
+            selectCharacter = 3;
+            break;
+        case '4':
+            selectCharacter = 4;
+            break;
+        case '5':
+            selectCharacter = 5;
+            break;
+        case 't':
+        {
+            if (character.size() >= 6) {
+                break;
+            }
+
+            Character cha;
+            cha = character[0];
+            character.push_back(cha);
+            
+            break;
+        }
         case 'e':
             SetTimer(hWnd, 2, 160, NULL);
             break;
@@ -250,8 +289,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         FillRect(mDC1, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
 
         backgroundImage.Draw(mDC1, 0, 0, rect.right, rect.bottom);
-
-        character[selectCharacter].print_v(mDC1);
+        
+        for (int i = 0; i < character.size(); ++i) {
+            character[i].print_v(mDC1, i, imgs);
+        }
 
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC1, 0, 0, SRCCOPY);
 
@@ -332,6 +373,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 }
 
             }
+
             if (move.jump != -1 && move.jump_status) {
                 move.jump += 10;
                 character[selectCharacter].y -= move.jump;
@@ -357,6 +399,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
                 }
             }
+
             break;
         }
         default:
