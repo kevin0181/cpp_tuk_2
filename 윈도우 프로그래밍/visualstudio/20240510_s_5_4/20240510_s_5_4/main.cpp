@@ -178,6 +178,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         switch (wParam)
         {
         case VK_LEFT:
+            
             character[selectCharacter].move.left = true;
             character[selectCharacter].move_status = 1;
             break;
@@ -349,56 +350,113 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
         case 1:
         {
-            Move& move = character[selectCharacter].move;
-            if (move.down || move.left || move.up || move.right) {
-                character[selectCharacter].select_img++;
-                if (character[selectCharacter].select_img == 4) {
-                    character[selectCharacter].select_img = 0;
-                }
-
-                if (move.down) {
-                    character[selectCharacter].y += 7;
-                }
-
-                if (move.left) {
-                    character[selectCharacter].x -= 7;
-                }
-
-                if (move.up) {
-                    character[selectCharacter].y -= 7;
-                }
-
-                if (move.right) {
-                    character[selectCharacter].x += 7;
-                }
-
-            }
-
-            if (move.jump != -1 && move.jump_status) {
-                move.jump += 10;
-                character[selectCharacter].y -= move.jump;
-                if (move.jump >= 20) {
-                    move.jump_status = false;
-                }
-            }
-            else if (move.jump != -1 && !move.jump_status) {
-                move.jump += 10;
-                character[selectCharacter].y += move.jump;
-                if (move.jump >= 30) {
-                    move.jump = -1;
-                    move.jump_status = false;
-
-                    if (character[selectCharacter].move_status == 5) {
-                        character[selectCharacter].move_status = 1;
-                        move.left = true;
+            if (selectCharacter != 0) {
+                Move& move = character[selectCharacter].move;
+                if (move.down || move.left || move.up || move.right) {
+                    character[selectCharacter].select_img++;
+                    if (character[selectCharacter].select_img == 4) {
+                        character[selectCharacter].select_img = 0;
                     }
-                    else if (character[selectCharacter].move_status == 4) {
-                        character[selectCharacter].move_status = 0;
-                        move.right = true;
+
+                    if (move.down) {
+                        character[selectCharacter].y += 7;
+                    }
+
+                    if (move.left) {
+                        character[selectCharacter].x -= 7;
+                    }
+
+                    if (move.up) {
+                        character[selectCharacter].y -= 7;
+                    }
+
+                    if (move.right) {
+                        character[selectCharacter].x += 7;
                     }
 
                 }
+
+                if (move.jump != -1 && move.jump_status) {
+                    move.jump += 10;
+                    character[selectCharacter].y -= move.jump;
+                    if (move.jump >= 20) {
+                        move.jump_status = false;
+                    }
+                }
+                else if (move.jump != -1 && !move.jump_status) {
+                    move.jump += 10;
+                    character[selectCharacter].y += move.jump;
+                    if (move.jump >= 30) {
+                        move.jump = -1;
+                        move.jump_status = false;
+
+                        if (character[selectCharacter].move_status == 5) {
+                            character[selectCharacter].move_status = 1;
+                            move.left = true;
+                        }
+                        else if (character[selectCharacter].move_status == 4) {
+                            character[selectCharacter].move_status = 0;
+                            move.right = true;
+                        }
+
+                    }
+                }
             }
+            else if (selectCharacter == 0) {
+                Move& move = character[0].move;
+                for (int i = 0; i < character.size(); ++i) {
+                    if (move.down || move.left || move.up || move.right) {
+                        character[i].select_img++;
+                        if (character[i].select_img == 4) {
+                            character[i].select_img = 0;
+                        }
+
+                        if (move.down) {
+                            character[i].y += 7;
+                        }
+
+                        if (move.left) {
+                            character[i].x -= 7;
+                        }
+
+                        if (move.up) {
+                            character[i].y -= 7;
+                        }
+
+                        if (move.right) {
+                            character[i].x += 7;
+                        }
+
+                    }
+
+                    if (move.jump != -1 && move.jump_status) {
+                        move.jump += 10;
+                        character[i].y -= move.jump;
+                        if (move.jump >= 20) {
+                            move.jump_status = false;
+                        }
+                    }
+                    else if (move.jump != -1 && !move.jump_status) {
+                        move.jump += 10;
+                        character[i].y += move.jump;
+                        if (move.jump >= 30) {
+                            move.jump = -1;
+                            move.jump_status = false;
+
+                            if (character[i].move_status == 5) {
+                                character[i].move_status = 1;
+                                move.left = true;
+                            }
+                            else if (character[i].move_status == 4) {
+                                character[i].move_status = 0;
+                                move.right = true;
+                            }
+
+                        }
+                    }
+                }
+            }
+            
 
             break;
         }
