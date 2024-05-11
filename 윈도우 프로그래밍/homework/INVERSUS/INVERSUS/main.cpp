@@ -8,6 +8,7 @@
 #include "sound.h"
 #include "game_befor.h"
 #include "GameState.h"
+#include "GameStateMachine.h"
 
 using namespace std;
 
@@ -83,21 +84,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int Timer1Count = 0;
     static int cellSizeX;
     static int cellSizeY;
-    static CImage pImage;  // 전역 이미지 포인터
-    static bool start = true;
-    static int player_num = -1; // player 인원 선택하는 변수
-    static bool game_setting_status = false; //
     
-    static bool game_status = false;
-
-    static int game_level = -1;
+    static GameStateMachine gameStateMachine;
 
     switch (uMsg)
     {
     case WM_CREATE:
     {
-        pImage.Load(L"img/Inversus Intro.png");
-        PlayMP3(L"sound/main intro.mp3"); // 경로에 있는 MP3 파일 재생
+        gameStateMachine.setCurrentState(GameState::StartScreen);
+        gameStateMachine.setImage(L"img/Inversus Intro.png");
+        PlayMP3(L"sound/main intro.mp3");
         break;
     }
     case WM_COMMAND:
@@ -106,18 +102,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
 
-        if (start && wParam == VK_RETURN) {
+        if (gameStateMachine.getState() == GameState::StartScreen && wParam == VK_RETURN) { // 시작화면 -> player Select 화면
             PlaySecondMP3(L"sound/button sound.MP3"); // 버튼 사운드
-            pImage.Destroy();  // Free the old image
-            player_num = 0;
-            start = false;
-            game_setting_status = true; // 게임 설정 페이지로
-            pImage.Load(L"img/player_0.png");
+            gameStateMachine.setImage(L"img/player_0.png");
         }
 
-        if (!start && game_setting_status) { // 게임 시작 전 setting
-            game_setting(wParam, pImage, player_num, start, game_setting_status);
-        }
+        //if (!start && game_setting_status) { // 게임 시작 전 setting
+        //    game_setting(wParam, pImage, player_num, start, game_setting_status);
+        //}
 
         InvalidateRect(hWnd, NULL, false);
         break;
@@ -151,15 +143,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         cellSizeX = rect.right / WIDTH_LINE;
         cellSizeY = rect.bottom / HEGHIT_LINE;
 
-        
-        if (start) { // game start
-            //intro img
-
-        }
-        else {
-
-        }
-        pImage.Draw(mDC, 0, 0, rect.right, rect.bottom, 0, 0, pImage.GetWidth(), pImage.GetHeight()); //이미지 전체 화면
+        gameStateMachine.DrawImage(mDC, rect); // 이미지 그리기
 
         /*for (int y = 0; y <= WIDTH_LINE; ++y) {
             MoveToEx(mDC, y * cellSizeX, 0, NULL);
