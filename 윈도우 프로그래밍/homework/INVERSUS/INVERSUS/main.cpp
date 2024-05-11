@@ -3,17 +3,12 @@
 #include <random>
 #include <vector>
 #include <string>
-#include <cmath>
-#include <objidl.h>
-#include <gdiplus.h>
-#include <dshow.h>
-#include <thread>
+#include<atlimage.h>
 
-#pragma comment(lib, "strmiids.lib")
-#pragma comment (lib,"Gdiplus.lib")
+#include "sound.h"
+#include "game_befor.h"
 
 using namespace std;
-using namespace Gdiplus;
 
 ULONG_PTR gdiplusToken;
 
@@ -26,122 +21,11 @@ LPCTSTR lpszWindowName = L"INVERSUS";
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
-
-
 void MonitorMediaEvent();
 void MonitorSecondMediaEvent();
-void game_setting(bool game_status, WPARAM wParam, Image*& pImage, int& player_num, bool start);
-
-
-// GDI+ 초기화
-void InitGDIPlus() {
-    GdiplusStartupInput gdiplusStartupInput;
-    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-}
-
-// GDI+ 종료
-void ShutdownGDIPlus() {
-    GdiplusShutdown(gdiplusToken);
-}
-// DirectShow 인터페이스
-IGraphBuilder* pGraph = NULL;
-IMediaControl* pControl = NULL;
-IMediaEvent* pEvent = NULL;
-IBasicAudio* pBasicAudio = NULL;
-
-// 두 번째 오디오 파일을 위한 DirectShow 인터페이스
-IGraphBuilder* pGraph2 = NULL;
-IMediaControl* pControl2 = NULL;
-IMediaEvent* pEvent2 = NULL;
-IBasicAudio* pBasicAudio2 = NULL;
-
-void PlayMP3(const WCHAR* filename) {
-    CoInitialize(NULL);
-    CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, IID_IGraphBuilder, (void**)&pGraph);
-    pGraph->QueryInterface(IID_IMediaControl, (void**)&pControl);
-    pGraph->QueryInterface(IID_IMediaEvent, (void**)&pEvent);
-    pGraph->QueryInterface(IID_IBasicAudio, (void**)&pBasicAudio);
-
-    BSTR bstrFilename = SysAllocString(filename);
-    pControl->RenderFile(bstrFilename);
-    SysFreeString(bstrFilename);
-    pControl->Run();
-
-    if (pBasicAudio != NULL) {
-        pBasicAudio->put_Volume(-2500); // 볼륨 설정
-    }
-
-    // 별도의 스레드나 타이머를 사용하여 이벤트 모니터링
-    std::thread eventMonitor(MonitorMediaEvent);
-    eventMonitor.detach(); // 백그라운드에서 실행
-}
-
-void PlayMP3Close() {
-    if (pControl) pControl->Release();
-    if (pGraph) pGraph->Release();
-    if (pEvent) pEvent->Release();
-    if (pBasicAudio) pBasicAudio->Release();
-    CoUninitialize();
-}
-
-void MonitorMediaEvent() {
-    long evCode;
-    LONG_PTR param1, param2;
-    while (pEvent->GetEvent(&evCode, &param1, &param2, 0) == S_OK) {
-        pEvent->FreeEventParams(evCode, param1, param2);
-        if (evCode == EC_COMPLETE) {
-            // 미디어 재생 완료 이벤트 처리
-            PlayMP3Close(); // 리소스 해제 함수 호출
-            break;
-        }
-    }
-}
-
-void PlaySecondMP3(const WCHAR* filename) {
-    CoInitialize(NULL);
-    CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, IID_IGraphBuilder, (void**)&pGraph2);
-    pGraph2->QueryInterface(IID_IMediaControl, (void**)&pControl2);
-    pGraph2->QueryInterface(IID_IMediaEvent, (void**)&pEvent2);
-    pGraph2->QueryInterface(IID_IBasicAudio, (void**)&pBasicAudio2);
-
-    BSTR bstrFilename = SysAllocString(filename);
-    pControl2->RenderFile(bstrFilename);
-    SysFreeString(bstrFilename);
-    pControl2->Run();
-
-    if (pBasicAudio2 != NULL) {
-        pBasicAudio2->put_Volume(0); // 볼륨 설정
-    }
-
-    // 별도의 스레드에서 이벤트 모니터링
-    std::thread eventMonitor(MonitorSecondMediaEvent);
-    eventMonitor.detach(); // 백그라운드에서 실행
-}
-
-void CloseSecondMP3() {
-    if (pControl2) pControl2->Release();
-    if (pGraph2) pGraph2->Release();
-    if (pEvent2) pEvent2->Release();
-    if (pBasicAudio2) pBasicAudio2->Release();
-    CoUninitialize();
-}
-
-void MonitorSecondMediaEvent() {
-    long evCode;
-    LONG_PTR param1, param2;
-    while (pEvent2->GetEvent(&evCode, &param1, &param2, 0) == S_OK) {
-        pEvent2->FreeEventParams(evCode, param1, param2);
-        if (evCode == EC_COMPLETE) {
-            // 미디어 재생 완료 이벤트 처리
-            CloseSecondMP3(); // 리소스 해제 함수 호출
-            break;
-        }
-    }
-}
+void game_setting(bool game_status, WPARAM wParam, CImage& pImage, int& player_num, bool start);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdParam, int nCmdShow) {
-
-    InitGDIPlus();
 
     HWND hWnd;
     MSG Message;
@@ -202,18 +86,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int Timer1Count = 0;
     static int cellSizeX;
     static int cellSizeY;
-    static Image* pImage = nullptr;  // 전역 이미지 포인터
+    static CImage pImage;  // 전역 이미지 포인터
     static bool start = true;
-    static int player_num = -1;
+    static int player_num = -1; // player 인원 선택하는 변수
+    static bool game_setting_status = false; //
+    
     static bool game_status = false;
 
     switch (uMsg)
     {
     case WM_CREATE:
     {
-        pImage = new Image(L"Inversus Intro.png");
-        PlayMP3(L"main intro.mp3"); // 경로에 있는 MP3 파일 재생
-
+        pImage.Load(L"img/Inversus Intro.png");
+        PlayMP3(L"sound/main intro.mp3"); // 경로에 있는 MP3 파일 재생
         break;
     }
     case WM_COMMAND:
@@ -223,14 +108,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
 
         if (start && wParam == VK_RETURN) {
-            PlaySecondMP3(L"button sound.MP3"); // 버튼 사운드
-            delete pImage;
+            PlaySecondMP3(L"sound/button sound.MP3"); // 버튼 사운드
+            pImage.Destroy();  // Free the old image
             player_num = 0;
-            pImage = new Image(L"img/player_0.png"); // 새 이미지 로드
             start = false;
+            game_setting_status = true; // 게임 설정 페이지로
+            pImage.Load(L"img/player_0.png");
         }
 
-        game_setting(game_status, wParam, pImage, player_num, start);
+        if (!start && game_setting_status) { // 게임 시작 전 setting
+            game_setting(wParam, pImage, player_num, start, game_setting_status);
+        }
+
+
+
         InvalidateRect(hWnd, NULL, false);
         break;
     case WM_LBUTTONDOWN:
@@ -266,14 +157,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         
         if (start) { // game start
             //intro img
-            Graphics graphics(hDC);
-            graphics.DrawImage(pImage, 0, 0, pImage->GetWidth(), pImage->GetHeight());
+
         }
         else {
-            Graphics graphics(hDC);
-            graphics.DrawImage(pImage, 0, 0, pImage->GetWidth(), pImage->GetHeight());
-        }
 
+        }
+        pImage.Draw(mDC, 0, 0, rect.right, rect.bottom, 0, 0, pImage.GetWidth(), pImage.GetHeight()); //이미지 전체 화면
 
         /*for (int y = 0; y <= WIDTH_LINE; ++y) {
             MoveToEx(mDC, y * cellSizeX, 0, NULL);
@@ -285,7 +174,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             LineTo(mDC, HEGHIT_LINE * cellSizeX, x * cellSizeY);
         }*/
 
-        //BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
+        BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
 
         DeleteObject(hBitmap); // 생성한 비트맵 삭제
         DeleteDC(mDC);
@@ -296,7 +185,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         InvalidateRect(hWnd, NULL, false);
         break;
     case WM_DESTROY:
-        delete pImage;  // 이미지 자원 해제
         PostQuitMessage(0);
         break;
     default:
