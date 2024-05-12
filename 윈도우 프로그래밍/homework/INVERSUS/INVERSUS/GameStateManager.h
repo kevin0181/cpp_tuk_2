@@ -26,5 +26,9 @@ public:
 		this->level = level;
 	}
 
+	int getPlayer() {
+		return player;
+	}
+
 	GameState getState();
 };

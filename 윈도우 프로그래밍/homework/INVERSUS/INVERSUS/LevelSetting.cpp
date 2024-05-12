@@ -70,7 +70,12 @@ void LevelSetting::level_setting(WPARAM wParam) {
             gameStateManager->setCurrentState(GameState::GAMEPLAY);
             break;
         case 5: // 뒤로가기
-            gameStateManager->setImage(L"img/player/player_0.png");
+            if (gameStateManager->getPlayer() == 1) {
+                gameStateManager->setImage(L"img/player/player_1.png");
+            }
+            else if (gameStateManager->getPlayer() == 2) {
+                gameStateManager->setImage(L"img/player/player_2.png");
+            }
             gameStateManager->setCurrentState(GameState::PLAYER);
             break;
         default:

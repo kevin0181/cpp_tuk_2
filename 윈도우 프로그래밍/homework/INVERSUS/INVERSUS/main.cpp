@@ -108,17 +108,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             PlaySecondMP3(L"sound/button sound.MP3"); // 버튼 사운드
             gameStateManager.setImage(L"img/player/player_0.png");
             gameStateManager.setCurrentState(GameState::PLAYER);
+            InvalidateRect(hWnd, NULL, false);
+            break;
         }
 
         if (gameStateManager.getState() == GameState::PLAYER) { // 게임 시작 전 setting
             playerSetting.game_setting(wParam);
+            InvalidateRect(hWnd, NULL, false);
+            break;
         }
 
         if (gameStateManager.getState() == GameState::LEVEL) {
             levelSetting.level_setting(wParam);
+            InvalidateRect(hWnd, NULL, false);
+            break;
         }
 
-        InvalidateRect(hWnd, NULL, false);
         break;
     case WM_LBUTTONDOWN:
         break;
