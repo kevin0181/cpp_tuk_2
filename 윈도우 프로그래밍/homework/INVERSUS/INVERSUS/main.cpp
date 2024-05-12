@@ -6,7 +6,7 @@
 #include<atlimage.h>
 
 #include "sound.h"
-#include "gameSetting.h"
+#include "GameSetting.h"
 #include "GameState.h"
 #include "GameStateManager.h"
 
@@ -84,14 +84,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int cellSizeX;
     static int cellSizeY;
     
-    static GameStateMachine gameStateMachine;
+    static GameStateManager gameStateManager;
+    static GameSetting gameSetting(&gameStateManager);
 
     switch (uMsg)
     {
     case WM_CREATE:
     {
-        gameStateMachine.setCurrentState(GameState::StartScreen);
-        gameStateMachine.setImage(L"img/Inversus Intro.png");
+        gameStateManager.setCurrentState(GameState::StartScreen);
+        gameStateManager.setImage(L"img/Inversus Intro.png");
         PlayMP3(L"sound/main intro.mp3");
         break;
     }
@@ -101,14 +102,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
 
-        if (gameStateMachine.getState() == GameState::StartScreen && wParam == VK_RETURN) { // 시작화면 -> player Select 화면
+        if (gameStateManager.getState() == GameState::StartScreen && wParam == VK_RETURN) { // 시작화면 -> player Select 화면
             PlaySecondMP3(L"sound/button sound.MP3"); // 버튼 사운드
-            gameStateMachine.setImage(L"img/player_0.png");
+            gameStateManager.setImage(L"img/player_0.png");
+            gameStateManager.setCurrentState(GameState::PlayerSelection);
         }
+        
 
-        //if (!start && game_setting_status) { // 게임 시작 전 setting
-        //    game_setting(wParam, pImage, player_num, start, game_setting_status);
-        //}
+        if (gameStateManager.getState() == GameState::PlayerSelection) { // 게임 시작 전 setting
+            gameSetting.game_setting(wParam);
+        }
 
         InvalidateRect(hWnd, NULL, false);
         break;
@@ -142,7 +145,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         cellSizeX = rect.right / WIDTH_LINE;
         cellSizeY = rect.bottom / HEGHIT_LINE;
 
-        gameStateMachine.DrawImage(mDC, rect); // 이미지 그리기
+        gameStateManager.DrawImage(mDC, rect); // 이미지 그리기
 
         /*for (int y = 0; y <= WIDTH_LINE; ++y) {
             MoveToEx(mDC, y * cellSizeX, 0, NULL);

@@ -36,7 +36,7 @@
     <ClCompile Include="GameState.h">
       <Filter>헤더 파일\gameState</Filter>
     </ClCompile>
-    <ClCompile Include="gameSetting.cpp">
+    <ClCompile Include="GameSetting.cpp">
       <Filter>소스 파일\gameState</Filter>
     </ClCompile>
     <ClCompile Include="sound.cpp">
@@ -50,7 +50,7 @@
     <ClInclude Include="sound.h">
       <Filter>헤더 파일\config</Filter>
     </ClInclude>
-    <ClInclude Include="gameSetting.h">
+    <ClInclude Include="GameSetting.h">
       <Filter>헤더 파일\gameState</Filter>
     </ClInclude>
   </ItemGroup>

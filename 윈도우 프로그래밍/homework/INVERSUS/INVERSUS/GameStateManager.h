@@ -5,7 +5,7 @@
 
 #include "GameState.h"
 
-class GameStateMachine {
+class GameStateManager {
 private:
 	GameState currentState;
 	CImage cImage;

@@ -2,32 +2,34 @@
 #include <string>
 #include <gdiplus.h>
 #include<atlimage.h>
-#include"gameSetting.h"
+
+#include"GameStateManager.h"
+#include"GameSetting.h"
 #include"sound.h"
 
 using namespace std;
 
 void PlaySecondMP3(const WCHAR* filename);
 
-void game_setting(WPARAM wParam, CImage& pImage, int& player_num, bool& start, bool& game_setting_status) {
+void GameSetting::game_setting(WPARAM wParam) {
     switch (wParam)
     {
     case VK_DOWN:
 
-        if (player_num == 3) {
-            player_num = 1;
+        if (player == 3) {
+            player = 1;
         }
         else {
-            player_num++;
+            player++;
         }
 
         break;
     case VK_UP:
-        if (player_num == 1) {
-            player_num = 3;
+        if (player == 1) {
+            player = 3;
         }
         else {
-            player_num--;
+            player--;
         }
         break;
     default:
@@ -35,22 +37,19 @@ void game_setting(WPARAM wParam, CImage& pImage, int& player_num, bool& start, b
     }
 
     // -------- 이미지 넣음
-    switch (player_num)
+    switch (player)
     {
     case 1:
         PlaySecondMP3(L"sound/button sound.MP3"); // 버튼 사운드
-        pImage.Destroy();
-        pImage.Load(L"img/player_1.png"); // 새 이미지 로드
+        gameStateManager->setImage(L"img/player_1.png");
         break;
     case 2:
         PlaySecondMP3(L"sound/button sound.MP3"); // 버튼 사운드
-        pImage.Destroy();
-        pImage.Load(L"img/player_2.png"); // 새 이미지 로드
+        gameStateManager->setImage(L"img/player_2.png");
         break;
     case 3:
         PlaySecondMP3(L"sound/button sound.MP3"); // 버튼 사운드
-        pImage.Destroy();
-        pImage.Load(L"img/player_back.png"); // 새 이미지 로드
+        gameStateManager->setImage(L"img/player_back.png");
         break;
     default:
         break;
@@ -58,18 +57,12 @@ void game_setting(WPARAM wParam, CImage& pImage, int& player_num, bool& start, b
     }
 
     if (VK_RETURN == wParam) {
-        switch (player_num) {
+        switch (player) {
         case 1: // player1
             break;
         case 2: // player2
             break;
         case 3: // 뒤로가기
-            //pImage.Destroy();
-            //pImage.Load(L"img/Inversus Intro.png");
-            //PlayMP3Close();
-            //PlayMP3(L"sound/main intro.mp3"); // 경로에 있는 MP3 파일 재생
-            //start = true;
-            //game_setting_status = false;
             PostQuitMessage(0);
             break;
         default:
