@@ -1,9 +1,9 @@
 #pragma once
 
 enum class GameState {
-    StartScreen,
-    PlayerSelection,
-    DifficultySelection,
-    GamePlay,
-    GameOver
+    START,
+    PLAYER,
+    LEVEL,
+    GAMEPLAY,
+    GAMEOVER
 };

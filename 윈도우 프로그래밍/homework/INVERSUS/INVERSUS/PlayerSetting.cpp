@@ -4,14 +4,14 @@
 #include<atlimage.h>
 
 #include"GameStateManager.h"
-#include"GameSetting.h"
+#include"PlayerSetting.h"
 #include"sound.h"
 
 using namespace std;
 
 void PlaySecondMP3(const WCHAR* filename);
 
-void GameSetting::game_setting(WPARAM wParam) {
+void PlayerSetting::game_setting(WPARAM wParam) {
     switch (wParam)
     {
     case VK_DOWN:
@@ -59,8 +59,14 @@ void GameSetting::game_setting(WPARAM wParam) {
     if (VK_RETURN == wParam) {
         switch (player) {
         case 1: // player1
+            gameStateManager->setPlayer(player);
+            gameStateManager->setImage(L"img/난이도/0.png");
+            gameStateManager->setCurrentState(GameState::LEVEL);
             break;
         case 2: // player2
+            gameStateManager->setPlayer(player);
+            gameStateManager->setImage(L"img/난이도/0.png");
+            gameStateManager->setCurrentState(GameState::LEVEL);
             break;
         case 3: // 뒤로가기
             PostQuitMessage(0);

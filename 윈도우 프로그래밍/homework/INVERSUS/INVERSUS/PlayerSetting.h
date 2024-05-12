@@ -1,14 +1,13 @@
 #pragma once
 #include "GameStateManager.h"
 
-class GameSetting {
+class PlayerSetting {
 private:
 	int player;
-
 	GameStateManager* gameStateManager;
 public:
 
-	GameSetting(GameStateManager* instance) : gameStateManager(instance) {};
+	PlayerSetting(GameStateManager* instance) : gameStateManager(instance) {};
 
 	void game_setting(WPARAM wParam);
 };

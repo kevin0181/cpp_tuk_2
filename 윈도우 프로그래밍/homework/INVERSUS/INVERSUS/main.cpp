@@ -6,9 +6,10 @@
 #include<atlimage.h>
 
 #include "sound.h"
-#include "GameSetting.h"
+#include "PlayerSetting.h"
 #include "GameState.h"
 #include "GameStateManager.h"
+#include "LevelSetting.h"
 
 using namespace std;
 
@@ -85,13 +86,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static int cellSizeY;
     
     static GameStateManager gameStateManager;
-    static GameSetting gameSetting(&gameStateManager);
+    static PlayerSetting playerSetting(&gameStateManager);
+    static LevelSetting levelSetting(&gameStateManager);
 
     switch (uMsg)
     {
     case WM_CREATE:
     {
-        gameStateManager.setCurrentState(GameState::StartScreen);
+        gameStateManager.setCurrentState(GameState::START);
         gameStateManager.setImage(L"img/Inversus Intro.png");
         PlayMP3(L"sound/main intro.mp3");
         break;
@@ -102,15 +104,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_KEYDOWN:  // 키보드 키가 눌렸을 때
 
-        if (gameStateManager.getState() == GameState::StartScreen && wParam == VK_RETURN) { // 시작화면 -> player Select 화면
+        if (gameStateManager.getState() == GameState::START && wParam == VK_RETURN) { // 시작화면 -> player Select 화면
             PlaySecondMP3(L"sound/button sound.MP3"); // 버튼 사운드
             gameStateManager.setImage(L"img/player_0.png");
-            gameStateManager.setCurrentState(GameState::PlayerSelection);
+            gameStateManager.setCurrentState(GameState::START);
         }
         
 
-        if (gameStateManager.getState() == GameState::PlayerSelection) { // 게임 시작 전 setting
-            gameSetting.game_setting(wParam);
+        if (gameStateManager.getState() == GameState::START) { // 게임 시작 전 setting
+            playerSetting.game_setting(wParam);
+        }
+
+        if (gameStateManager.getState() == GameState::LEVEL) {
+
         }
 
         InvalidateRect(hWnd, NULL, false);

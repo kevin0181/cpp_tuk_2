@@ -36,11 +36,14 @@
     <ClCompile Include="GameState.h">
       <Filter>헤더 파일\gameState</Filter>
     </ClCompile>
-    <ClCompile Include="GameSetting.cpp">
+    <ClCompile Include="PlayerSetting.cpp">
       <Filter>소스 파일\gameState</Filter>
     </ClCompile>
     <ClCompile Include="sound.cpp">
       <Filter>소스 파일\config</Filter>
+    </ClCompile>
+    <ClCompile Include="LevelSetting.cpp">
+      <Filter>소스 파일\gameState</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -50,7 +53,10 @@
     <ClInclude Include="sound.h">
       <Filter>헤더 파일\config</Filter>
     </ClInclude>
-    <ClInclude Include="GameSetting.h">
+    <ClInclude Include="PlayerSetting.h">
+      <Filter>헤더 파일\gameState</Filter>
+    </ClInclude>
+    <ClInclude Include="LevelSetting.h">
       <Filter>헤더 파일\gameState</Filter>
     </ClInclude>
   </ItemGroup>
