@@ -2,7 +2,7 @@
 #include <string>
 #include <gdiplus.h>
 #include<atlimage.h>
-#include"game_befor.h"
+#include"gameSetting.h"
 #include"sound.h"
 
 using namespace std;

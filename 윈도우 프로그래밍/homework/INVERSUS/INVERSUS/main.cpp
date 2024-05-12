@@ -6,9 +6,9 @@
 #include<atlimage.h>
 
 #include "sound.h"
-#include "game_befor.h"
+#include "gameSetting.h"
 #include "GameState.h"
-#include "GameStateMachine.h"
+#include "GameStateManager.h"
 
 using namespace std;
 
@@ -60,7 +60,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
         DispatchMessage(&Message);
     }
 
-    //ShutdownGDIPlus();
     return Message.wParam;
 
 }

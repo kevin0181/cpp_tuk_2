@@ -1,5 +1,5 @@
 #include <string>
-#include "GameStateMachine.h"
+#include "GameStateManager.h"
 #include "GameState.h"
 
 void GameStateMachine::setCurrentState(GameState gameState) {
