@@ -22,5 +22,9 @@ public:
 		this->player = player;
 	}
 
+	void setLevel(int level) {
+		this->level = level;
+	}
+
 	GameState getState();
 };
