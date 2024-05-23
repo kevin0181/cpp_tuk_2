@@ -1,5 +1,5 @@
 #include<iostream>
-#include<string>
+#include <string>
 #include<fstream>
 #include<Windows.h>
 
@@ -29,14 +29,15 @@ struct DoubleNode {
 template <typename Node>
 class LinkedList {
 protected:
-	Node* head = nullptr;
-	Node* tail = nullptr;
+	Node* head;
+	Node* tail;
 public:
-	virtual void Insert(Champion p) = 0;
 
-	void PrintAll() {
+	virtual void Insert_SL_DL(Champion p) = 0;
+
+	void PrintAll_SL_DL() {
 		if (head == nullptr) {
-			cout << "no data" << endl;
+			cout << " no data" << endl;
 			return;
 		}
 
@@ -47,9 +48,9 @@ public:
 		} while (current != head);
 	}
 
-	void FindMaxHp() {
+	void FindMaxHp_SL_DL() {
 		if (head == nullptr) {
-			cout << "no data" << endl;
+			cout << " no data" << endl;
 			return;
 		}
 
@@ -61,18 +62,18 @@ public:
 			}
 			current = current->next;
 		} while (current != head);
-		current = head;
+
 		do {
-			if (maxHp == current->champion.hp) {
+			if (current->champion.hp == maxHp) {
 				print_v(current->champion);
 			}
 			current = current->next;
 		} while (current != head);
 	}
 
-	void SortByName() {
+	void SortByName_SL_DL() {
 		if (head == nullptr) {
-			cout << "no data" << endl;
+			cout << " no data" << endl;
 			return;
 		}
 
@@ -96,6 +97,7 @@ protected:
 	void print_v(Champion p) {
 		cout << p.position << " " << p.name << " " << p.hp << " " << p.power << " " << p.defence << endl;
 	}
+
 	void swap(Champion& a, Champion& b) {
 		Champion temp = a;
 		a = b;
@@ -103,9 +105,26 @@ protected:
 	}
 };
 
-class DoubleLinkedList :public LinkedList<DoubleNode> {
+class SingleLinkedList :public LinkedList<SingleNode> {
 public:
-	void Insert(Champion p) override{
+	void Insert_SL_DL(Champion p) override {
+		SingleNode* newNode = new SingleNode(p);
+
+		if (head == nullptr) {
+			head = tail = newNode;
+			tail->next = head;
+		}
+		else {
+			tail->next = newNode;
+			newNode->next = head;
+			tail = newNode;
+		}
+	}
+};
+
+class DoubleLinkedList : public LinkedList<DoubleNode> {
+public:
+	void Insert_SL_DL(Champion p) override {
 		DoubleNode* newNode = new DoubleNode(p);
 
 		if (head == nullptr) {
@@ -120,53 +139,38 @@ public:
 			head->prev = newNode;
 			tail = newNode;
 		}
-	};
-};
+	}
 
-class SingleLinkedList : public LinkedList<SingleNode> {
-public:
-	void Insert(Champion p) override {
-		SingleNode* newNode = new SingleNode(p);
-
-		if (head == nullptr) {
-			head = tail = newNode;
-			tail->next = head;
-		}
-		else {
-			tail->next = newNode;
-			newNode->next = head;
-			tail = newNode;
-		}
-	};
 };
 
 void loadSingle(SingleLinkedList& list) {
 	ifstream file("LOLDic_pr.txt");
 
 	if (!file.is_open()) {
-		cerr << "file open error" << endl;
+		cerr << "file open fail" << endl;
 		return;
 	}
 
 	Champion p;
 	while (file >> p.position >> p.name >> p.hp >> p.power >> p.defence) {
-		list.Insert(p);
+		list.Insert_SL_DL(p);
 	}
 
 	file.close();
 }
 
+
 void loadDouble(DoubleLinkedList& list) {
 	ifstream file("LOLDic_pr.txt");
 
 	if (!file.is_open()) {
-		cerr << "file open error" << endl;
+		cerr << "file open fail" << endl;
 		return;
 	}
 
 	Champion p;
 	while (file >> p.position >> p.name >> p.hp >> p.power >> p.defence) {
-		list.Insert(p);
+		list.Insert_SL_DL(p);
 	}
 
 	file.close();
@@ -182,35 +186,40 @@ int main() {
 	LARGE_INTEGER frequency, start, end;
 
 	QueryPerformanceFrequency(&frequency);
-
 	QueryPerformanceCounter(&start);
-	list_sl.FindMaxHp();
+	list_sl.FindMaxHp_SL_DL();
 	QueryPerformanceCounter(&end);
-	cout << "싱글링크드리스트 findMaxHp : " << (end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart << "마이크로초" << endl;
+	cout << "싱글 FindMaxHp_SL_DL :" << (end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart << "마이크로초" << endl;
+	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&start);
-	list_dl.FindMaxHp();
+	list_dl.FindMaxHp_SL_DL();
 	QueryPerformanceCounter(&end);
-	cout << "더블링크드리스트 findMaxHp : " << (end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart << "마이크로초" << endl;
-
-	Sleep(1000);
-
-	QueryPerformanceCounter(&start);
-	list_sl.SortByName();
-	QueryPerformanceCounter(&end);
-	cout << "싱글링크드리스트 sortByName : " << (end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart << "마이크로초" << endl;
-	QueryPerformanceCounter(&start);
-	list_dl.SortByName();
-	QueryPerformanceCounter(&end);
-	cout << "더블링크드리스트 sortByName : " << (end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart << "마이크로초" << endl;
+	cout << "더블 FindMaxHp_SL_DL :" << (end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart << "마이크로초" << endl;
 
 	Sleep(1000);
 
+	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&start);
-	list_sl.PrintAll();
+	list_sl.SortByName_SL_DL();
 	QueryPerformanceCounter(&end);
-	cout << "싱글링크드리스트 PrintAll : " << (end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart << "마이크로초" << endl;
+	cout << "싱글 SortByName_SL_DL :" << (end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart << "마이크로초" << endl;
+	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&start);
-	list_dl.PrintAll();
+	list_dl.SortByName_SL_DL();
 	QueryPerformanceCounter(&end);
-	cout << "더블링크드리스트 PrintAll : " << (end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart << "마이크로초" << endl;
+	cout << "더블 SortByName_SL_DL :" << (end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart << "마이크로초" << endl;
+
+	Sleep(1000);
+
+	QueryPerformanceFrequency(&frequency);
+	QueryPerformanceCounter(&start);
+	list_sl.PrintAll_SL_DL();
+	QueryPerformanceCounter(&end);
+	cout << "싱글 PrintAll_SL_DL :" << (end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart << "마이크로초" << endl;
+	QueryPerformanceFrequency(&frequency);
+	QueryPerformanceCounter(&start);
+	list_dl.PrintAll_SL_DL();
+	QueryPerformanceCounter(&end);
+	cout << "더블 PrintAll_SL_DL :" << (end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart << "마이크로초" << endl;
+	
 }
