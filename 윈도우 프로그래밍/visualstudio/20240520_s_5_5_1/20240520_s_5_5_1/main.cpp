@@ -283,7 +283,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             character.move.down = true;
             character.move_status = 3;
             break;
-        case VK_SPACE:
+        case VK_RETURN:
         {
             Bullet b;
             if (character.move.left || character.move.right || character.move.up || character.move.down) {
