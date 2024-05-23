@@ -13,6 +13,9 @@ LPCTSTR lpszWindowName = L"INVERSUS";
 #define WIDTH 1200
 #define HEIGHT 1000
 
+#define TIMER_ID_X 1
+#define TIMER_ID_Y 2
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdParam, int nCmdShow) {
@@ -49,6 +52,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
     return static_cast<int>(Message.wParam);
 }
 
+COLORREF InvertColor(COLORREF color) {
+    BYTE r = 255 - GetRValue(color);
+    BYTE g = 255 - GetGValue(color);
+    BYTE b = 255 - GetBValue(color);
+    return RGB(r, g, b);
+}
+
 enum class GraphicsType {
     None,
     Sin,
@@ -61,9 +71,11 @@ struct GraphicsData {
     COLORREF lineColor;
     int lineWidth;
     GraphicsType graphType;
+    int xOffset; // 새로운 이동 오프셋 값
+    int yOffset; // y축 이동 오프셋 값
 };
 
-GraphicsData graphData = { RGB(0, 0, 255), 2, GraphicsType::None }; // 기본 값 설정
+GraphicsData graphData = { RGB(0, 0, 255), 2, GraphicsType::None, 0, 0 }; // 기본 값 설정
 
 void DrawSinCurve(HDC& hdc, RECT rect, GraphicsData graphData) {
     HPEN hPen = CreatePen(PS_SOLID, graphData.lineWidth, graphData.lineColor);
@@ -74,9 +86,9 @@ void DrawSinCurve(HDC& hdc, RECT rect, GraphicsData graphData) {
     double xScale = 2.0 * 3.14 / width;
     double yScale = height / 4.0;
 
-    MoveToEx(hdc, 0, height / 2, NULL);
+    MoveToEx(hdc, -graphData.xOffset, height / 2 - graphData.yOffset, NULL); // xOffset 및 yOffset 적용
     for (int x = 0; x < width; ++x) {
-        int y = static_cast<int>(height / 2 - sin(4 * x * xScale) * yScale);
+        int y = static_cast<int>(height / 2 - sin(4 * (x + graphData.xOffset) * xScale) * yScale - graphData.yOffset);
         LineTo(hdc, x, y);
     }
 
@@ -91,10 +103,11 @@ void DrawZigzag(HDC& hdc, RECT rect, GraphicsData graphData) {
     int width = rect.right - rect.left;
     int height = rect.bottom - rect.top;
     int step = width / 20;
+    int effectiveXOffset = graphData.xOffset % (2 * step); // xOffset을 step의 배수로 제한
 
-    MoveToEx(hdc, 0, height / 2, NULL);
-    for (int x = 0; x < width; x += step) {
-        LineTo(hdc, x, (x / step) % 2 == 0 ? height / 4 : (3 * height) / 4);
+    MoveToEx(hdc, -effectiveXOffset, height / 2 - graphData.yOffset, NULL); // xOffset 및 yOffset 적용
+    for (int x = -effectiveXOffset; x < width; x += step) {
+        LineTo(hdc, x, ((x + effectiveXOffset) / step) % 2 == 0 ? height / 4 - graphData.yOffset : (3 * height) / 4 - graphData.yOffset);
     }
 
     SelectObject(hdc, hOldPen);
@@ -108,8 +121,8 @@ void DrawSpringCurve(HDC hdc, RECT rect, GraphicsData graphData) {
     int radius = 50; // radius of each circle
     int spacing = radius / 2; // overlap amount
 
-    for (int x = spacing; x < rect.right; x += spacing) {
-        Arc(hdc, x - radius, rect.bottom / 2 - radius, x + radius, rect.bottom / 2 + radius, 0, 0, 0, 0);
+    for (int x = spacing - graphData.xOffset; x < rect.right; x += spacing) {
+        Arc(hdc, x - radius, rect.bottom / 2 - radius - graphData.yOffset, x + radius, rect.bottom / 2 + radius - graphData.yOffset, 0, 0, 0, 0);
     }
 
     SelectObject(hdc, hOldPen);
@@ -124,11 +137,12 @@ void DrawPieChart(HDC hdc, RECT rect, GraphicsData graphData) {
     int height = rect.bottom - rect.top;
     int step = width / 20;
     int amplitude = height / 4;
+    int effectiveXOffset = graphData.xOffset % (2 * step); // xOffset을 step의 배수로 제한
 
-    MoveToEx(hdc, 0, height / 2, NULL);
-    for (int x = 0; x < width; x += step) {
-        LineTo(hdc, x, (x / step) % 2 == 0 ? height / 2 - amplitude : height / 2 + amplitude);
-        LineTo(hdc, x + step, (x / step) % 2 == 0 ? height / 2 - amplitude : height / 2 + amplitude);
+    MoveToEx(hdc, -effectiveXOffset, height / 2 - graphData.yOffset, NULL); // xOffset 및 yOffset 적용
+    for (int x = -effectiveXOffset; x < width; x += step) {
+        LineTo(hdc, x, ((x + effectiveXOffset) / step) % 2 == 0 ? height / 2 - amplitude - graphData.yOffset : height / 2 + amplitude - graphData.yOffset);
+        LineTo(hdc, x + step, ((x + effectiveXOffset) / step) % 2 == 0 ? height / 2 - amplitude - graphData.yOffset : height / 2 + amplitude - graphData.yOffset);
     }
 
     SelectObject(hdc, hOldPen);
@@ -183,6 +197,30 @@ BOOL CALLBACK DialogProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
             graphData.graphType = GraphicsType::Pie;
             InvalidateRect(GetParent(hDlg), NULL, TRUE); // 부모 창 무효화
             return TRUE;
+        case IDC_CHECK1:
+            graphData.lineColor = RGB(0, 255, 255); // Cyan
+            InvalidateRect(GetParent(hDlg), NULL, TRUE); // 부모 창 무효화
+            return TRUE;
+        case IDC_CHECK2:
+            graphData.lineColor = RGB(255, 0, 255); // Magenta
+            InvalidateRect(GetParent(hDlg), NULL, TRUE); // 부모 창 무효화
+            return TRUE;
+        case IDC_CHECK3:
+            graphData.lineColor = RGB(255, 255, 0); // Yellow
+            InvalidateRect(GetParent(hDlg), NULL, TRUE); // 부모 창 무효화
+            return TRUE;
+        case IDC_CHECK4:
+            graphData.lineColor = InvertColor(graphData.lineColor); // 반전 색상
+            InvalidateRect(GetParent(hDlg), NULL, TRUE); // 부모 창 무효화
+            return TRUE;
+        case IDC_BUTTON4:
+            SetTimer(GetParent(hDlg), TIMER_ID_X, 50, NULL); // x축 타이머 설정
+            KillTimer(GetParent(hDlg), TIMER_ID_Y); // y축 타이머 중지
+            return TRUE;
+        case IDC_BUTTON5:
+            SetTimer(GetParent(hDlg), TIMER_ID_Y, 50, NULL); // y축 타이머 설정
+            KillTimer(GetParent(hDlg), TIMER_ID_X); // x축 타이머 중지
+            return TRUE;
         }
     case WM_CLOSE:
         EndDialog(hDlg, 0);
@@ -190,7 +228,6 @@ BOOL CALLBACK DialogProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
     }
     return FALSE; // 나머지 메시지는 FALSE 반환
 }
-
 
 random_device rd;
 mt19937 gen(rd());
@@ -237,9 +274,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_TIMER:
-        //InvalidateRect(hWnd, NULL, FALSE); // Force a repaint
+        switch (wParam) {
+        case TIMER_ID_X:
+            graphData.xOffset += 5; // xOffset 증가
+            InvalidateRect(hWnd, NULL, FALSE); // 창 무효화
+            break;
+        case TIMER_ID_Y:
+            graphData.yOffset += 5; // yOffset 증가
+            InvalidateRect(hWnd, NULL, FALSE); // 창 무효화
+            break;
+        }
         break;
     case WM_DESTROY:
+        KillTimer(hWnd, TIMER_ID_X);
+        KillTimer(hWnd, TIMER_ID_Y);
         PostQuitMessage(0);
         break;
     default:
