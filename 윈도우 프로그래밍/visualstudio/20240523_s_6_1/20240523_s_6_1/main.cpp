@@ -15,6 +15,7 @@ LPCTSTR lpszWindowName = L"INVERSUS";
 
 #define TIMER_ID_X 1
 #define TIMER_ID_Y 2
+#define TIMER_ID_CIRCLE 3
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
@@ -73,9 +74,16 @@ struct GraphicsData {
     GraphicsType graphType;
     int xOffset; // 새로운 이동 오프셋 값
     int yOffset; // y축 이동 오프셋 값
+    int circlePos; // 원의 현재 x 위치
+    bool circleMoving; // 원 이동 상태
 };
 
-GraphicsData graphData = { RGB(0, 0, 255), 2, GraphicsType::None, 0, 0 }; // 기본 값 설정
+GraphicsData graphData = { RGB(0, 0, 255), 2, GraphicsType::None, 0, 0, 0, false }; // 기본 값 설정
+
+void DrawCircle(HDC& hdc, int x, int y) {
+    int radius = 10;
+    Ellipse(hdc, x - radius, y - radius, x + radius, y + radius);
+}
 
 void DrawSinCurve(HDC& hdc, RECT rect, GraphicsData graphData) {
     HPEN hPen = CreatePen(PS_SOLID, graphData.lineWidth, graphData.lineColor);
@@ -90,6 +98,11 @@ void DrawSinCurve(HDC& hdc, RECT rect, GraphicsData graphData) {
     for (int x = 0; x < width; ++x) {
         int y = static_cast<int>(height / 2 - sin(4 * (x + graphData.xOffset) * xScale) * yScale - graphData.yOffset);
         LineTo(hdc, x, y);
+    }
+
+    if (graphData.circleMoving) {
+        int circleY = static_cast<int>(height / 2 - sin(4 * (graphData.circlePos + graphData.xOffset) * xScale) * yScale - graphData.yOffset);
+        DrawCircle(hdc, graphData.circlePos, circleY);
     }
 
     SelectObject(hdc, hOldPen);
@@ -110,6 +123,12 @@ void DrawZigzag(HDC& hdc, RECT rect, GraphicsData graphData) {
         LineTo(hdc, x, ((x + effectiveXOffset) / step) % 2 == 0 ? height / 4 - graphData.yOffset : (3 * height) / 4 - graphData.yOffset);
     }
 
+    if (graphData.circleMoving) {
+        int stepPos = (graphData.circlePos + effectiveXOffset) / step;
+        int circleY = (stepPos % 2 == 0) ? height / 4 - graphData.yOffset : (3 * height) / 4 - graphData.yOffset;
+        DrawCircle(hdc, graphData.circlePos, circleY);
+    }
+
     SelectObject(hdc, hOldPen);
     DeleteObject(hPen);
 }
@@ -123,6 +142,12 @@ void DrawSpringCurve(HDC hdc, RECT rect, GraphicsData graphData) {
 
     for (int x = spacing - graphData.xOffset; x < rect.right; x += spacing) {
         Arc(hdc, x - radius, rect.bottom / 2 - radius - graphData.yOffset, x + radius, rect.bottom / 2 + radius - graphData.yOffset, 0, 0, 0, 0);
+    }
+
+    if (graphData.circleMoving) {
+        int circleX = (graphData.circlePos + graphData.xOffset) % (spacing * 2);
+        int circleY = rect.bottom / 2 + sin(circleX * 3.14 / spacing) * (radius / 2) - graphData.yOffset;
+        DrawCircle(hdc, graphData.circlePos, circleY);
     }
 
     SelectObject(hdc, hOldPen);
@@ -143,6 +168,12 @@ void DrawPieChart(HDC hdc, RECT rect, GraphicsData graphData) {
     for (int x = -effectiveXOffset; x < width; x += step) {
         LineTo(hdc, x, ((x + effectiveXOffset) / step) % 2 == 0 ? height / 2 - amplitude - graphData.yOffset : height / 2 + amplitude - graphData.yOffset);
         LineTo(hdc, x + step, ((x + effectiveXOffset) / step) % 2 == 0 ? height / 2 - amplitude - graphData.yOffset : height / 2 + amplitude - graphData.yOffset);
+    }
+
+    if (graphData.circleMoving) {
+        int stepPos = (graphData.circlePos + effectiveXOffset) / step;
+        int circleY = (stepPos % 2 == 0) ? height / 2 - amplitude - graphData.yOffset : height / 2 + amplitude - graphData.yOffset;
+        DrawCircle(hdc, graphData.circlePos, circleY);
     }
 
     SelectObject(hdc, hOldPen);
@@ -216,10 +247,29 @@ BOOL CALLBACK DialogProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
         case IDC_BUTTON4:
             SetTimer(GetParent(hDlg), TIMER_ID_X, 50, NULL); // x축 타이머 설정
             KillTimer(GetParent(hDlg), TIMER_ID_Y); // y축 타이머 중지
+            graphData.circleMoving = false;
             return TRUE;
         case IDC_BUTTON5:
             SetTimer(GetParent(hDlg), TIMER_ID_Y, 50, NULL); // y축 타이머 설정
             KillTimer(GetParent(hDlg), TIMER_ID_X); // x축 타이머 중지
+            graphData.circleMoving = false;
+            return TRUE;
+        case IDC_BUTTON3:
+            KillTimer(GetParent(hDlg), TIMER_ID_Y); // y축 타이머 중지
+            KillTimer(GetParent(hDlg), TIMER_ID_X); // x축 타이머 중지
+            graphData.circleMoving = false;
+            return TRUE;
+        case IDC_BUTTON7:
+            graphData.xOffset = 0; // xOffset 초기화
+            graphData.yOffset = 0; // yOffset 초기화
+            graphData.circlePos = 0; // circlePos 초기화
+            graphData.circleMoving = false;
+            InvalidateRect(GetParent(hDlg), NULL, TRUE); // 부모 창 무효화
+            return TRUE;
+        case IDC_BUTTON6:
+            graphData.circlePos = 0; // 원의 시작 위치 초기화
+            graphData.circleMoving = true;
+            SetTimer(GetParent(hDlg), TIMER_ID_CIRCLE, 50, NULL); // 원 이동 타이머 설정
             return TRUE;
         }
     case WM_CLOSE:
@@ -283,11 +333,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             graphData.yOffset += 5; // yOffset 증가
             InvalidateRect(hWnd, NULL, FALSE); // 창 무효화
             break;
+        case TIMER_ID_CIRCLE:
+            graphData.circlePos += 5; // 원의 위치 증가
+            if (graphData.circlePos > rect.right) { // 원이 화면을 벗어나면 중지
+                KillTimer(hWnd, TIMER_ID_CIRCLE);
+                graphData.circleMoving = false;
+            }
+            InvalidateRect(hWnd, NULL, FALSE); // 창 무효화
+            break;
         }
         break;
     case WM_DESTROY:
         KillTimer(hWnd, TIMER_ID_X);
         KillTimer(hWnd, TIMER_ID_Y);
+        KillTimer(hWnd, TIMER_ID_CIRCLE);
         PostQuitMessage(0);
         break;
     default:
