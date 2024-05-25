@@ -10,8 +10,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 BOOL CALLBACK DialogProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
 
 TCHAR input[256] = L"";
+TCHAR input_s[256] = L"";
+
 TCHAR operation = 0;
-double result = 0.0;
+int result = 0;
 BOOL new_input = TRUE;
 
 void AddToInput(HWND hDlg, TCHAR ch) {
@@ -28,17 +30,13 @@ void AddToInput(HWND hDlg, TCHAR ch) {
 }
 
 void ExecuteOperation(HWND hDlg) {
-    double num = _tstof(input);
-    switch (operation) {
-    case '+': result += num; break;
-    case '-': result -= num; break;
-    case '*': result *= num; break;
-    case '/': if (num != 0) result /= num; break;
-    default: result = num; break;
+
+    for (int i = 0; i < _tcslen(input); ++i) {
+        input_s[i] = input[i];
     }
-    _stprintf_s(input, L"%f", result);
+   _tcscpy_s(input, L"");
     SetDlgItemText(hDlg, IDC_EDIT1, input);
-    new_input = TRUE;
+    new_input = false;
 }
 
 BOOL CALLBACK DialogProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam) {
@@ -62,16 +60,52 @@ BOOL CALLBACK DialogProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         case IDC_BUTTON12: operation = '-'; ExecuteOperation(hDlg); break;
         case IDC_BUTTON13: AddToInput(hDlg, '9'); break;
         case IDC_BUTTON14: AddToInput(hDlg, '.'); break;
-        case IDC_BUTTON15: operation = '+'; ExecuteOperation(hDlg); break;
-        case IDC_BUTTON17: SetDlgItemText(hDlg, IDC_EDIT1, L""); break; // CE
+        case IDC_BUTTON15:
+            SetDlgItemText(hDlg, IDC_EDIT1, L"");
+            _tcscpy_s(input, L"");
+            _tcscpy_s(input_s, L"");
+            operation = 0;
+            break; // CE
+        case IDC_BUTTON16: operation = '+'; ExecuteOperation(hDlg); break;
+        case IDC_BUTTON17: break;
         case IDC_BUTTON18: result = 0; operation = 0; SetDlgItemText(hDlg, IDC_EDIT1, L""); break; // C
-        case IDC_BUTTON19: ExecuteOperation(hDlg); operation = 0; break; // =
-        case IDC_BUTTON20: // Backspace
+        case IDC_BUTTON19: 
             if (_tcslen(input) > 0) {
                 input[_tcslen(input) - 1] = 0;
                 SetDlgItemText(hDlg, IDC_EDIT1, input);
             }
             break;
+        case IDC_BUTTON20: 
+        {
+            int num1 = _tstof(input);
+            int num2 = _tstof(input_s);
+            int result = 0;
+            switch (operation)
+            {
+            case '+':
+                result = num2 + num1;
+                break;
+            case '-':
+                result = num2 - num1;
+                break;
+            case '/':
+                result = num2 / num1;
+                break;
+            case '*':
+                result = num2 * num1;
+                break;
+            default:
+                break;
+            }
+
+            _stprintf_s(input, L"%d", result); // result 값을 문자열로 변환하여 input에 저장
+
+            _tcscpy_s(input_s, L"");
+
+            SetDlgItemText(hDlg, IDC_EDIT1, input);
+            new_input = TRUE;
+            break; // =
+        }
         case IDC_BUTTON24: PostQuitMessage(0); break; // Finish
         }
         return TRUE;
