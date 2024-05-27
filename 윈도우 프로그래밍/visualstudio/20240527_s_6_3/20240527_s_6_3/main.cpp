@@ -132,19 +132,42 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_CREATE:
         break;
     case WM_LBUTTONUP:
-        if (Drag) {
+        if (Drag && draw_status) {
             Drag = false;
             lines.back().end_x = LOWORD(lParam);
             lines.back().end_y = HIWORD(lParam);
+
+            if (lines.size() == 7) {
+                Line line;
+                line.start_x = lines[6].end_x;
+                line.start_y = lines[6].end_y;
+                line.end_x = lines[0].start_x;
+                line.end_y = lines[0].start_y;
+                line.color = RGB(0, 0, 0);
+                lines.push_back(line);
+            }
+
             InvalidateRect(hWnd, NULL, false);
         }
         break;
     case WM_LBUTTONDOWN:
+
+        if (lines.size() >= 7) {
+            break;
+        }
+
         if (draw_status) {
             Drag = true;
             Line line;
-            line.start_x = LOWORD(lParam);
-            line.start_y = HIWORD(lParam);
+
+            if (lines.size() != 0) {
+                line.start_x = lines[lines.size() - 1].end_x;
+                line.start_y = lines[lines.size() - 1].end_y;
+            }
+            else {
+                line.start_x = LOWORD(lParam);
+                line.start_y = HIWORD(lParam);
+            }
             line.end_x = LOWORD(lParam);
             line.end_y = HIWORD(lParam);
             line.color = RGB(0, 0, 0);
@@ -152,7 +175,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         }
         break;
     case WM_MOUSEMOVE:
-        if (Drag) {
+        if (Drag && draw_status) {
             lines.back().end_x = LOWORD(lParam);
             lines.back().end_y = HIWORD(lParam);
             InvalidateRect(hWnd, NULL, false);
