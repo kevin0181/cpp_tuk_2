@@ -11,6 +11,9 @@ LPCTSTR lpszWindowName = L"INVERSUS";
 
 #define WIDTH 1200
 #define HEIGHT 1000
+#define RECT_WIDTH 150
+#define RECT_HEIGHT 150
+#define TIMER_ID 2
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
@@ -57,10 +60,10 @@ struct Shape {
     RECT rect;
     COLORREF color;
 
-    void print(HDC& mDC, COLORREF color_s) {
+    void print(HDC& mDC, COLORREF color_s, const TCHAR* buffer) {
         HPEN hPen = CreatePen(PS_SOLID, 2, color_s);
         HPEN hOldPen = (HPEN)SelectObject(mDC, hPen);
-        HBRUSH hBrush = (HBRUSH)GetStockObject(HOLLOW_BRUSH);  // Use HOLLOW_BRUSH for transparency
+        HBRUSH hBrush = (HBRUSH)GetStockObject(HOLLOW_BRUSH);
         HBRUSH oldBrush = (HBRUSH)SelectObject(mDC, hBrush);
         if (status == 0) {
             Ellipse(mDC, rect.left, rect.top, rect.right, rect.bottom);
@@ -69,9 +72,12 @@ struct Shape {
             Rectangle(mDC, rect.left, rect.top, rect.right, rect.bottom);
         }
         SelectObject(mDC, oldBrush);
-        DeleteObject(hBrush);
         SelectObject(mDC, hOldPen);
         DeleteObject(hPen);
+
+        // Draw the buffer text next to the shape
+        SetBkMode(mDC, TRANSPARENT);
+        TextOut(mDC, rect.right + 5, rect.top, buffer, lstrlen(buffer));
     }
 };
 
@@ -96,6 +102,9 @@ double progress = 0.0;
 
 bool reverse_status = false;
 
+RECT dialogRect = { 50, 50, 50 + RECT_WIDTH, 50 + RECT_HEIGHT };
+int dx = 5; // Speed of movement
+
 void insert_color(vector<Line>& lines, COLORREF color) {
     for (auto& line : lines) {
         line.color = color;
@@ -108,7 +117,6 @@ BOOL CALLBACK DialogProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
     case WM_INITDIALOG: {
         HWND hListBox = GetDlgItem(hDlg, IDC_LIST4);
         if (hListBox) {
-            // List Box에 항목 추가
             SendMessage(hListBox, LB_ADDSTRING, 0, (LPARAM)L"Hello");
             SendMessage(hListBox, LB_ADDSTRING, 0, (LPARAM)L"TUKOREA");
             SendMessage(hListBox, LB_ADDSTRING, 0, (LPARAM)L"Winapi");
@@ -116,7 +124,7 @@ BOOL CALLBACK DialogProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
         else {
             MessageBox(hDlg, L"Could not find list box in dialog.", L"Error", MB_OK | MB_ICONERROR);
         }
-        return TRUE; // WM_INITDIALOG 메시지를 처리하고 TRUE 반환
+        return TRUE;
     }
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
@@ -127,7 +135,6 @@ BOOL CALLBACK DialogProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
                     int index = (int)SendMessage(hListBox, LB_GETCURSEL, 0, 0);
                     if (index != LB_ERR) {
                         SendMessage(hListBox, LB_GETTEXT, index, (LPARAM)buffer);
-                        //MessageBox(hDlg, buffer, L"Selected Item", MB_OK);
                     }
                     else {
                         MessageBox(hDlg, L"No item selected.", L"Error", MB_OK | MB_ICONERROR);
@@ -138,7 +145,7 @@ BOOL CALLBACK DialogProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
             break;
         case IDCANCEL:
             ShowWindow(hDlg, SW_HIDE);
-            return TRUE; // IDCANCEL 처리 후 TRUE 반환
+            return TRUE;
         case IDC_RADIO1:
             shape.status = 0;
             break;
@@ -161,6 +168,7 @@ BOOL CALLBACK DialogProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
             InvalidateRect(GetParent(hDlg), NULL, false);
             break;
         case IDC_BUTTON1:
+            SetTimer(GetParent(hDlg), 1, 10, NULL); // Adjust the timer interval as needed
             draw_status = true;
             break;
         case IDC_BUTTON2:
@@ -173,30 +181,71 @@ BOOL CALLBACK DialogProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
         case IDC_BUTTON3:
             reverse_status = !reverse_status;
             break;
+        case IDC_BUTTON6: // Start the rectangle movement timer
+            SetTimer(hDlg, TIMER_ID, 50, NULL); // Set a timer for moving the rectangle
+            break;
         case IDC_BUTTON4:
             move_status = false;
             break;
         case IDC_BUTTON5:
+            move_status = false;
             lines.clear();
             InvalidateRect(GetParent(hDlg), NULL, false);
             break;
-        case IDC_BUTTON6:
-            break;
         case IDC_BUTTON7:
+            ShowWindow(hDlg, SW_HIDE);
             break;
         }
         break;
-    case WM_CLOSE:
-        ShowWindow(hDlg, SW_HIDE);
-        return TRUE; // WM_CLOSE 처리 후 TRUE 반환
+    case WM_TIMER:
+        if (wParam == TIMER_ID) {
+            // Move the rectangle
+            dialogRect.left += dx;
+            dialogRect.right += dx;
+
+            // Check boundaries and reverse direction if needed
+            RECT dlgRect;
+            GetClientRect(hDlg, &dlgRect);
+            if (dialogRect.right > dlgRect.right || dialogRect.left < dlgRect.left) {
+                dx = -dx; // Reverse direction
+            }
+
+            InvalidateRect(hDlg, NULL, TRUE); // Request to repaint the dialog
+        }
+        break;
+    case WM_PAINT: {
+        PAINTSTRUCT ps;
+        HDC hDC = BeginPaint(hDlg, &ps);
+
+        if (!IsRectEmpty(&dialogRect)) {
+            HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+            HPEN hOldPen = (HPEN)SelectObject(hDC, hPen);
+            HBRUSH hBrush = (HBRUSH)GetStockObject(HOLLOW_BRUSH);
+            HBRUSH oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
+
+            Rectangle(hDC, dialogRect.left, dialogRect.top, dialogRect.right, dialogRect.bottom);
+
+            SelectObject(hDC, hOldPen);
+            SelectObject(hDC, oldBrush);
+            DeleteObject(hPen);
+            DeleteObject(hBrush);
+        }
+
+        EndPaint(hDlg, &ps);
+        return TRUE;
     }
-    return FALSE; // 나머지 메시지는 FALSE 반환
+    case WM_CLOSE:
+        KillTimer(hDlg, TIMER_ID); // Stop the timer when the dialog is closed
+        ShowWindow(hDlg, SW_HIDE);
+        return TRUE;
+    }
+    return FALSE;
 }
 
 void MoveShapeAlongLines() {
     if (lines.empty() || !move_status) return;
 
-    const double step = 0.01; // Adjust the speed of movement
+    const double step = 0.01;
     progress += step;
 
     if (progress >= 1.0) {
@@ -210,8 +259,8 @@ void MoveShapeAlongLines() {
     }
 
     const Line& line = lines[current_line_index];
-    int shapeWidth = 50;  // Shape width
-    int shapeHeight = 50; // Shape height
+    int shapeWidth = 50;
+    int shapeHeight = 50;
 
     int centerX, centerY;
 
@@ -242,7 +291,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     switch (uMsg) {
     case WM_CREATE:
-        SetTimer(hWnd, 1, 10, NULL); // Adjust the timer interval as needed
         break;
     case WM_LBUTTONUP:
         if (Drag && draw_status) {
@@ -323,7 +371,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         }
 
         if (move_status) {
-            shape.print(mDC, select_color);
+            shape.print(mDC, select_color, buffer);
         }
 
         BitBlt(hDC, 0, 0, rect.right, rect.bottom, mDC, 0, 0, SRCCOPY);
@@ -335,7 +383,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_TIMER:
-        if (move_status) {
+        if (wParam == 1 && move_status) {
             MoveShapeAlongLines();
             InvalidateRect(hWnd, NULL, FALSE);
         }
