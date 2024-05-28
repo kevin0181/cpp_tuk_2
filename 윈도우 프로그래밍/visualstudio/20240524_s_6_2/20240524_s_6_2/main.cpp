@@ -112,6 +112,9 @@ BOOL CALLBACK DialogProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 result = num2 - num1;
                 break;
             case '/':
+                if (num1 == 0) {
+                    break;
+                }
                 result = num2 / num1;
                 break;
             case '*':
