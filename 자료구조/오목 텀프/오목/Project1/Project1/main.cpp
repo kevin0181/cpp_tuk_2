@@ -8,11 +8,18 @@ using namespace std;
 int main() {
 	Judgment judgment;
 
+	//judgment.SetYourFunc(
+	//	BlackAttack_2022180024/*선공*/,
+	//	BlackDefence_2022180024,
+	//	WhiteAttack_2022180024_1/*후공*/,
+	//	WhiteDefence_2022180024_1
+	//);
+
 	judgment.SetYourFunc(
-		BlackAttack_2022180024/*선공*/,
-		BlackDefence_2022180024,
-		WhiteAttack_2022180024_1/*후공*/,
-		WhiteDefence_2022180024_1
+		BlackAttack_2022180024_1/*선공*/,
+		BlackDefence_2022180024_1,
+		WhiteAttack_2022180024/*후공*/,
+		WhiteDefence_2022180024
 	);
 
 	judgment.GamePlay();
