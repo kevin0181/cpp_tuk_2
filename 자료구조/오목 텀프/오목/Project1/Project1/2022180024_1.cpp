@@ -50,13 +50,13 @@ void make_random_move_1(int* x, int* y) {
     } while (!is_valid_move_1(*x, *y));
 }
 
-void WhiteAttack_2022180024_1(int* x, int* y) {
-    // White attack strategy
+void find_best_move_1(int* x, int* y, int shape) {
+    // 자신이 이길 수 있는 위치를 찾음
     for (int i = 0; i < COL; ++i) {
         for (int j = 0; j < LOW; ++j) {
             if (is_valid_move_1(i, j)) {
-                p1[i][j].shape = WHITE;
-                if (is_winning_move_1(i, j, WHITE)) {
+                p1[i][j].shape = shape;
+                if (is_winning_move_1(i, j, shape)) {
                     *x = i;
                     *y = j;
                     p1[i][j].shape = 0; // Undo the move
@@ -66,36 +66,59 @@ void WhiteAttack_2022180024_1(int* x, int* y) {
             }
         }
     }
-    make_random_move_1(x, y); // If no winning move found, make a random move
+    // 상대방이 이길 수 있는 위치를 막음
+    int opponent_shape = (shape == WHITE) ? BLACK : WHITE;
+    for (int i = 0; i < COL; ++i) {
+        for (int j = 0; j < LOW; ++j) {
+            if (is_valid_move_1(i, j)) {
+                p1[i][j].shape = opponent_shape;
+                if (is_winning_move_1(i, j, opponent_shape)) {
+                    *x = i;
+                    *y = j;
+                    p1[i][j].shape = 0; // Undo the move
+                    return;
+                }
+                p1[i][j].shape = 0; // Undo the move
+            }
+        }
+    }
+    // 중앙에서 가까운 위치에 돌을 둠
+    int best_x = COL / 2, best_y = LOW / 2;
+    int min_distance = COL * COL + LOW * LOW;
+    for (int i = 0; i < COL; ++i) {
+        for (int j = 0; j < LOW; ++j) {
+            if (is_valid_move_1(i, j)) {
+                int distance = (i - best_x) * (i - best_x) + (j - best_y) * (j - best_y);
+                if (distance < min_distance) {
+                    min_distance = distance;
+                    *x = i;
+                    *y = j;
+                }
+            }
+        }
+    }
+}
+
+void WhiteAttack_2022180024_1(int* x, int* y) {
+    find_best_move_1(x, y, WHITE);
+    p1[*x][*y].shape = WHITE; // Update the board with the move
+    cout << "2022180024_1 흰색 둔곳: (" << *x << ", " << *y << ")" << endl;
 }
 
 void WhiteDefence_2022180024_1(int x, int y) {
-    // White defence strategy
     p1[x][y].shape = WHITE;
+    cout << "                                        2022180024_1 WhiteDefence: (" << x << ", " << y << ")" << endl;
 }
 
 void BlackAttack_2022180024_1(int* x, int* y) {
-    // Black attack strategy
-    for (int i = 0; i < COL; ++i) {
-        for (int j = 0; j < LOW; ++j) {
-            if (is_valid_move_1(i, j)) {
-                p1[i][j].shape = BLACK;
-                if (is_winning_move_1(i, j, BLACK)) {
-                    *x = i;
-                    *y = j;
-                    p1[i][j].shape = 0; // Undo the move
-                    return;
-                }
-                p1[i][j].shape = 0; // Undo the move
-            }
-        }
-    }
-    make_random_move_1(x, y); // If no winning move found, make a random move
+    find_best_move_1(x, y, BLACK);
+    p1[*x][*y].shape = BLACK; // Update the board with the move
+    cout << "2022180024_1 검은돌 둔곳: (" << *x << ", " << *y << ")" << endl;
 }
 
 void BlackDefence_2022180024_1(int x, int y) {
-    // Black defence strategy
     p1[x][y].shape = BLACK;
+    cout << "                                        2022180024_1 BlackDefence: (" << x << ", " << y << ")" << endl;
 }
 
 void init_game_1() {
