@@ -1,7 +1,7 @@
 #include "2022180024.h"
 
 Point p[COL][LOW];
-int defense_threshold = 3; // 3개 이상 연속되는 돌을 막기 위한 임계값
+int defense_threshold = 4; // 3개 이상 연속되는 돌을 막기 위한 임계값
 
 void initialize_board() {
     for (int i = 0; i < COL; ++i) {
