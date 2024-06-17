@@ -1,6 +1,7 @@
 #include "2022180024.h"
 
 Point p[COL][LOW];
+int defense_threshold = 3; // 3개 이상 연속되는 돌을 막기 위한 임계값
 
 void initialize_board() {
     for (int i = 0; i < COL; ++i) {
@@ -15,7 +16,6 @@ bool is_valid_move(int x, int y, int shape) {
         return false;
     }
 
-    // 검은 돌일 경우 삼삼 및 사사 금수 체크
     if (shape == BLACK) {
         if (is_double_three(x, y, shape) || is_double_four(x, y, shape)) {
             return false;
@@ -137,61 +137,104 @@ int evaluate_board(int shape) {
     return score;
 }
 
-int minimax(int depth, bool is_maximizing, int alpha, int beta, int shape) {
-    int score = evaluate_board(shape);
-    if (depth == 0 || abs(score) >= 100) {
-        return score;
+void find_defensive_move(int* x, int* y, int shape) {
+    const int opponent_shape = -shape;
+    const int directions[4][2] = { {1, 0}, {0, 1}, {1, 1}, {1, -1} };
+    for (int i = 0; i < COL; ++i) {
+        for (int j = 0; j < LOW; ++j) {
+            if (p[i][j].shape == opponent_shape) {
+                for (auto& dir : directions) {
+                    int count = 1;
+                    int start_x = i;
+                    int start_y = j;
+                    int end_x = i;
+                    int end_y = j;
+                    for (int k = 1; k < 5; ++k) {
+                        int nx = i + dir[0] * k;
+                        int ny = j + dir[1] * k;
+                        if (nx >= 0 && nx < COL && ny >= 0 && ny < LOW && p[nx][ny].shape == opponent_shape) {
+                            count++;
+                            end_x = nx;
+                            end_y = ny;
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                    if (count >= defense_threshold) { // 3개 이상 연속되면 방어
+                        int possible_moves[2][2] = { {start_x - dir[0], start_y - dir[1]}, {end_x + dir[0], end_y + dir[1]} };
+                        for (int m = 0; m < 2; ++m) {
+                            int px = possible_moves[m][0];
+                            int py = possible_moves[m][1];
+                            if (px >= 0 && px < COL && py >= 0 && py < LOW && p[px][py].shape == EMPTY) {
+                                *x = px;
+                                *y = py;
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
+}
 
-    if (is_maximizing) {
-        int max_eval = -10000;
-        for (int i = 0; i < COL; ++i) {
-            for (int j = 0; j < LOW; ++j) {
-                if (is_valid_move(i, j, shape)) {
-                    p[i][j].shape = shape;
-                    int eval = minimax(depth - 1, false, alpha, beta, shape);
-                    p[i][j].shape = EMPTY;
-                    max_eval = max(max_eval, eval);
-                    alpha = max(alpha, eval);
-                    if (beta <= alpha) {
-                        return max_eval;
+void find_offensive_move(int* x, int* y, int shape) {
+    const int directions[4][2] = { {1, 0}, {0, 1}, {1, 1}, {1, -1} };
+    for (int i = 0; i < COL; ++i) {
+        for (int j = 0; j < LOW; ++j) {
+            if (p[i][j].shape == shape) {
+                for (auto& dir : directions) {
+                    int count = 1;
+                    for (int k = 1; k < 5; ++k) {
+                        int nx = i + dir[0] * k;
+                        int ny = j + dir[1] * k;
+                        if (nx >= 0 && nx < COL && ny >= 0 && ny < LOW && p[nx][ny].shape == shape) {
+                            count++;
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                    if (count >= 3) {
+                        for (int k = 1; k < 5; ++k) {
+                            int nx = i + dir[0] * k;
+                            int ny = j + dir[1] * k;
+                            if (nx >= 0 && nx < COL && ny >= 0 && ny < LOW && p[nx][ny].shape == EMPTY) {
+                                *x = nx;
+                                *y = ny;
+                                return;
+                            }
+                        }
                     }
                 }
             }
         }
-        return max_eval;
-    }
-    else {
-        int min_eval = 10000;
-        int opponent_shape = -shape;
-        for (int i = 0; i < COL; ++i) {
-            for (int j = 0; j < LOW; ++j) {
-                if (is_valid_move(i, j, opponent_shape)) {
-                    p[i][j].shape = opponent_shape;
-                    int eval = minimax(depth - 1, true, alpha, beta, shape);
-                    p[i][j].shape = EMPTY;
-                    min_eval = min(min_eval, eval);
-                    beta = min(beta, eval);
-                    if (beta <= alpha) {
-                        return min_eval;
-                    }
-                }
-            }
-        }
-        return min_eval;
     }
 }
 
 void find_best_move(int* x, int* y, int shape) {
-    int best_score = -10000;
+    // 방어 우선
+    *x = -1;
+    *y = -1;
+    find_defensive_move(x, y, shape);
+    if (*x != -1 && *y != -1) {
+        return;
+    }
+    // 공격 시도
+    find_offensive_move(x, y, shape);
+    if (*x != -1 && *y != -1) {
+        return;
+    }
+    // 중앙에 가까운 위치에 돌을 둠
+    int best_x = COL / 2, best_y = LOW / 2;
+    int min_distance = COL * COL + LOW * LOW;
     for (int i = 0; i < COL; ++i) {
         for (int j = 0; j < LOW; ++j) {
             if (is_valid_move(i, j, shape)) {
-                p[i][j].shape = shape;
-                int score = minimax(2, false, -10000, 10000, shape); // 깊이를 2로 설정
-                p[i][j].shape = EMPTY;
-                if (score > best_score) {
-                    best_score = score;
+                int distance = (i - best_x) * (i - best_x) + (j - best_y) * (j - best_y);
+                if (distance < min_distance) {
+                    min_distance = distance;
                     *x = i;
                     *y = j;
                 }
@@ -219,7 +262,7 @@ void BlackAttack_2022180024(int* x, int* y) {
 
 void BlackDefence_2022180024(int x, int y) {
     p[x][y].shape = BLACK;
-    cout << "                                       2022180024 BlackDefence: (" << x << ", " << y << ")" << endl;
+    cout << "                                        2022180024 BlackDefence: (" << x << ", " << y << ")" << endl;
 }
 
 void init_game() {
